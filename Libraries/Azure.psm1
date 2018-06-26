@@ -772,12 +772,14 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
     }
     if($newVM.RoleName)
     {
-        $VMNames += $newVM.RoleName
+        $vmName = $newVM.RoleName
     }
     else
     {
-        $VMNames += "$RGName-role-$numberOfVMs"
+        $vmName = "$RGName-role-$numberOfVMs"
     }
+    $vmName = $vmName.ToLower()
+    $VMNames += $vmName
     $numberOfVMs += 1
 }
 
@@ -1326,6 +1328,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
     {
         $vmName = "$RGName-role-$role"
     }
+    $vmName = $vmName.ToLower()
     foreach ( $endpoint in $newVM.EndPoints)
     {
         if ( !($endpoint.LoadBalanced) -or ($endpoint.LoadBalanced -eq "False") )
@@ -1381,6 +1384,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
     {
         $vmName = "$RGName-role-$role"
     }
+    $vmName = $vmName.ToLower()
     
     foreach ( $endpoint in $newVM.EndPoints)
     {
@@ -1482,6 +1486,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
     {
         $vmName = "$RGName-role-$role"
     }
+    $vmName = $vmName.ToLower()
 
     foreach ( $endpoint in $newVM.EndPoints)
     {
@@ -1556,6 +1561,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
     {
         $vmName = "$RGName-role-$role"
     }
+    $vmName = $vmName.ToLower()
     $NIC = "PrimaryNIC" + "-$vmName"
 
         if ( $vmAdded )
