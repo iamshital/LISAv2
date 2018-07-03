@@ -74,7 +74,7 @@ try
     if ( $WorkingDirectory.Length -gt $MaxDirLength)
     {
         $OriginalWorkingDirectory = $WorkingDirectory
-        Write-Host "Current working directory length is greather than $MaxDirLength. Need to change the working directory."
+        Write-Host "Current working directory '$WorkingDirectory' length is greather than $MaxDirLength. Need to change the working directory."
         $TempWorkspace = "$(Split-Path $OriginalWorkingDirectory -Qualifier)"
         New-Item -ItemType Directory -Path "$TempWorkspace\LISAv2" -Force -ErrorAction SilentlyContinue | Out-Null
         New-Item -ItemType Directory -Path "$TempWorkspace\LISAv2\$shortRandomWord$shortRandomNumber" -Force -ErrorAction SilentlyContinue | Out-Null
@@ -461,7 +461,6 @@ try
             LogMsg "Changed exit code from 1 --> 0. (-ExitWithZero mentioned.)"
             $ExitCode = 0
         }
-        LogMsg "Exiting with code : $ExitCode"
     }
 }
 catch 
@@ -487,5 +486,6 @@ finally
         cd $originalWorkingDirectory
     }
     Get-Variable -Scope Global | Remove-Variable -Force -ErrorAction SilentlyContinue
+    LogMsg "Exiting with code : $ExitCode"
     exit $ExitCode    
 }

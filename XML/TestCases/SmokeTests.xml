@@ -19,7 +19,7 @@
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>        
-        <Platform>Azure,HyperV</Platform>
+        <Platform>Azure</Platform>
         <Category>Smoke</Category>
         <Area>default</Area>
         <Tags>bvt</Tags>
