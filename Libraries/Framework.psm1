@@ -72,21 +72,21 @@ Function UpdateGlobalConfigurationXML()
 		{
 			if (Test-Path -Path $XMLSecretFile)
 			{
-				LogMsg "Updating $WorkingDirectory\XML\GlobalConfigurations.xml"
-				$WorkingDirectory\Utilities\UpdateGlobalConfigurationFromXmlSecrets.ps1 -XmlSecretsFilePath $XMLSecretFile
+				LogMsg "Updating .\XML\GlobalConfigurations.xml"
+				.\Utilities\UpdateGlobalConfigurationFromXmlSecrets.ps1 -XmlSecretsFilePath $XMLSecretFile
 			}
 			else 
 			{
-				LogErr "Failed to update $WorkingDirectory\XML\GlobalConfigurations.xml. '$XMLSecretFile' not found."    
+				LogErr "Failed to update .\XML\GlobalConfigurations.xml. '$XMLSecretFile' not found."    
 			}
 		}
 		else 
 		{
-			LogErr "Failed to update $WorkingDirectory\XML\GlobalConfigurations.xml. '-XMLSecretFile [FilePath]' not provided."    
+			LogErr "Failed to update .\XML\GlobalConfigurations.xml. '-XMLSecretFile [FilePath]' not provided."    
 		}
 	}
-	$RegionStorageMapping = [xml](Get-Content $WorkingDirectory\XML\RegionAndStorageAccounts.xml)
-	$GlobalConfiguration = [xml](Get-Content $WorkingDirectory\XML\GlobalConfigurations.xml)
+	$RegionStorageMapping = [xml](Get-Content .\XML\RegionAndStorageAccounts.xml)
+	$GlobalConfiguration = [xml](Get-Content .\XML\GlobalConfigurations.xml)
 
 	if ($TestPlatform -eq "Azure")
 	{
@@ -147,12 +147,12 @@ Function UpdateGlobalConfigurationXML()
 		if( $ResultDBTable )
 		{
 			$GlobalConfiguration.Global.$TestPlatform.ResultsDatabase.dbtable = ($ResultDBTable).Trim()
-			LogMsg "ResultDBTable : $ResultDBTable added to $WorkingDirectory\XML\GlobalConfigurations.xml"
+			LogMsg "ResultDBTable : $ResultDBTable added to .\XML\GlobalConfigurations.xml"
 		}
 		if( $ResultDBTestTag )
 		{
 			$GlobalConfiguration.Global.$TestPlatform.ResultsDatabase.testTag = ($ResultDBTestTag).Trim()
-			LogMsg "ResultDBTestTag: $ResultDBTestTag added to $WorkingDirectory\XML\GlobalConfigurations.xml"
+			LogMsg "ResultDBTestTag: $ResultDBTestTag added to .\XML\GlobalConfigurations.xml"
 		}                      
 	}
 	$GlobalConfiguration.Save("$WorkingDirectory\XML\GlobalConfigurations.xml")
@@ -160,7 +160,7 @@ Function UpdateGlobalConfigurationXML()
 
 	New-Item -ItemType Directory -Path "TestResults" -Force -ErrorAction SilentlyContinue | Out-Null
 
-	$LogDir = "$WorkingDirectory\TestResults\$(Get-Date -Format 'yyyy-dd-MM-HH-mm-ss-ffff')"
+	$LogDir = ".\TestResults\$(Get-Date -Format 'yyyy-dd-MM-HH-mm-ss-ffff')"
 	Set-Variable -Name LogDir -Value $LogDir -Scope Global -Force
 	Set-Variable -Name RootLogDir -Value $LogDir -Scope Global -Force
 	New-Item -ItemType Directory -Path $LogDir -Force | Out-Null
@@ -177,7 +177,7 @@ Function UpdateGlobalConfigurationXML()
 		if ( $XMLSecretFile )
 		{
 			ValiateXMLs -ParentFolder $((Get-Item -Path $XMLSecretFile).FullName | Split-Path -Parent)
-			$WorkingDirectory\Utilities\AddAzureRmAccountFromSecretsFile.ps1 -customSecretsFilePath $XMLSecretFile
+			.\Utilities\AddAzureRmAccountFromSecretsFile.ps1 -customSecretsFilePath $XMLSecretFile
 			Set-Variable -Value ([xml](Get-Content $XMLSecretFile)) -Name XmlSecrets -Scope Global
 			LogMsg "XmlSecrets set as global variable."
 		}
@@ -198,16 +198,16 @@ Function UpdateXMLStringsFromSecretsFile()
         {
             if (Test-Path -Path $XMLSecretFile)
             {
-                $WorkingDirectory\Utilities\UpdateXMLStringsFromXmlSecrets.ps1 -XmlSecretsFilePath $XMLSecretFile
+                .\Utilities\UpdateXMLStringsFromXmlSecrets.ps1 -XmlSecretsFilePath $XMLSecretFile
             }
             else 
             {
-                LogErr "Failed to update Strings in $WorkingDirectory\XML files. '$XMLSecretFile' not found."    
+                LogErr "Failed to update Strings in .\XML files. '$XMLSecretFile' not found."    
             }
         }
         else 
         {
-            LogErr "Failed to update Strings in $WorkingDirectory\XML files. '-XMLSecretFile [FilePath]' not provided."    
+            LogErr "Failed to update Strings in .\XML files. '-XMLSecretFile [FilePath]' not provided."    
         }
     }
 }
@@ -434,11 +434,11 @@ function GetTestSummary($testCycle, [DateTime] $StartTime, [string] $xmlFilename
     
     $strHtml += "</body></Html>"
 
-    if (-not (Test-Path("$WorkingDirectory\temp\CI"))) {
-        mkdir "$WorkingDirectory\temp\CI" | Out-Null 
+    if (-not (Test-Path(".\temp\CI"))) {
+        mkdir ".\temp\CI" | Out-Null 
     }
 
-	Set-Content "$WorkingDirectory\temp\CI\index.html" $strHtml
+	Set-Content ".\temp\CI\index.html" $strHtml
 	return $plainTextSummary, $strHtml
 }
 
@@ -521,7 +521,7 @@ Function ThrowException($Exception)
 JUnit XML Report Schema:
 	http://windyroad.com.au/dl/Open%20Source/JUnit.xsd
 Example:
-	Import-Module $WorkingDirectory\UtilLibs.psm1 -Force
+	Import-Module .\UtilLibs.psm1 -Force
 
 	StartLogReport("$pwd/report.xml")
 
@@ -887,15 +887,15 @@ Function UploadTestResultToDatabase ($TestPlatform,$TestLocation,$TestCategory,$
 				$TestSummary = $CurrentTestResult.TestSummary
 				$UTCTime = (Get-Date).ToUniversalTime()
 				$DateTimeUTC = "$($UTCTime.Year)-$($UTCTime.Month)-$($UTCTime.Day) $($UTCTime.Hour):$($UTCTime.Minute):$($UTCTime.Second)"
-				$GlobalConfiguration = [xml](Get-Content $WorkingDirectory\XML\GlobalConfigurations.xml)
+				$GlobalConfiguration = [xml](Get-Content .\XML\GlobalConfigurations.xml)
 				$TestTag = $GlobalConfiguration.Global.$TestPlatform.ResultsDatabase.testTag
 				$testLogStorageAccount = $XmlSecrets.secrets.testLogsStorageAccount
 				$testLogStorageAccountKey = $XmlSecrets.secrets.testLogsStorageAccountKey
 				$testLogFolder = "$($UTCTime.Year)-$($UTCTime.Month)-$($UTCTime.Day)"
 				$ticks= (Get-Date).Ticks
-				$uploadFileName = "$WorkingDirectory\Temp\$($TestName)-$ticks.zip"
+				$uploadFileName = ".\Temp\$($TestName)-$ticks.zip"
 				$out = ZipFiles -zipfilename $uploadFileName -sourcedir $LogDir
-				$UploadedURL = $WorkingDirectory\Utilities\UploadFilesToStorageAccount.ps1 -filePaths $uploadFileName -destinationStorageAccount $testLogStorageAccount -destinationContainer "lisav2logs" -destinationFolder "$testLogFolder" -destinationStorageKey $testLogStorageAccountKey
+				$UploadedURL = .\Utilities\UploadFilesToStorageAccount.ps1 -filePaths $uploadFileName -destinationStorageAccount $testLogStorageAccount -destinationContainer "lisav2logs" -destinationFolder "$testLogFolder" -destinationStorageKey $testLogStorageAccountKey
 				if ( $BuildURL )
 				{
 					$BuildURL = "$BuildURL`consoleFull"
