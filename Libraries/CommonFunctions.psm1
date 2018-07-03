@@ -1839,7 +1839,7 @@ Function DoTestCleanUp($CurrentTestResult, $testName, $DeployedServices, $Resour
 					$VMSize = $HyperVInstanceSize
 				}
 				#endregion
-				UploadTestResultToDatabase -TestPlatform $TestPlatform -TestLocation $TestLocation -TestCategory $TestCategory -TestArea $TestArea -TestName $CurrentTestData.TestName -CurrentTestResult $CurrentTestResult -TestTag $TestTag -GuestDistro $GuestDistro -KernelVersion $KernelVersion -LISVersion $LISVersion -HostVersion $HostVersion -VMSize $VMSize -Networking $Networking -ARMImage $ARMImage -OsVHD $OsVHD -BuildURL $env:BUILD_URL
+				UploadTestResultToDatabase -TestPlatform $TestPlatform -TestLocation $TestLocation -TestCategory $TestCategory -TestArea $TestArea -TestName $CurrentTestData.TestName -CurrentTestResult $CurrentTestResult -ExecutionTag $ResultDBTestTag -GuestDistro $GuestDistro -KernelVersion $KernelVersion -LISVersion $LISVersion -HostVersion $HostVersion -VMSize $VMSize -Networking $Networking -ARMImage $ARMImage -OsVHD $OsVHD -BuildURL $env:BUILD_URL
 			}
 			catch
 			{
@@ -1998,7 +1998,7 @@ Function DoTestCleanUp($CurrentTestResult, $testName, $DeployedServices, $Resour
 		}
 		else
 		{
-			UploadTestResultToDatabase -TestPlatform $TestPlatform -TestLocation $TestLocation -TestCategory $TestCategory -TestArea $TestArea -TestName $CurrentTestData.TestName -CurrentTestResult $CurrentTestResult -TestTag $TestTag -GuestDistro $GuestDistro -KernelVersion $KernelVersion -LISVersion $LISVersion -HostVersion $HostVersion -VMSize $VMSize -Networking $Networking -ARMImage $ARMImage -OsVHD $OsVHD -BuildURL $env:BUILD_URL
+			UploadTestResultToDatabase -TestPlatform $TestPlatform -TestLocation $TestLocation -TestCategory $TestCategory -TestArea $TestArea -TestName $CurrentTestData.TestName -CurrentTestResult $CurrentTestResult -ExecutionTag $ResultDBTestTag -GuestDistro $GuestDistro -KernelVersion $KernelVersion -LISVersion $LISVersion -HostVersion $HostVersion -VMSize $VMSize -Networking $Networking -ARMImage $ARMImage -OsVHD $OsVHD -BuildURL $env:BUILD_URL
 			LogMsg "Skipping cleanup, as No services / resource groups / HyperV Groups deployed for cleanup!"
 		}
 	}

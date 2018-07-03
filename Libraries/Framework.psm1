@@ -875,7 +875,7 @@ Function CreateArrayOfTabs()
 	return $tab
 }
 
-Function UploadTestResultToDatabase ($TestPlatform,$TestLocation,$TestCategory,$TestArea,$TestName,$CurrentTestResult,$TestTag,$GuestDistro,$KernelVersion,$LISVersion,$HostVersion,$VMSize,$Networking,$ARMImage,$OsVHD,$LogFile,$BuildURL)
+Function UploadTestResultToDatabase ($TestPlatform,$TestLocation,$TestCategory,$TestArea,$TestName,$CurrentTestResult,$ExecutionTag,$GuestDistro,$KernelVersion,$LISVersion,$HostVersion,$VMSize,$Networking,$ARMImage,$OsVHD,$LogFile,$BuildURL)
 {
 	if ( $EnableTelemetry )
 	{
