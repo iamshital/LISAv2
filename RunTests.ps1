@@ -77,7 +77,7 @@ try
         Write-Host "Current working directory length is greather than $MaxDirLength. Need to change the working directory."
         $TempWorkspace = "$(Split-Path $OriginalWorkingDirectory -Qualifier)"
         New-Item -ItemType Directory -Path "$TempWorkspace\LISAv2" -Force -ErrorAction SilentlyContinue | Out-Null
-        New-Item -ItemType Directory -Path "$TempWorkspace\LISAv2\$shortRandomNumber" -Force -ErrorAction SilentlyContinue | Out-Null
+        New-Item -ItemType Directory -Path "$TempWorkspace\LISAv2\$shortRandomWord$shortRandomNumber" -Force -ErrorAction SilentlyContinue | Out-Null
         $finalWorkingDirectory = "$TempWorkspace\LISAv2\$shortRandomWord$shortRandomNumber"
         $tmpSource = '\\?\' + "$OriginalWorkingDirectory\*"
         Write-Host "Copying current workspace to $finalWorkingDirectory"
