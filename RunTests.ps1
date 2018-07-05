@@ -81,9 +81,9 @@ try
         $finalWorkingDirectory = "$TempWorkspace\LISAv2\$shortRandomWord$shortRandomNumber"
         $tmpSource = '\\?\' + "$OriginalWorkingDirectory\*"
         Write-Host "Copying current workspace to $finalWorkingDirectory"
-        Copy-Item -Path $tmpSource -Destination $finalWorkingDirectory -Recurse -Force -ErrorAction SilentlyContinue| Out-Null
+        Copy-Item -Path $tmpSource -Destination $finalWorkingDirectory -Recurse -Force | Out-Null
         Set-Location -Path $finalWorkingDirectory | Out-Null
-        Write-Host "Wroking directory changed to $finalWorkingDirectory"
+        Write-Host "Working directory changed to $finalWorkingDirectory"
         $WorkingDirectory = $finalWorkingDirectory
     }
      
@@ -478,7 +478,7 @@ finally
     {
         Write-Host "Copying all files to original working directory."
         $tmpDest = '\\?\' + $originalWorkingDirectory
-        Copy-Item -Path "$finalWorkingDirectory\*" -Destination $tmpDest -Force -Recurse -ErrorAction SilentlyContinue | Out-Null
+        Copy-Item -Path "$finalWorkingDirectory\*" -Destination $tmpDest -Force -Recurse | Out-Null
         cd ..
         Write-Host "Cleaning $finalWorkingDirectory"
         Remove-Item -Path $finalWorkingDirectory -Force -Recurse -ErrorAction SilentlyContinue
