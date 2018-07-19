@@ -1,5 +1,7 @@
 #!/bin/bash
 
+TEST_URL="https://microsoft.com"
+
 function log_msg() {
     echo "[$(date +"%x %r %Z")] ${1}"
     echo "[$(date +"%x %r %Z")] ${1}" >> "./TestExecution.log"
@@ -73,6 +75,14 @@ function main() {
             eth_ip=$(ip a | grep "${eth_name}" | sed -n '2 p' | awk '{print $2}')
             if [[ "${eth_ip}" != '' ]];then
                 log_msg "IP for ${eth_name} is ${eth_ip}"
+                # Note(avladu): Enable testing Internet connectivity
+                #run "curl --connect-timeout 10 --max-time 10 --interface ${eth_name} ${TEST_URL}"
+                #if [[ "$?" -ne '0' ]]; then
+                #    log_err "CURL failed for ${eth_name} with output ${curl_test_output}"
+                #    test_result=$(( $test_result + 1 ))
+                #else
+                #    log_msg "CURL succeeded for ${eth_name}"
+                #fi
             else
                 log_err "IP for ${eth_name} is not set"
                 test_result=$(( $test_result + 1 ))
