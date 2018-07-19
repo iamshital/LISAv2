@@ -1,3 +1,29 @@
+##############################################################################################
+# HyperV.psm1
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the Apache License.
+# Operations :
+#
+<#
+.SYNOPSIS
+    Required for Hyper-V test execution.
+
+.PARAMETER
+    <Parameters>
+
+.INPUTS
+	
+
+.NOTES
+    Creation Date:  
+    Purpose/Change: 
+
+.EXAMPLE
+
+
+#>
+###############################################################################################
+
 Function DeployHyperVGroups ($xmlConfig, $setupType, $Distro, $getLogsIfFailed = $false, $GetDeploymentStatistics = $false)
 {
     if( (!$EconomyMode) -or ( $EconomyMode -and ($xmlConfig.config.HyperV.Deployment.$setupType.isDeployed -eq "NO")))
@@ -354,9 +380,15 @@ Function CreateHyperVGroupDeployment([string]$HyperVGroup, $HyperVGroupNameXML)
                 if ($?)
                 {
                     LogMsg "Set-VM -VM $($NewVM.Name) -ProcessorCount $CurrentVMCpu -StaticMemory -CheckpointType Disabled -Notes $HyperVGroupName"
+
                     $Out = Set-VM -VM $NewVM -ProcessorCount $CurrentVMCpu -StaticMemory  -CheckpointType Disabled -Notes "$HyperVGroupName"
                     LogMsg "Add-VMGroupMember -Name $HyperVGroupName -VM $($NewVM.Name)"
                     $Out = Add-VMGroupMember -Name "$HyperVGroupName" -VM $NewVM -ComputerName $HyperVHost
+                    $ResourceDiskPath = ".\Temp\ResourceDisk-$((Get-Date).Ticks)-sdb.vhd"
+                    LogMsg "New-VHD -Path $ResourceDiskPath -SizeBytes 1GB -Dynamic -Verbose -ComputerName $HyperVHost"
+                    $VHD = New-VHD -Path $ResourceDiskPath -SizeBytes 1GB -Dynamic -Verbose -ComputerName $HyperVHost
+                    LogMsg "Add-VMHardDiskDrive -ControllerType SCSI -Path $ResourceDiskPath -VM $($NewVM.Name)"
+                    $NewVM | Add-VMHardDiskDrive -ControllerType SCSI -Path $ResourceDiskPath
                 }
                 else 
                 {

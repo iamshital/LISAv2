@@ -1,4 +1,6 @@
-﻿$CurrentTestResult = CreateTestResultObject
+﻿# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the Apache License.
+$CurrentTestResult = CreateTestResultObject
 $resultArr = @()
 
 $isDeployed = DeployVMS -setupType $currentTestData.setupType -Distro $Distro -xmlConfig $xmlConfig
@@ -39,7 +41,7 @@ if ($isDeployed)
 				LogMsg "Test Result : FAIL."
 				$testResult = "FAIL"
 			}
-			
+
 		}
 		else
 		{
