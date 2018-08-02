@@ -6,17 +6,17 @@
 #
 <#
 .SYNOPSIS
-    Pipeline framework modules.
+	Pipeline framework modules.
 
 .PARAMETER
-    <Parameters>
+	<Parameters>
 
 .INPUTS
 
 
 .NOTES
-    Creation Date:  
-    Purpose/Change: 
+	Creation Date:  
+	Purpose/Change: 
 
 .EXAMPLE
 
@@ -34,10 +34,10 @@ Function ValidateParameters()
 		{
 			$ParameterErrors += "-ARMImageName '<Publisher> <Offer> <Sku> <Version>', or -OsVHD <'VHD_Name.vhd'> is required."
 		}
-		if (($ARMImageName.Trim().Split(" ").Count -ne 4) -and !$OsVHD) 
+		if (($ARMImageName.Trim().Split(" ").Count -ne 4) -and ($ARMImageName -ne ""))
 		{
 			$ParameterErrors += ("Invalid value for the provided ARMImageName parameter: <'${ARMImageName}'>." + `
-                                 "The ARM image should be in the format: '<Publisher> <Offer> <Sku> <Version>'.")
+								 "The ARM image should be in the format: '<Publisher> <Offer> <Sku> <Version>'.")
 		}
 		if ( !$TestLocation)
 		{
@@ -157,9 +157,9 @@ Function UpdateGlobalConfigurationXML()
 		}
 		else
 		{
-            $VMs = Get-VM -ComputerName $TestLocation
+			$VMs = Get-VM -ComputerName $TestLocation
 		}
-        
+		
 		
 	}
 	#If user provides Result database / result table, then add it to the GlobalConfiguration.
@@ -203,251 +203,251 @@ Function UpdateGlobalConfigurationXML()
 Function UpdateXMLStringsFromSecretsFile()
 {
 	#region Replace strings in XML files
-    if ($UpdateXMLStringsFromSecretsFile)
-    {
-        if ($XMLSecretFile)
-        {
-            if (Test-Path -Path $XMLSecretFile)
-            {
-                .\Utilities\UpdateXMLStringsFromXmlSecrets.ps1 -XmlSecretsFilePath $XMLSecretFile
-            }
-            else 
-            {
-                LogErr "Failed to update Strings in .\XML files. '$XMLSecretFile' not found."    
-            }
-        }
-        else 
-        {
-            LogErr "Failed to update Strings in .\XML files. '-XMLSecretFile [FilePath]' not provided."    
-        }
-    }
+	if ($UpdateXMLStringsFromSecretsFile)
+	{
+		if ($XMLSecretFile)
+		{
+			if (Test-Path -Path $XMLSecretFile)
+			{
+				.\Utilities\UpdateXMLStringsFromXmlSecrets.ps1 -XmlSecretsFilePath $XMLSecretFile
+			}
+			else 
+			{
+				LogErr "Failed to update Strings in .\XML files. '$XMLSecretFile' not found."    
+			}
+		}
+		else 
+		{
+			LogErr "Failed to update Strings in .\XML files. '-XMLSecretFile [FilePath]' not provided."    
+		}
+	}
 }
 
 Function CollectTestCases($TestXMLs)
 {
 	#region Collect Tests Data
 	$allTests = @()
-    if ( $TestPlatform -and !$TestCategory -and !$TestArea -and !$TestNames -and !$TestTag)
-    {
-        foreach ( $file in $TestXMLs.FullName)
-        {
-            $currentTests = ([xml]( Get-Content -Path $file)).TestCases
-            if ( $TestPlatform )
-            {
-                foreach ( $test in $currentTests.test )
-                {
-                    if ($test.Platform.Split(",").Contains($TestPlatform) ) 
-                    {
-                        LogMsg "Collected $($test.TestName)"
-                        $allTests += $test
-                    }
-                }
-            }
-        }         
-    }
-    elseif ( $TestPlatform -and $TestCategory -and (!$TestArea -or $TestArea -eq "default") -and !$TestNames -and !$TestTag)
-    {
-        foreach ( $file in $TestXMLs.FullName)
-        {
-            
-            $currentTests = ([xml]( Get-Content -Path $file)).TestCases
-            if ( $TestPlatform )
-            {
-                foreach ( $test in $currentTests.test )
-                {
-                    if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and $($TestCategory -eq $test.Category) )
-                    {
-                        LogMsg "Collected $($test.TestName)"
-                        $allTests += $test
-                    }
-                }
-            }
-        }         
-    }
-    elseif ( $TestPlatform -and $TestCategory -and ($TestArea -and $TestArea -ne "default") -and !$TestNames -and !$TestTag)
-    {
-        foreach ( $file in $TestXMLs.FullName)
-        {
-            
-            $currentTests = ([xml]( Get-Content -Path $file)).TestCases
-            if ( $TestPlatform )
-            {
-                foreach ( $test in $currentTests.test )
-                {
-                    if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and $($TestCategory -eq $test.Category) -and $($TestArea -eq $test.Area) )
-                    {
-                        LogMsg "Collected $($test.TestName)"
-                        $allTests += $test
-                    }
-                }
-            }
-        }         
-    }
-    elseif ( $TestPlatform -and $TestCategory  -and $TestNames -and !$TestTag)
-    {
-        foreach ( $file in $TestXMLs.FullName)
-        {
-            
-            $currentTests = ([xml]( Get-Content -Path $file)).TestCases
-            if ( $TestPlatform )
-            {
-                foreach ( $test in $currentTests.test )
-                {
-                    if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and $($TestCategory -eq $test.Category) -and $($TestArea -eq $test.Area) -and ($TestNames.Split(",").Contains($test.TestName) ) )
-                    {
-                        LogMsg "Collected $($test.TestName)"
-                        $allTests += $test
-                    }
-                }
-            }
-        }         
-    }
-    elseif ( $TestPlatform -and !$TestCategory -and !$TestArea -and $TestNames -and !$TestTag)
-    {
-        foreach ( $file in $TestXMLs.FullName)
-        {   
-            $currentTests = ([xml]( Get-Content -Path $file)).TestCases
-            if ( $TestPlatform )
-            {
-                foreach ( $test in $currentTests.test )
-                {
-                    if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and ($TestNames.Split(",").Contains($test.TestName) ) )
-                    {
-                        LogMsg "Collected $($test.TestName)"
-                        $allTests += $test
-                    }
-                }
-            }
-        }         
-    }    
-    elseif ( $TestPlatform -and !$TestCategory -and !$TestArea -and !$TestNames -and $TestTag)
-    {
-        foreach ( $file in $TestXMLs.FullName)
-        {
-            
-            $currentTests = ([xml]( Get-Content -Path $file)).TestCases
-            if ( $TestPlatform )
-            {
-                foreach ( $test in $currentTests.test )
-                {
-                    if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and ( $test.Tags.Split(",").Contains($TestTag) ) )
-                    {
-                        LogMsg "Collected $($test.TestName)"
-                        $allTests += $test
-                    }
-                }
-            }
-        }         
-    }
-    else 
-    {
-        LogError "TestPlatform : $TestPlatform"
-        LogError "TestCategory : $TestCategory"
-        LogError "TestArea : $TestArea"
-        LogError "TestNames : $TestNames"
-        LogError "TestTag : $TestTag"
-        Throw "Invalid Test Selection"
+	if ( $TestPlatform -and !$TestCategory -and !$TestArea -and !$TestNames -and !$TestTag)
+	{
+		foreach ( $file in $TestXMLs.FullName)
+		{
+			$currentTests = ([xml]( Get-Content -Path $file)).TestCases
+			if ( $TestPlatform )
+			{
+				foreach ( $test in $currentTests.test )
+				{
+					if ($test.Platform.Split(",").Contains($TestPlatform) ) 
+					{
+						LogMsg "Collected $($test.TestName)"
+						$allTests += $test
+					}
+				}
+			}
+		}         
+	}
+	elseif ( $TestPlatform -and $TestCategory -and (!$TestArea -or $TestArea -eq "default") -and !$TestNames -and !$TestTag)
+	{
+		foreach ( $file in $TestXMLs.FullName)
+		{
+			
+			$currentTests = ([xml]( Get-Content -Path $file)).TestCases
+			if ( $TestPlatform )
+			{
+				foreach ( $test in $currentTests.test )
+				{
+					if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and $($TestCategory -eq $test.Category) )
+					{
+						LogMsg "Collected $($test.TestName)"
+						$allTests += $test
+					}
+				}
+			}
+		}         
+	}
+	elseif ( $TestPlatform -and $TestCategory -and ($TestArea -and $TestArea -ne "default") -and !$TestNames -and !$TestTag)
+	{
+		foreach ( $file in $TestXMLs.FullName)
+		{
+			
+			$currentTests = ([xml]( Get-Content -Path $file)).TestCases
+			if ( $TestPlatform )
+			{
+				foreach ( $test in $currentTests.test )
+				{
+					if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and $($TestCategory -eq $test.Category) -and $($TestArea -eq $test.Area) )
+					{
+						LogMsg "Collected $($test.TestName)"
+						$allTests += $test
+					}
+				}
+			}
+		}         
+	}
+	elseif ( $TestPlatform -and $TestCategory  -and $TestNames -and !$TestTag)
+	{
+		foreach ( $file in $TestXMLs.FullName)
+		{
+			
+			$currentTests = ([xml]( Get-Content -Path $file)).TestCases
+			if ( $TestPlatform )
+			{
+				foreach ( $test in $currentTests.test )
+				{
+					if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and $($TestCategory -eq $test.Category) -and $($TestArea -eq $test.Area) -and ($TestNames.Split(",").Contains($test.TestName) ) )
+					{
+						LogMsg "Collected $($test.TestName)"
+						$allTests += $test
+					}
+				}
+			}
+		}         
+	}
+	elseif ( $TestPlatform -and !$TestCategory -and !$TestArea -and $TestNames -and !$TestTag)
+	{
+		foreach ( $file in $TestXMLs.FullName)
+		{   
+			$currentTests = ([xml]( Get-Content -Path $file)).TestCases
+			if ( $TestPlatform )
+			{
+				foreach ( $test in $currentTests.test )
+				{
+					if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and ($TestNames.Split(",").Contains($test.TestName) ) )
+					{
+						LogMsg "Collected $($test.TestName)"
+						$allTests += $test
+					}
+				}
+			}
+		}         
+	}    
+	elseif ( $TestPlatform -and !$TestCategory -and !$TestArea -and !$TestNames -and $TestTag)
+	{
+		foreach ( $file in $TestXMLs.FullName)
+		{
+			
+			$currentTests = ([xml]( Get-Content -Path $file)).TestCases
+			if ( $TestPlatform )
+			{
+				foreach ( $test in $currentTests.test )
+				{
+					if ( ($test.Platform.Split(",").Contains($TestPlatform) ) -and ( $test.Tags.Split(",").Contains($TestTag) ) )
+					{
+						LogMsg "Collected $($test.TestName)"
+						$allTests += $test
+					}
+				}
+			}
+		}         
+	}
+	else 
+	{
+		LogError "TestPlatform : $TestPlatform"
+		LogError "TestCategory : $TestCategory"
+		LogError "TestArea : $TestArea"
+		LogError "TestNames : $TestNames"
+		LogError "TestTag : $TestTag"
+		Throw "Invalid Test Selection"
 	}
 	return $allTests
-    #endregion 	
+	#endregion 	
 }
 function GetTestSummary($testCycle, [DateTime] $StartTime, [string] $xmlFilename, [string] $distro, $testSuiteResultDetails)
 {
-    <#
+	<#
 	.Synopsis
-    	Append the summary text from each VM into a single string.
-        
-    .Description
-        Append the summary text from each VM one long string. The
-        string includes line breaks so it can be display on a 
-        console or included in an e-mail message.
-        
+		Append the summary text from each VM into a single string.
+		
+	.Description
+		Append the summary text from each VM one long string. The
+		string includes line breaks so it can be display on a 
+		console or included in an e-mail message.
+		
 	.Parameter xmlConfig
-    	The parsed xml from the $xmlFilename file.
-        Type : [System.Xml]
+		The parsed xml from the $xmlFilename file.
+		Type : [System.Xml]
 
-    .Parameter startTime
-        The date/time the ICA test run was started
-        Type : [DateTime]
+	.Parameter startTime
+		The date/time the ICA test run was started
+		Type : [DateTime]
 
-    .Parameter xmlFilename
-        The name of the xml file for the current test run.
-        Type : [String]
-        
-    .ReturnValue
-        A string containing all the summary message from all
-        VMs in the current test run.
-        
-    .Example
-        GetTestSummary $testCycle $myStartTime $myXmlTestFile
+	.Parameter xmlFilename
+		The name of the xml file for the current test run.
+		Type : [String]
+		
+	.ReturnValue
+		A string containing all the summary message from all
+		VMs in the current test run.
+		
+	.Example
+		GetTestSummary $testCycle $myStartTime $myXmlTestFile
 	
 #>
-    
+	
 	$endTime = [Datetime]::Now.ToUniversalTime()
 	$testSuiteRunDuration= $endTime - $StartTime    
 	$testSuiteRunDuration=$testSuiteRunDuration.Days.ToString() + ":" +  $testSuiteRunDuration.hours.ToString() + ":" + $testSuiteRunDuration.minutes.ToString()
-    $str = "<br />Test Results Summary<br />"
-    $str += "ICA test run on " + $startTime
-    if ( $BaseOsImage )
-    {
-        $str += "<br />Image under test " + $BaseOsImage
-    }
-    if ( $BaseOSVHD )
-    {
-        $str += "<br />VHD under test " + $BaseOSVHD
-    }
-    if ( $ARMImage )
-    {
-        $str += "<br />ARM Image under test " + "$($ARMImage.Publisher) : $($ARMImage.Offer) : $($ARMImage.Sku) : $($ARMImage.Version)"
-    }
+	$str = "<br />Test Results Summary<br />"
+	$str += "ICA test run on " + $startTime
+	if ( $BaseOsImage )
+	{
+		$str += "<br />Image under test " + $BaseOsImage
+	}
+	if ( $BaseOSVHD )
+	{
+		$str += "<br />VHD under test " + $BaseOSVHD
+	}
+	if ( $ARMImage )
+	{
+		$str += "<br />ARM Image under test " + "$($ARMImage.Publisher) : $($ARMImage.Offer) : $($ARMImage.Sku) : $($ARMImage.Version)"
+	}
 	$str += "<br />Total Executed TestCases " + $testSuiteResultDetails.totalTc + " (" + $testSuiteResultDetails.totalPassTc + " Pass" + ", " + $testSuiteResultDetails.totalFailTc + " Fail" + ", " + $testSuiteResultDetails.totalAbortedTc + " Abort)"
 	$str += "<br />Total Execution Time(dd:hh:mm) " + $testSuiteRunDuration.ToString()
-    $str += "<br />XML file: $xmlFilename<br /><br />"
-	        
-    # Add information about the host running ICA to the e-mail summary
-    $str += "<pre>"
-    $str += $testCycle.emailSummary + "<br />"
-    $hostName = hostname
-    $str += "<br />Logs can be found at $LogDir" + "<br /><br />"
-    $str += "</pre>"
-    $plainTextSummary = $str
-    $strHtml =  "<style type='text/css'>" +
+	$str += "<br />XML file: $xmlFilename<br /><br />"
+			
+	# Add information about the host running ICA to the e-mail summary
+	$str += "<pre>"
+	$str += $testCycle.emailSummary + "<br />"
+	$hostName = hostname
+	$str += "<br />Logs can be found at $LogDir" + "<br /><br />"
+	$str += "</pre>"
+	$plainTextSummary = $str
+	$strHtml =  "<style type='text/css'>" +
 			".TFtable{width:1024px; border-collapse:collapse; }" +
 			".TFtable td{ padding:7px; border:#4e95f4 1px solid;}" +
 			".TFtable tr{ background: #b8d1f3;}" +
 			".TFtable tr:nth-child(odd){ background: #dbe1e9;}" +
 			".TFtable tr:nth-child(even){background: #ffffff;}</style>" +
-            "<Html><head><title>Test Results Summary</title></head>" +
-            "<body style = 'font-family:sans-serif;font-size:13px;color:#000000;margin:0px;padding:30px'>" +
-            "<br/><h1 style='background-color:lightblue;width:1024'>Test Results Summary</h1>"
-    $strHtml += "<h2 style='background-color:lightblue;width:1024'>ICA test run on - " + $startTime + "</h2><span style='font-size: medium'>"
-    if ( $BaseOsImage )
-    {
-        $strHtml += '<p>Image under test - <span style="font-family:courier new,courier,monospace;">' + "$BaseOsImage</span></p>"
-    }
-    if ( $BaseOSVHD )
-    {
-        $strHtml += '<p>VHD under test - <span style="font-family:courier new,courier,monospace;">' + "$BaseOsVHD</span></p>"
-    }
-    if ( $ARMImage )
-    {
-        $strHtml += '<p>ARM Image under test - <span style="font-family:courier new,courier,monospace;">' + "$($ARMImage.Publisher) : $($ARMImage.Offer) : $($ARMImage.Sku) : $($ARMImage.Version)</span></p>"
-    }
+			"<Html><head><title>Test Results Summary</title></head>" +
+			"<body style = 'font-family:sans-serif;font-size:13px;color:#000000;margin:0px;padding:30px'>" +
+			"<br/><h1 style='background-color:lightblue;width:1024'>Test Results Summary</h1>"
+	$strHtml += "<h2 style='background-color:lightblue;width:1024'>ICA test run on - " + $startTime + "</h2><span style='font-size: medium'>"
+	if ( $BaseOsImage )
+	{
+		$strHtml += '<p>Image under test - <span style="font-family:courier new,courier,monospace;">' + "$BaseOsImage</span></p>"
+	}
+	if ( $BaseOSVHD )
+	{
+		$strHtml += '<p>VHD under test - <span style="font-family:courier new,courier,monospace;">' + "$BaseOsVHD</span></p>"
+	}
+	if ( $ARMImage )
+	{
+		$strHtml += '<p>ARM Image under test - <span style="font-family:courier new,courier,monospace;">' + "$($ARMImage.Publisher) : $($ARMImage.Offer) : $($ARMImage.Sku) : $($ARMImage.Version)</span></p>"
+	}
 
-    $strHtml += '<p>Total Executed TestCases - <strong><span style="font-size:16px;">' + "$($testSuiteResultDetails.totalTc)" + '</span></strong><br />' + '[&nbsp;<span style="font-size:16px;"><span style="color:#008000;"><strong>' +  $testSuiteResultDetails.totalPassTc + ' </strong></span></span> - PASS, <span style="font-size:16px;"><span style="color:#ff0000;"><strong>' + "$($testSuiteResultDetails.totalFailTc)" + '</strong></span></span>- FAIL, <span style="font-size:16px;"><span style="color:#ff0000;"><strong><span style="background-color:#ffff00;">' + "$($testSuiteResultDetails.totalAbortedTc)" +'</span></strong></span></span> - ABORTED ]</p>'
-    $strHtml += "<br /><br/>Total Execution Time(dd:hh:mm) " + $testSuiteRunDuration.ToString()
-    $strHtml += "<br /><br/>XML file: $xmlFilename<br /><br /></span>"
+	$strHtml += '<p>Total Executed TestCases - <strong><span style="font-size:16px;">' + "$($testSuiteResultDetails.totalTc)" + '</span></strong><br />' + '[&nbsp;<span style="font-size:16px;"><span style="color:#008000;"><strong>' +  $testSuiteResultDetails.totalPassTc + ' </strong></span></span> - PASS, <span style="font-size:16px;"><span style="color:#ff0000;"><strong>' + "$($testSuiteResultDetails.totalFailTc)" + '</strong></span></span>- FAIL, <span style="font-size:16px;"><span style="color:#ff0000;"><strong><span style="background-color:#ffff00;">' + "$($testSuiteResultDetails.totalAbortedTc)" +'</span></strong></span></span> - ABORTED ]</p>'
+	$strHtml += "<br /><br/>Total Execution Time(dd:hh:mm) " + $testSuiteRunDuration.ToString()
+	$strHtml += "<br /><br/>XML file: $xmlFilename<br /><br /></span>"
 
-    # Add information about the host running ICA to the e-mail summary
-    $strHtml += "<table border='0' class='TFtable'>"
-    $strHtml += $testCycle.htmlSummary
-    $strHtml += "</table>"
-    
-    $strHtml += "</body></Html>"
+	# Add information about the host running ICA to the e-mail summary
+	$strHtml += "<table border='0' class='TFtable'>"
+	$strHtml += $testCycle.htmlSummary
+	$strHtml += "</table>"
+	
+	$strHtml += "</body></Html>"
 
-    if (-not (Test-Path(".\temp\CI"))) {
-        mkdir ".\temp\CI" | Out-Null 
-    }
+	if (-not (Test-Path(".\temp\CI"))) {
+		mkdir ".\temp\CI" | Out-Null 
+	}
 
 	Set-Content ".\temp\CI\index.html" $strHtml
 	return $plainTextSummary, $strHtml
@@ -455,59 +455,59 @@ function GetTestSummary($testCycle, [DateTime] $StartTime, [string] $xmlFilename
 
 function SendEmail([XML] $xmlConfig, $body)
 {
-    <#
+	<#
 	.Synopsis
-    	Send an e-mail message with test summary information.
-        
-    .Description
-        Collect the test summary information from each testcycle.  Send an
-        eMail message with this summary information to emailList defined
-        in the xml config file.
-        
+		Send an e-mail message with test summary information.
+		
+	.Description
+		Collect the test summary information from each testcycle.  Send an
+		eMail message with this summary information to emailList defined
+		in the xml config file.
+		
 	.Parameter xmlConfig
-    	The parsed XML from the test xml file
-        Type : [System.Xml]
-        
-    .ReturnValue
-        none
-        
-    .Example
-        SendEmail $myConfig
+		The parsed XML from the test xml file
+		Type : [System.Xml]
+		
+	.ReturnValue
+		none
+		
+	.Example
+		SendEmail $myConfig
 	#>
 
-    $to = $xmlConfig.config.global.emailList.split(",")
-    $from = $xmlConfig.config.global.emailSender
-    $subject = $xmlConfig.config.global.emailSubject + " " + $testStartTime
-    $smtpServer = $xmlConfig.config.global.smtpServer
-    $fname = [System.IO.Path]::GetFilenameWithoutExtension($xmlConfigFile)
-    # Highlight the failed tests 
-    $body = $body.Replace("Aborted", '<em style="background:Yellow; color:Red">Aborted</em>')
-    $body = $body.Replace("FAIL", '<em style="background:Yellow; color:Red">Failed</em>')
-    
+	$to = $xmlConfig.config.global.emailList.split(",")
+	$from = $xmlConfig.config.global.emailSender
+	$subject = $xmlConfig.config.global.emailSubject + " " + $testStartTime
+	$smtpServer = $xmlConfig.config.global.smtpServer
+	$fname = [System.IO.Path]::GetFilenameWithoutExtension($xmlConfigFile)
+	# Highlight the failed tests 
+	$body = $body.Replace("Aborted", '<em style="background:Yellow; color:Red">Aborted</em>')
+	$body = $body.Replace("FAIL", '<em style="background:Yellow; color:Red">Failed</em>')
+	
 	Send-mailMessage -to $to -from $from -subject $subject -body $body -smtpserver $smtpServer -BodyAsHtml
 }
 
 function Usage()
 {
-    write-host
-    write-host "  Start automation: AzureAutomationManager.ps1 -xmlConfigFile <xmlConfigFile> -runTests -email -Distro <DistroName> -cycleName <TestCycle>"
-    write-host
-    write-host "         xmlConfigFile : Specifies the configuration for the test environment."
-    write-host "         DistroName    : Run tests on the distribution OS image defined in Azure->Deployment->Data->Distro"
-    write-host "         -help         : Displays this help message."
-    write-host
+	write-host
+	write-host "  Start automation: AzureAutomationManager.ps1 -xmlConfigFile <xmlConfigFile> -runTests -email -Distro <DistroName> -cycleName <TestCycle>"
+	write-host
+	write-host "         xmlConfigFile : Specifies the configuration for the test environment."
+	write-host "         DistroName    : Run tests on the distribution OS image defined in Azure->Deployment->Data->Distro"
+	write-host "         -help         : Displays this help message."
+	write-host
 }
 Function GetCurrentCycleData($xmlConfig, $cycleName)
 {
-    foreach ($Cycle in $xmlConfig.config.testCycles.Cycle )
-    {
-        if($cycle.cycleName -eq $cycleName)
-        {
-        return $cycle
-        break
-        }
-    }
-    
+	foreach ($Cycle in $xmlConfig.config.testCycles.Cycle )
+	{
+		if($cycle.cycleName -eq $cycleName)
+		{
+		return $cycle
+		break
+		}
+	}
+	
 }
 
 <#
@@ -790,40 +790,40 @@ Function RefineTestResult1 ($tempResult)
 
 Function ValidateVHD($vhdPath)
 {
-    try
-    {
-        $tempVHDName = Split-Path $vhdPath -leaf
-        LogMsg "Inspecting '$tempVHDName'. Please wait..."
-        $VHDInfo = Get-VHD -Path $vhdPath -ErrorAction Stop
-        LogMsg "  VhdFormat            :$($VHDInfo.VhdFormat)"
-        LogMsg "  VhdType              :$($VHDInfo.VhdType)"
-        LogMsg "  FileSize             :$($VHDInfo.FileSize)"
-        LogMsg "  Size                 :$($VHDInfo.Size)"
-        LogMsg "  LogicalSectorSize    :$($VHDInfo.LogicalSectorSize)"
-        LogMsg "  PhysicalSectorSize   :$($VHDInfo.PhysicalSectorSize)"
-        LogMsg "  BlockSize            :$($VHDInfo.BlockSize)"
-        LogMsg "Validation successful."
-    }
-    catch
-    {
-        LogMsg "Failed: Get-VHD -Path $vhdPath"
-        Throw "INVALID_VHD_EXCEPTION"
-    }
+	try
+	{
+		$tempVHDName = Split-Path $vhdPath -leaf
+		LogMsg "Inspecting '$tempVHDName'. Please wait..."
+		$VHDInfo = Get-VHD -Path $vhdPath -ErrorAction Stop
+		LogMsg "  VhdFormat            :$($VHDInfo.VhdFormat)"
+		LogMsg "  VhdType              :$($VHDInfo.VhdType)"
+		LogMsg "  FileSize             :$($VHDInfo.FileSize)"
+		LogMsg "  Size                 :$($VHDInfo.Size)"
+		LogMsg "  LogicalSectorSize    :$($VHDInfo.LogicalSectorSize)"
+		LogMsg "  PhysicalSectorSize   :$($VHDInfo.PhysicalSectorSize)"
+		LogMsg "  BlockSize            :$($VHDInfo.BlockSize)"
+		LogMsg "Validation successful."
+	}
+	catch
+	{
+		LogMsg "Failed: Get-VHD -Path $vhdPath"
+		Throw "INVALID_VHD_EXCEPTION"
+	}
 }
 
 Function ValidateMD5($filePath, $expectedMD5hash)
 {
-    LogMsg "Expected MD5 hash for $filePath : $($expectedMD5hash.ToUpper())"
-    $hash = Get-FileHash -Path $filePath -Algorithm MD5
-    LogMsg "Calculated MD5 hash for $filePath : $($hash.Hash.ToUpper())"
-    if ($hash.Hash.ToUpper() -eq  $expectedMD5hash.ToUpper())
-    {
-        LogMsg "MD5 checksum verified successfully."
-    }
-    else
-    {
-        Throw "MD5 checksum verification failed."
-    }
+	LogMsg "Expected MD5 hash for $filePath : $($expectedMD5hash.ToUpper())"
+	$hash = Get-FileHash -Path $filePath -Algorithm MD5
+	LogMsg "Calculated MD5 hash for $filePath : $($hash.Hash.ToUpper())"
+	if ($hash.Hash.ToUpper() -eq  $expectedMD5hash.ToUpper())
+	{
+		LogMsg "MD5 checksum verified successfully."
+	}
+	else
+	{
+		Throw "MD5 checksum verification failed."
+	}
 }
 
 Function Test-FileLock 
@@ -856,14 +856,14 @@ Function Test-FileLock
 Function CreateArrayOfTabs()
 {
 	$tab = @()
-    for ( $i = 0; $i -lt 30; $i++)
-    {
-        $currentTab = ""
-        for ( $j = 0; $j -lt $i; $j++)
-        {
-            $currentTab +=  "`t"
-        }
-        $tab += $currentTab
+	for ( $i = 0; $i -lt 30; $i++)
+	{
+		$currentTab = ""
+		for ( $j = 0; $j -lt $i; $j++)
+		{
+			$currentTab +=  "`t"
+		}
+		$tab += $currentTab
 	}
 	return $tab
 }
