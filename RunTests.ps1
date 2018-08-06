@@ -388,10 +388,12 @@ try {
 	}
 
 	try {
-		if (Test-Path -Path ".\report\report_$(($TestCycle).Trim()).xml" ) {
-			$resultXML = [xml](Get-Content ".\report\report_$(($TestCycle).Trim()).xml" -ErrorAction SilentlyContinue)
-			Copy-Item -Path ".\report\report_$(($TestCycle).Trim()).xml" -Destination ".\report\report_$(($TestCycle).Trim())-junit.xml" -Force -ErrorAction SilentlyContinue
-			LogMsg "Copied : .\report\report_$(($TestCycle).Trim()).xml --> .\report\report_$(($TestCycle).Trim())-junit.xml"
+		$JunitResultFile = ".\report\report_$TestCycle.xml"
+		$RenamedJunitResultFile = ".\report\report_$TestCycle-junit.xml"
+		if (Test-Path -Path "$JunitResultFile" ) {
+			$resultXML = [xml](Get-Content "$JunitResultFile")
+			Copy-Item -Path "$JunitResultFile" -Destination "$RenamedJunitResultFile" -Force
+			LogMsg "Copied : $JunitResultFile --> $RenamedJunitResultFile"
 			LogMsg "Analysing results.."
 			LogMsg "PASS  : $($resultXML.testsuites.testsuite.tests - $resultXML.testsuites.testsuite.errors - $resultXML.testsuites.testsuite.failures)"
 			LogMsg "FAIL  : $($resultXML.testsuites.testsuite.failures)"
@@ -402,7 +404,7 @@ try {
 				$ExitCode = 1
 			}
 		} else {
-			LogMsg "Summary file: .\report\report_$(($TestCycle).Trim()).xml does not exist. Exiting with 1."
+			LogMsg "Summary file: $JunitResultFile does not exist. Exiting with 1."
 			$ExitCode = 1
 		}
 	}
@@ -432,6 +434,8 @@ try {
 		Write-Output "Copying test results back to original working directory: $originalWorkingDirectory."
 		$tmpDest = '\\?\' + $originalWorkingDirectory
 		Copy-Item -Path "$finalWorkingDirectory\TestResults" -Destination $tmpDest -Force -Recurse | Out-Null
+		Copy-Item -Path "$finalWorkingDirectory\$zipFile" -Destination $tmpDest -Force | Out-Null
+		Copy-Item -Path "$finalWorkingDirectory\$RenamedJunitResultFile" -Destination $tmpDest -Force | Out-Null
 		Set-Location ..
 		Write-Output "Cleaning up $finalWorkingDirectory"
 		Remove-Item -Path $finalWorkingDirectory -Force -Recurse -ErrorAction SilentlyContinue
