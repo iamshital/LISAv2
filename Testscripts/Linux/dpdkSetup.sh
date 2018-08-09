@@ -96,9 +96,9 @@ function installDPDK ()
 	srcIp=${2}
 	dstIp=${3}
 	LogMsg "Configuring ${1} for DPDK test..."
-	if [[ $DISTRO =~ "Ubuntu" ]];
+	if [[ $DISTRO =~ "Ubuntu" ]] || [[ $DISTRO =~ "Debian" ]];
 	then
-		LogMsg "Detected UBUNTU"
+		LogMsg "Detected Ubuntu\Debian"
 		ssh ${1} "until dpkg --force-all --configure -a; sleep 10; do echo 'Trying again...'; done"
 		ssh ${1} "add-apt-repository ppa:canonical-server/dpdk-mlx-tech-preview"
 		ssh ${1} "apt-get update"

@@ -29,9 +29,9 @@ touch ./lagscopeTest.log
 InstallLAGSCOPE() {
 		DISTRO=`grep -ihs "ubuntu\|Suse\|Fedora\|Debian\|CentOS\|Red Hat Enterprise Linux\|clear-linux-os" /etc/{issue,*release,*version} /usr/lib/os-release`
 
-		if [[ $DISTRO =~ "Ubuntu" ]];
+		if [[ $DISTRO =~ "Ubuntu" ]] || [[ $DISTRO =~ "Debian" ]];
 		then
-			LogMsg "Detected UBUNTU"
+			LogMsg "Detected Ubuntu\Debian"
 				LogMsg "Configuring ${1} for lagscope test..."
 				ssh ${1} "until dpkg --force-all --configure -a; sleep 10; do echo 'Trying again...'; done"
 				ssh ${1} "apt-get update"
