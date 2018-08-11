@@ -3,6 +3,7 @@
 
 function Main {
 	try {
+		$SuccessCount = 0
 		$CurrentTestResult.TestSummary += CreateResultSummary -testResult "PASS" -metaData "FirstBoot" -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
 		LogMsg "Check 1: Checking call tracess again after 30 seconds sleep"
 		Start-Sleep 30
@@ -20,6 +21,7 @@ function Main {
 						$CurrentTestResult.TestSummary += CreateResultSummary -testResult "PASS" -metaData "Reboot : Call Trace Verification" -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
 						LogMsg "Test Result : PASS."
 						$testResult = "PASS"
+						$SuccessCount += 1
 					}
 					else {
 						$CurrentTestResult.TestSummary += CreateResultSummary -testResult "FAIL" -metaData "Reboot : Call Trace Verification" -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
@@ -37,6 +39,15 @@ function Main {
 		else {
 			$CurrentTestResult.TestSummary += CreateResultSummary -testResult "FAIL" -metaData "FirstBoot : Call Trace Verification" -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
 			LogMsg "Test Result : FAIL."
+			$testResult = "FAIL"
+		}
+		LogMsg "-----------------------------"
+		LogMsg "Success count : $SuccessCount"
+		LogMsg "-----------------------------"
+		if ($SuccessCount -eq 3) {
+			$testResult = "PASS"
+		}
+		else {
 			$testResult = "FAIL"
 		}
 	}
