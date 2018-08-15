@@ -214,7 +214,7 @@ RunFIO()
 			Thread=$startThread			
 			while [ $Thread -le $maxThread ]
 			do
-				numjobs=1
+				numjobs=2
 				iostatfilename="${IOSTATLOGDIR}/iostat-fio-${testmode}-${io}K-${Thread}td.txt"
 				nohup iostat -x 5 -t -y > $iostatfilename &
 				#capture blktrace output during test
