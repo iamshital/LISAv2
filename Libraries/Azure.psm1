@@ -454,11 +454,11 @@ Function CreateAllResourceGroupDeployments($setupType, $xmlConfig, $Distro, [str
                 $retryDeployment = 0
                 if ( $RG.Tag -ne $null )
                 {
-                    $groupName = "ICA-RG-" + $RG.Tag + "-" + $Distro + "-" + "$shortRandomWord-" + "$curtime"
+                    $groupName = "$($Distro.ToUpper())-" + $RG.Tag + "-" + "$shortRandomWord-" + "$curtime"
                 }
                 else
                 {
-                    $groupName = "ICA-RG-" + $setupType + "-" + $Distro + "-" + "$shortRandomWord-" + "$curtime"
+                    $groupName = "$($Distro.ToUpper())-" + $setupType + "-" + "$shortRandomWord-" + "$curtime"
                 }
                 if($isMultiple -eq "True")
                 {
@@ -2217,28 +2217,39 @@ Function isAllSSHPortsEnabledRG($AllVMDataObject)
         $WaitingForConnect = 0
         foreach ( $vm in $AllVMDataObject)
         {
-            $out = Test-TCP  -testIP $($vm.PublicIP) -testport $($vm.SSHPort)
+            $TestPort = $($vm.SSHPort)
+            if ( $GuestOSType -eq "Linux" )
+            {
+                $TestPort = $($vm.SSHPort)
+                $PortName = "SSH"
+            }
+            else
+            {
+                $TestPort = $($vm.RDPPort)
+                $PortName = "RDP"
+            }
+            $out = Test-TCP  -testIP $($vm.PublicIP) -testport $TestPort
             if ($out -ne "True")
             {
-                LogMsg "Connecting to  $($vm.PublicIP) : $($vm.SSHPort) : Failed"
+                LogMsg "Connecting to  $($vm.PublicIP) : $TestPort : Failed"
                 $WaitingForConnect = $WaitingForConnect + 1
             }
             else
             {
-                LogMsg "Connecting to  $($vm.PublicIP) : $($vm.SSHPort) : Connected"
+                LogMsg "Connecting to  $($vm.PublicIP) : $TestPort : Connected"
             }
         }
         if($WaitingForConnect -gt 0)
         {
             $timeout = $timeout + 1
-            LogMsg "$WaitingForConnect VM(s) still awaiting to open SSH port.."
+            LogMsg "$WaitingForConnect VM(s) still awaiting to open $PortName port.."
             LogMsg "Retry $timeout/100"
             sleep 3
             $retValue = "False"
         }
         else
         {
-            LogMsg "ALL VM's SSH port is/are open now.."
+            LogMsg "ALL VM's $PortName port is/are open now.."
             $retValue = "True"
         }
 

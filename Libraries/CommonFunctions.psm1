@@ -437,6 +437,84 @@ function InstallCustomKernel ($CustomKernel, $allVMData, [switch]$RestartAfterUp
     }
 }
 
+function RunCustomScript ($CustomScript, $allVMData, [switch]$RestartAfterUpgrade)
+{
+    try
+    {
+
+		Copy-Item -Path $CustomScript -Destination .\Temp -Force
+		$scriptName = $CustomScript | Split-Path -Leaf
+		Add-Content -Value " " -Path ".\Temp\$scriptName" -Force
+		Add-Content -Value "sleep 10" -Path ".\Temp\$scriptName" -Force
+		Add-Content -Value "exit 0" -Path ".\Temp\$scriptName" -Force		
+		$jobCount = 0
+		$kernelSuccess = 0
+		$packageInstallJobs = @()
+		foreach ( $vmData in $allVMData )
+		{
+			RemoteCopy -uploadTo $vmData.PublicIP -port $vmData.SSHPort -files ".\Temp\$scriptName" -username $user -password $password -upload
+			$out = RunLinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -command "chmod +x $scriptName" -runAsSudo
+			LogMsg "Executing $scriptName ..."
+			$jobID = RunLinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -command "/home/$user/$scriptName > custom-script-log.txt" -RunInBackground -runAsSudo
+			$packageInstallObj = New-Object PSObject
+			Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name ID -Value $jobID
+			Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
+			Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name PublicIP -Value $vmData.PublicIP
+			Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name SSHPort -Value $vmData.SSHPort
+			$packageInstallJobs += $packageInstallObj
+			$jobCount += 1
+			#endregion
+		}
+
+		$packageInstallJobsRunning = $true
+		while ($packageInstallJobsRunning)
+		{
+			$packageInstallJobsRunning = $false
+			foreach ( $job in $packageInstallJobs )
+			{
+				if ( (Get-Job -Id $($job.ID)).State -eq "Running" )
+				{
+					$currentStatus = RunLinuxCmd -ip $job.PublicIP -port $job.SSHPort -username $user -password $password -command "tail -n 1 custom-script-log.txt"
+					LogMsg "$scriptName execution status for $($job.RoleName) : $currentStatus"
+					$packageInstallJobsRunning = $true
+				}
+				else
+				{
+					if ( !(Test-Path -Path "$LogDir\$($job.RoleName)-custom-script-log.txt" ) )
+					{
+						RemoteCopy -download -downloadFrom $job.PublicIP -port $job.SSHPort -files "custom-script-log.txt" -username $user -password $password -downloadTo $LogDir
+						Rename-Item -Path "$LogDir\custom-script-log.txt" -NewName "$($job.RoleName)-custom-script-log.txt" -Force | Out-Null
+						LogMsg "Custom Script console output in $($job.RoleName) VM----------------"
+						$CustomScriptLog = Get-Content -Path "$LogDir\$($job.RoleName)-custom-script-log.txt"
+						LogMsg "$CustomScriptLog"
+						LogMsg "-------------------------------------------------------------------"
+						$kernelSuccess += 1
+					}
+				}
+			}
+			if ( $packageInstallJobsRunning )
+			{
+				WaitFor -seconds 10
+			}
+		}
+		if ( $kernelSuccess -eq $jobCount )
+		{
+			LogMsg "$scriptName executed in $($allVMData.Count) VM(s)."
+			return $true
+		}
+		else
+		{
+			LogMsg "$scriptName failed to execute in $($jobCount-$kernelSuccess) VM(s)."
+			return $false
+		}
+    }
+    catch
+    {
+		LogErr "Exception in RunCustomScript."
+		ThrowException($_)
+        return $false
+    }
+}
 function InstallcustomLIS ($CustomLIS, $customLISBranch, $allVMData, [switch]$RestartAfterUpgrade)
 {
     try
@@ -1081,7 +1159,18 @@ Function DeployVMs ($xmlConfig, $setupType, $Distro, $getLogsIfFailed = $false, 
             LogError "Failed to enable Accelerated Networking. Aborting tests."
             $retValue = ""
 		}
-    }
+	}
+    if ( $retValue -and $CustomScript)
+    {
+		if (Test-Path -Path $CustomScript)
+		{
+			$CustomScriptStatus = RunCustomScript -allVMData $allVMData -CustomScript $CustomScript
+		}
+		else
+		{
+			LogErr "$CustomScript Not found. Ignoring!"
+		}
+    }	
 	return $retValue
 }
 

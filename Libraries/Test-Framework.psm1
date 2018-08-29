@@ -435,6 +435,9 @@ function Run-Test {
         # Note: This method will create $AllVMData global variable
         $isDeployed = DeployVMS -setupType $CurrentTestData.setupType `
              -Distro $Distro -XMLConfig $XmlConfig
+        if ($isDeployed -eq $null) {
+            Throw "Failed to create VMs... Aborting!"
+        }
         Enable-RootUser -RootPassword $VMPassword -VMData $AllVMData `
              -Username $VMUser -password $VMPassword
 
