@@ -1901,6 +1901,7 @@ Function DoTestCleanUp($CurrentTestResult, $testName, $DeployedServices, $Resour
 		{
 			try
 			{
+				<#
 				if ($allVMData.Count -gt 1)
 				{
 					$vmData = $allVMData[0]
@@ -1935,6 +1936,7 @@ Function DoTestCleanUp($CurrentTestResult, $testName, $DeployedServices, $Resour
 				$HostVersion = ($FinalLine.Split(":")[$FinalLine.Split(":").Count -1 ]).Trim().TrimEnd(";")
 				#endregion				
 				
+
 				if($EnableAcceleratedNetworking -or ($currentTestData.AdditionalHWConfig.Networking -imatch "SRIOV"))
 				{
 					$Networking = "SRIOV"
@@ -1957,6 +1959,7 @@ Function DoTestCleanUp($CurrentTestResult, $testName, $DeployedServices, $Resour
 				-ExecutionTag $ResultDBTestTag -GuestDistro $GuestDistro -KernelVersion $KernelVersion `
 				-LISVersion $LISVersion -HostVersion $HostVersion -VMSize $VMSize -Networking $Networking `
 				-ARMImage $ARMImage -OsVHD $OsVHD -BuildURL $env:BUILD_URL
+				#>
 			}
 			catch
 			{
