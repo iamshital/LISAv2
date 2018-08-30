@@ -2000,6 +2000,17 @@ Function DoTestCleanUp($CurrentTestResult, $testName, $DeployedServices, $Resour
 			$isVMLogsCollected = $false
 			foreach ($group in $ResourceGroups)
 			{
+				if ($AutoCleanup -ne "Disabled" -and $AutoCleanup){
+					$AutoCleanupDate = (Get-Date).AddDays($AutoCleanup).ToString()
+					LogMsg "Setting tags : AutoCleanup = $AutoCleanupDate"
+					$hash = @{}
+					$hash.Add("AutoCleanup","$AutoCleanupDate")
+					$out = Set-AzureRmResourceGroup -Name $group -Tag $hash
+					LogMsg "-------------------AUTO CLEANUP WARNING-----------------------"
+					LogMsg "Resource group : '$group' will be removed on $AutoCleanupDate."
+					LogMsg "To remove this scheduled cleanup, please remove 'AutoCleanup' tag from resource group '$group'"
+					LogMsg "--------------------------------------------------------------"
+				}				
 				if ($ForceDeleteResources)
 				{
 					LogMsg "-ForceDeleteResources is Set. Deleting $group."

@@ -68,7 +68,8 @@ Param(
     [int] $DataDiskSize = "",
     [string] $DataDiskCacheSettings = "",
     [string] $GuestVMOperations = "",
-    
+    [string] $AutoCleanup = "",
+
     #[Optional] Parameters for changing framework behavior.
     [string] $CoreCountExceededTimeout,
     [int]    $TestIterations,
