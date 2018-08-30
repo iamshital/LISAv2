@@ -67,6 +67,7 @@ Param(
     [int] $TotalDataDisksPerVM = "",
     [int] $DataDiskSize = "",
     [string] $DataDiskCacheSettings = "",
+    [string] $GuestVMOperations = "",
     
     #[Optional] Parameters for changing framework behavior.
     [string] $CoreCountExceededTimeout,
