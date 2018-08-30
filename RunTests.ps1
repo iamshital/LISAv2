@@ -225,7 +225,7 @@ try {
     if ($TotalDataDisksPerVM -gt 0) {
         $CUSTOM_DISKS = $null
         for ( $i = 0; $i -lt $TotalDataDisksPerVM; $i++ ) {
-            $CUSTOM_DISKS += $SingleDataDisk.Replace("DISK_NUMBER", "$i").Replace("DISK_SIZE", "$DataDiskSize ").Replace("DISK_CACHING", "$DataDiskCacheSettings") + "`n"
+            $CUSTOM_DISKS += $SingleDataDisk.Replace("DISK_NUMBER", "$i").Replace("DISK_SIZE", "$($DataDiskSize - 1)").Replace("DISK_CACHING", "$DataDiskCacheSettings") + "`n"
         }
     }
     else {
