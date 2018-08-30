@@ -438,9 +438,10 @@ function Run-Test {
         if ($isDeployed -eq $null) {
             Throw "Failed to create VMs... Aborting!"
         }
-        Enable-RootUser -RootPassword $VMPassword -VMData $AllVMData `
-             -Username $VMUser -password $VMPassword
-
+        if ($GuestVMOperations -imatch "EnableRoot") {
+            Enable-RootUser -RootPassword $VMPassword -VMData $AllVMData `
+            -Username $VMUser -password $VMPassword
+        }
         if ($testPlatform.ToUpper() -eq "HYPERV") {
             Create-HyperVCheckpoint -VMnames $AllVMData.RoleName -CheckpointName "ICAbase"
             $AllVMData = Check-IP -VMData $AllVMData
