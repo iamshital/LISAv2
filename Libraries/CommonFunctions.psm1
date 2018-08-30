@@ -1155,7 +1155,8 @@ Function DeployVMs ($xmlConfig, $setupType, $Distro, $getLogsIfFailed = $false, 
             LogError "Custom Kernel: $CustomKernel installation FAIL. Aborting tests."
             $retValue = ""
         }
-    }
+	}
+	<#
     if ( $retValue -and $EnableAcceleratedNetworking)
     {
 		$SRIOVStatus = EnableSRIOVInAllVMs -allVMData $allVMData
@@ -1174,6 +1175,7 @@ Function DeployVMs ($xmlConfig, $setupType, $Distro, $getLogsIfFailed = $false, 
             $retValue = ""
 		}
 	}
+	#>
     if ( $retValue -and $CustomScript)
     {
 		if (Test-Path -Path $CustomScript)
