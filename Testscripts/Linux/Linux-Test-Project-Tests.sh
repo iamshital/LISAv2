@@ -134,6 +134,11 @@ if grep FAIL "$LTP_OUTPUT" ; then
     echo "Failed Tests:" >> ~/summary.log
     grep FAIL "$LTP_OUTPUT" | cut -d':' -f 2- >> ~/summary.log
 fi
-
+echo "-----------LTP RESULTS----------------" >> ~/TestExecution.log
+cat $LTP_RESULTS >> ~/TestExecution.log
+echo "--------------------------------------" >> ~/TestExecution.log
+echo "-----------LTP OUTPUT----------------" >> ~/TestExecution.log
+cat $LTP_OUTPUT >> ~/TestExecution.log
+echo "--------------------------------------" >> ~/TestExecution.log
 SetTestStateCompleted
 exit 0
