@@ -114,20 +114,20 @@ function Main {
             }
             else {
                 $ContinueMPITest = $true
-                foreach ( $VmData in $AllVMData ) {
-                    LogMsg "Step 1/2: Getting current MAC address info from $($VmData.RoleName)"
-                    $CurrentMAC = RunLinuxCmd -ip $VmData.PublicIP -port $VmData.SSHPort -username "root" `
-                        -password $password "ifconfig $InfinibandNic | grep ether | awk '{print `$2}'"
-                    $InitialMAC = RunLinuxCmd -ip $VmData.PublicIP -port $VmData.SSHPort -username "root" `
-                        -password $password "cat InitialInfiniBandMAC.txt"
-                    if ($CurrentMAC -eq $InitialMAC) {
-                        LogMsg "Step 2/2: MAC address verified in $($VmData.RoleName)."
-                    }
-                    else {
-                        LogErr "Step 2/2: MAC address swapped / changed in $($VmData.RoleName)."
-                        $ContinueMPITest = $false
-                    }
-                }
+                # foreach ( $VmData in $AllVMData ) {
+                #     LogMsg "Step 1/2: Getting current MAC address info from $($VmData.RoleName)"
+                #     $CurrentMAC = RunLinuxCmd -ip $VmData.PublicIP -port $VmData.SSHPort -username "root" `
+                #         -password $password "ifconfig $InfinibandNic | grep ether | awk '{print `$2}'"
+                #     $InitialMAC = RunLinuxCmd -ip $VmData.PublicIP -port $VmData.SSHPort -username "root" `
+                #         -password $password "cat InitialInfiniBandMAC.txt"
+                #     if ($CurrentMAC -eq $InitialMAC) {
+                #         LogMsg "Step 2/2: MAC address verified in $($VmData.RoleName)."
+                #     }
+                #     else {
+                #         LogErr "Step 2/2: MAC address swapped / changed in $($VmData.RoleName)."
+                #         $ContinueMPITest = $false
+                #     }
+                # }
             }
 
             if ($ContinueMPITest) {
