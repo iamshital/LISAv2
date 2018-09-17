@@ -1431,7 +1431,7 @@ Function RunLinuxCmd([string] $username,[string] $password,[string] $ip,[string]
 {
 	if ($detectedDistro -ne "COREOS" )
 	{
-		WrapperCommandsToFile $username $password $ip $command $port
+		[void](WrapperCommandsToFile $username $password $ip $command $port)
 	}
 	$randomFileName = [System.IO.Path]::GetRandomFileName()
 	if ( $maxRetryCount -eq 0)
