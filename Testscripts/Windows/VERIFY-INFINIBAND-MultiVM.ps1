@@ -134,17 +134,19 @@ function Main {
                 #region EXECUTE TEST
                 $Iteration += 1
                 LogMsg "******************Iteration - $Iteration/$ExpectedSuccessCount*******************"
-                $TestJob = RunLinuxCmd -ip $ServerVMData.PublicIP -port $ServerVMData.SSHPort -username "root" `
-                    -password $password -command "/root/TestRDMA_MultiVM.sh" -RunInBackground
-                LogMsg "JOB ID: $TestJob"
+                $BackgroundJobID = [int](RunLinuxCmd -ip $ServerVMData.PublicIP -port $ServerVMData.SSHPort -username "root" `
+                    -password $password -command "/root/TestRDMA_MultiVM.sh" -RunInBackground)
+                LogMsg "JOB ID: $BackgroundJobID"
                 #endregion
 
                 #region MONITOR TEST
-                while ( (Get-Job -Id $TestJob).State -eq "Running" ) {
+                $BackgroundJobStatus = Get-Job -Id $BackgroundJobID
+                while ( $BackgroundJobStatus.State -eq "Running" ) {
                     $CurrentStatus = RunLinuxCmd -ip $ServerVMData.PublicIP -port $ServerVMData.SSHPort -username "root" `
                         -password $password -command "tail -n 1 /root/TestExecution.log"
                     LogMsg "Current Test Staus : $CurrentStatus"
                     WaitFor -seconds 10
+                    $BackgroundJobStatus = Get-Job -Id $BackgroundJobID
                 }
 
                 RemoteCopy -downloadFrom $ServerVMData.PublicIP -port $ServerVMData.SSHPort -username "root" `
