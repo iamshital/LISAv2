@@ -136,6 +136,7 @@ function Main {
                 LogMsg "******************Iteration - $Iteration/$ExpectedSuccessCount*******************"
                 $TestJob = RunLinuxCmd -ip $ServerVMData.PublicIP -port $ServerVMData.SSHPort -username "root" `
                     -password $password -command "/root/TestRDMA_MultiVM.sh" -RunInBackground
+                LogMsg "JOB ID: $TestJob"
                 #endregion
 
                 #region MONITOR TEST
