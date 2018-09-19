@@ -159,20 +159,6 @@ collect_VM_properties
                 -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
             $CurrentTestResult.TestSummary += CreateResultSummary -testResult "$RxPpsMaximum" -metaData "Rx Maximum PPS" `
                 -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
-
-            $CurrentTestResult.TestSummary += CreateResultSummary -testResult "$TxPpsAverage" -metaData "Tx Average PPS" `
-                -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
-            $CurrentTestResult.TestSummary += CreateResultSummary -testResult "$TxPpsMinimum" -metaData "Tx Minimum PPS" `
-                -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
-            $CurrentTestResult.TestSummary += CreateResultSummary -testResult "$TxPpsMaximum" -metaData "Tx Maximum PPS" `
-                -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
-
-            $CurrentTestResult.TestSummary += CreateResultSummary -testResult "$RxTxPpsAverage" -metaData "RxTx Average PPS" `
-                -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
-            $CurrentTestResult.TestSummary += CreateResultSummary -testResult "$RxTxPpsMinimum" -metaData "RxTx Minimum PPS" `
-                -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
-            $CurrentTestResult.TestSummary += CreateResultSummary -testResult "$RxTxPpsMaximum" -metaData "RxTx Maximum PPS" `
-                -checkValues "PASS,FAIL,ABORTED" -testName $currentTestData.testName
         }
         catch {
             $ErrorMessage = $_.Exception.Message

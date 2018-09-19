@@ -104,8 +104,8 @@ ssh ${client} "killall netperf"
 
 if [[ "$test_type" == "singlepps" ]]; then
     #netperf server preparation...
-    server_command="netserver > netperf-server-output.txt 2>&1"
-    ssh ${server} $server_command &
+    server_command="netserver -p 30000 > netperf-server-output.txt 2>&1"
+    ssh ${server} $server_command
     LogMsg "${server} : Executed: $server_command"
     #Start the sar monitor on server.
     server_sar_command="sar -n DEV 1 ${test_duration} > netperf-server-sar-output.txt"
@@ -113,7 +113,7 @@ if [[ "$test_type" == "singlepps" ]]; then
     LogMsg "${server} : Executed: $server_sar_command"
     
     #Start the netperf client
-    client_command="netperf -H ${server} -t TCP_RR -n 32 -l ${test_duration} -D 1 -- -O 'THROUGHPUT, THROUGHPUT_UNITS, MIN_LATENCY, MAX_LATENCY, MEAN_LATENCY, REQUEST_SIZE, RESPONSE_SIZE, STDDEV_LATENCY' > netperf-client-output.txt"
+    client_command="netperf -H ${server} -p 30000 -t TCP_RR -n 32 -l ${test_duration} -D 1 -- -O 'THROUGHPUT, THROUGHPUT_UNITS, MIN_LATENCY, MAX_LATENCY, MEAN_LATENCY, REQUEST_SIZE, RESPONSE_SIZE, STDDEV_LATENCY' > netperf-client-output.txt"
     ssh ${client} $client_command &
     LogMsg "${client} : Executed: $client_command"
     #netperf client preparation...
@@ -133,7 +133,7 @@ if [[ "$test_type" == "singlepps" ]]; then
     max_port=30031
     while [ $current_port -le $max_port ]; do
         server_command="netserver -p $current_port > netperf-server-output.txt 2>&1"
-        ssh ${server} $server_command &
+        ssh ${server} $server_command
         LogMsg "Executed: $server_command"
         current_port=$(($current_port+1))
     done
