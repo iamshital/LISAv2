@@ -353,7 +353,6 @@
             <Networking>Synthetic</Networking>
         </AdditionalHWConfig>
         <OverrideVMSize>Standard_F32s_v2</OverrideVMSize>
-        <SubtestValues>This-tag-will-be-removed</SubtestValues>
         <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_netperf.sh</files>
         <TestParameters>
             <param>test_duration=NETPERF_RUNTIME_IN_SECONDS</param>
@@ -372,7 +371,6 @@
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
         <OverrideVMSize>Standard_F32s_v2</OverrideVMSize>
-        <SubtestValues>This-tag-will-be-removed</SubtestValues>
         <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_netperf.sh</files>
         <TestParameters>
             <param>test_duration=NETPERF_RUNTIME_IN_SECONDS</param>
@@ -391,7 +389,6 @@
             <Networking>Synthetic</Networking>
         </AdditionalHWConfig>
         <OverrideVMSize>Standard_F32s_v2</OverrideVMSize>
-        <SubtestValues>This-tag-will-be-removed</SubtestValues>
         <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_netperf.sh</files>
         <TestParameters>
             <param>test_duration=NETPERF_RUNTIME_IN_SECONDS</param>
@@ -410,7 +407,6 @@
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
         <OverrideVMSize>Standard_F32s_v2</OverrideVMSize>
-        <SubtestValues>This-tag-will-be-removed</SubtestValues>
         <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_netperf.sh</files>
         <TestParameters>
             <param>test_duration=NETPERF_RUNTIME_IN_SECONDS</param>
