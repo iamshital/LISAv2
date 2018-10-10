@@ -1084,7 +1084,7 @@ Function Test-TCP($testIP, $testport)
 	}
 	catch [System.Net.Sockets.SocketException]
 	{
-		LogWarn "TCP test failed"
+		LogError "TCP test failed"
 	}
 	if ($socket.Connected)
 	{
@@ -2164,8 +2164,8 @@ Function GetAllDeployementData($ResourceGroups)
 
 	foreach ($ResourceGroup in $ResourceGroups.Split("^"))
 	{
+		.\Tools\AddMyIpToCleanupService.ps1 -ResourceGroup $ResourceGroup
 		LogMsg "Collecting $ResourceGroup data.."
-
 		LogMsg "	Microsoft.Network/publicIPAddresses data collection in progress.."
 		$RGIPdata = Get-AzureRmResource -ResourceGroupName $ResourceGroup -ResourceType "Microsoft.Network/publicIPAddresses" -Verbose -ExpandProperties
 		LogMsg "	Microsoft.Compute/virtualMachines data collection in progress.."
@@ -4298,4 +4298,3 @@ function Test-GuestInterface {
     }
     return $True
 }
-
