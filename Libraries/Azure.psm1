@@ -815,11 +815,11 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
     }
     if($newVM.RoleName)
     {
-        $VMNames += $newVM.RoleName
+        $VMNames += $newVM.RoleName.ToLower()
     }
     else
     {
-        $VMNames += "$RGName-role-$numberOfVMs"
+        $VMNames += "$RGName-role-$numberOfVMs".ToLower()
     }
     $numberOfVMs += 1
 }
@@ -1363,11 +1363,11 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
 {
     if($newVM.RoleName)
     {
-        $vmName = $newVM.RoleName
+        $vmName = $newVM.RoleName.ToLower()
     }
     else
     {
-        $vmName = "$RGName-role-$role"
+        $vmName = "$RGName-role-$role".ToLower()
     }
     foreach ( $endpoint in $newVM.EndPoints)
     {
@@ -1418,11 +1418,11 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
 {
     if($newVM.RoleName)
     {
-        $vmName = $newVM.RoleName
+        $vmName = $newVM.RoleName.ToLower()
     }
     else
     {
-        $vmName = "$RGName-role-$role"
+        $vmName = "$RGName-role-$role".ToLower()
     }
     
     foreach ( $endpoint in $newVM.EndPoints)
@@ -1519,11 +1519,11 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
     
     if($newVM.RoleName)
     {
-        $vmName = $newVM.RoleName
+        $vmName = $newVM.RoleName.ToLower()
     }
     else
     {
-        $vmName = "$RGName-role-$role"
+        $vmName = "$RGName-role-$role".ToLower()
     }
 
     foreach ( $endpoint in $newVM.EndPoints)
@@ -1593,11 +1593,11 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
     $DnsServerIP = $RGXMLData.DnsServerIP
     if($newVM.RoleName)
     {
-        $vmName = $newVM.RoleName
+        $vmName = $newVM.RoleName.ToLower()
     }
     else
     {
-        $vmName = "$RGName-role-$role"
+        $vmName = "$RGName-role-$role".ToLower()
     }
     $NIC = "PrimaryNIC" + "-$vmName"
 
