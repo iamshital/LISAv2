@@ -109,9 +109,15 @@ Function RunTestsOnCycle ($cycleName , $xmlConfig, $Distro, $TestIterations ) {
 	} elseif ($testPlatform -eq "Hyperv") {
 		$ExecuteSetupForEachTest = $false
 	}
+	$VmSetup = @()
+	foreach ($test in $currentCycleData.test) {
+		$currentTestData = GetCurrentTestData -xmlConfig $xmlConfig -testName $test.Name
+		$VmSetup += $currentTestData.setupType	
+	}	
 
 	$testCount = $currentCycleData.test.Length
 	$testIndex = 0
+	$SummaryHeaderAdded = $false
 	if (-not $testCount) {
 		$testCount = 1
 	}
@@ -132,16 +138,34 @@ Function RunTestsOnCycle ($cycleName , $xmlConfig, $Distro, $TestIterations ) {
 			Set-Variable -Name EnableAcceleratedNetworking -Value $true -Scope Global
 		}
 
+		$currentVmSetup = $VmSetup[$testIndex-1]
+		$nextVmSetup = $VmSetup[$testIndex]
+		$previousVmSetup = $VmSetup[$testIndex-2]
+
 		if ($testIndex -eq 1) {
 			$TestState = @{"ExecuteSetup" = $True}
 			if ($testCount -eq 1) {
 				$TestState += @{"ExecuteTeardown" = $True}
+			} else {
+				if ($currentVmSetup -ne $nextVmSetup) {
+					$TestState += @{"ExecuteTeardown" = $True}	
+				} 
 			}
 		} elseif ($testIndex -eq $testCount) {
 			$TestState = @{"ExecuteTeardown" = $True}
-		} else {
+			if ($previousVmSetup -ne $currentVmSetup) {
+				$TestState += @{"ExecuteSetup" = $True}	
+			}
+		} else {		
 			$TestState = @{}
+			if ($previousVmSetup -ne $currentVmSetup) {
+				$TestState += @{"ExecuteSetup" = $True}	
+			}
+			if ($currentVmSetup -ne $nextVmSetup) {
+				$TestState += @{"ExecuteTeardown" = $True}	
+			}
 		}
+
 		# Generate Unique Test
 		for ( $testIterationCount = 1; $testIterationCount -le $TestIterations; $testIterationCount ++ ) {
 			if ( $TestIterations -ne 1 ) {
@@ -162,9 +186,9 @@ Function RunTestsOnCycle ($cycleName , $xmlConfig, $Distro, $TestIterations ) {
 
 				if(($testPriority -imatch $currentTestData.Priority ) -or (!$testPriority))	{
 					$CurrentTestLogDir = "$LogDir\$($currentTestData.testName)"
-					mkdir "$CurrentTestLogDir" -ErrorAction SilentlyContinue | out-null
-					Set-Variable -Name CurrentTestLogDir -Value $CurrentTestLogDir -Scope Global
-					Set-Variable -Name LogDir -Value $CurrentTestLogDir -Scope Global
+					New-Item -Type Directory -Path $CurrentTestLogDir -ErrorAction SilentlyContinue | Out-Null
+					Set-Variable -Name "CurrentTestLogDir" -Value $CurrentTestLogDir -Scope Global
+					Set-Variable -Name "LogDir" -Value $CurrentTestLogDir -Scope Global
 					$TestCaseLogFile = "$CurrentTestLogDir\CurrentTestLogs.txt"
 					$testcase = StartLogTestCase $testsuite "$($test.Name)" "CloudTesting.$($testCycle.cycleName)"
 					$testSuiteResultDetails.totalTc = $testSuiteResultDetails.totalTc +1
@@ -176,7 +200,7 @@ Function RunTestsOnCycle ($cycleName , $xmlConfig, $Distro, $TestIterations ) {
 						LogMsg "~~~~~~~~~~~~~~~TEST STARTED : $($currentTestData.testName)~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 						LogMsg "Starting multiple tests : $($currentTestData.testName)"
 						$CurrentTestResult = Run-Test -CurrentTestData $currentTestData -XmlConfig $xmlConfig `
-							-Distro $Distro -LogDir $LogDir -VMUser $user -VMPassword $password `
+							-Distro $Distro -LogDir $CurrentTestLogDir -VMUser $user -VMPassword $password `
 							-DeployVMPerEachTest $ExecuteSetupForEachTest @TestState
 						$testResult = $CurrentTestResult.TestResult
 						$testSummary = $CurrentTestResult.TestSummary
@@ -197,8 +221,12 @@ Function RunTestsOnCycle ($cycleName , $xmlConfig, $Distro, $TestIterations ) {
 						$executionCount += 1
 						$testRunDuration = GetStopWatchElapasedTime $stopWatch "mm"
 						$testRunDuration = $testRunDuration.ToString()
-						$testCycle.emailSummary += "$($currentTestData.testName) Execution Time: $testRunDuration minutes<br />"
-						$testCycle.emailSummary += "	$($currentTestData.testName) : $($testResult)  <br />"
+						if ( -not $SummaryHeaderAdded ) {
+							$testCycle.emailSummary += "#Sr. Test Name : Test Result : Test Duration (in minutes)<br />"
+							$testCycle.emailSummary += "----------------------------------------------------<br />"
+							$SummaryHeaderAdded = $true
+						}
+						$testCycle.emailSummary += "$executionCount. $($currentTestData.testName) : $($testResult) : $testRunDuration<br />"
 						if ( $testSummary ) {
 							$testCycle.emailSummary += "$($testSummary)"
 						}

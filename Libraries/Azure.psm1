@@ -731,10 +731,17 @@ Function CreateResourceGroupDeployment([string]$RGName, $location, $setupType, $
                 if ($ForceDeleteResources)
                 {
                     LogMsg "-ForceDeleteResources is Set. Deleting $RGName."
-                    $isClened = DeleteResourceGroup -RGName $RGName
-                
+                    $isCleaned = DeleteResourceGroup -RGName $RGName
+                    if (!$isCleaned)
+                    {
+                        LogMsg "CleanUP unsuccessful for $RGName.. Please delete the services manually."
+                    }
+                    else
+                    {
+                        LogMsg "CleanUP Successful for $RGName.."
+                    }
                 }
-                else 
+                else
                 {
                     $VMsCreated = Get-AzureRmVM -ResourceGroupName $RGName
                     if ( $VMsCreated )
@@ -744,9 +751,17 @@ Function CreateResourceGroupDeployment([string]$RGName, $location, $setupType, $
                     else
                     {
                         LogMsg "Removing Failed resource group, as we found 0 VM(s) deployed."
-                        $isClened = DeleteResourceGroup -RGName $RGName
-                    }                        
-                }                
+                        $isCleaned = DeleteResourceGroup -RGName $RGName
+                        if (!$isCleaned)
+                        {
+                            LogMsg "CleanUP unsuccessful for $RGName.. Please delete the services manually."
+                        }
+                        else
+                        {
+                            LogMsg "CleanUP Successful for $RGName.."
+                        }
+                    }
+                }
             }
         }
         catch
@@ -763,7 +778,14 @@ Function GenerateAzureDeployJSONFile ($RGName, $osImage, $osVHD, $RGXMLData, $Lo
 #Random Data
 $RGrandomWord = ([System.IO.Path]::GetRandomFileName() -replace '[^a-z]')
 $RGRandomNumber = Get-Random -Minimum 11111 -Maximum 99999
-
+if ( $CurrentTestData.AdditionalHWConfig.DiskType -eq "Managed" )
+{
+    $UseManageDiskForCurrentTest = $true
+}
+else
+{
+    $UseManageDiskForCurrentTest = $false
+}
 #Generate the initial data
 $numberOfVMs = 0
 $VMNames = @()
@@ -834,7 +856,7 @@ while(!$saInfoCollected -and ($retryCount -lt $maxRetryCount))
 
 $StorageAccountName = $xmlConfig.config.$TestPlatform.General.ARMStorageAccount
 #Condition Existing Storage - NonManaged disks
-if ( $StorageAccountName -inotmatch "NewStorage" -and !$UseManagedDisks)
+if ( $StorageAccountName -inotmatch "NewStorage" -and !$UseManagedDisks -and !$UseManageDiskForCurrentTest)
 {
     $StorageAccountType = ($GetAzureRMStorageAccount | where {$_.StorageAccountName -eq $StorageAccountName}).Sku.Tier.ToString()
     $StorageAccountRG = ($GetAzureRMStorageAccount | where {$_.StorageAccountName -eq $StorageAccountName}).ResourceGroupName.ToString()
@@ -851,7 +873,7 @@ if ( $StorageAccountName -inotmatch "NewStorage" -and !$UseManagedDisks)
 }
 
 #Condition Existing Storage - Managed Disks
-if ( $StorageAccountName -inotmatch "NewStorage" -and $UseManagedDisks)
+if ( $StorageAccountName -inotmatch "NewStorage" -and ($UseManagedDisks -or $UseManageDiskForCurrentTest))
 {
     $StorageAccountType = ($GetAzureRMStorageAccount | where {$_.StorageAccountName -eq $StorageAccountName}).Sku.Tier.ToString()
     if($StorageAccountType -match 'Premium')
@@ -867,7 +889,7 @@ if ( $StorageAccountName -inotmatch "NewStorage" -and $UseManagedDisks)
 
 
 #Condition New Storage - NonManaged disk
-if ( $StorageAccountName -imatch "NewStorage" -and !$UseManagedDisks)
+if ( $StorageAccountName -imatch "NewStorage" -and !$UseManagedDisks -and !$UseManageDiskForCurrentTest)
 {
     $NewARMStorageAccountType = ($StorageAccountName).Replace("NewStorage_","")
     Set-Variable -Name StorageAccountTypeGlobal -Value $NewARMStorageAccountType  -Scope Global
@@ -879,7 +901,7 @@ if ( $StorageAccountName -imatch "NewStorage" -and !$UseManagedDisks)
 }
 
 #Condition New Storage - Managed disk
-if ( $StorageAccountName -imatch "NewStorage" -and $UseManagedDisks)
+if ( $StorageAccountName -imatch "NewStorage" -and ($UseManagedDisks -or $UseManageDiskForCurrentTest))
 {
     Set-Variable -Name StorageAccountTypeGlobal -Value ($StorageAccountName).Replace("NewStorage_","")  -Scope Global
     LogMsg "Conflicting parameters - NewStorage and UseManagedDisks. Storage account will not be created."
@@ -1086,7 +1108,7 @@ Set-Content -Value "$($indents[0]){" -Path $jsonFile -Force
                 Add-Content -Value "$($indents[3])^type^: ^Microsoft.Compute/availabilitySets^," -Path $jsonFile
                 Add-Content -Value "$($indents[3])^name^: ^[variables('availabilitySetName')]^," -Path $jsonFile
                 Add-Content -Value "$($indents[3])^location^: ^[variables('location')]^," -Path $jsonFile
-                if ($UseManagedDisks)
+                if ($UseManagedDisks -or ($UseManageDiskForCurrentTest))
                 {
                     Add-Content -Value "$($indents[3])^sku^:" -Path $jsonFile
                     Add-Content -Value "$($indents[3]){" -Path $jsonFile
@@ -1106,7 +1128,7 @@ Set-Content -Value "$($indents[0]){" -Path $jsonFile -Force
                     Add-Content -Value "$($indents[4])^platformUpdateDomainCount^:5" -Path $jsonFile              
                 if ( $TiPSessionId -and $TiPCluster)
                 {
-                    Add-Content -Value "$($indents[4])^," -Path $jsonFile
+                    Add-Content -Value "$($indents[4])," -Path $jsonFile
                     Add-Content -Value "$($indents[4])^internalData^:" -Path $jsonFile
                     Add-Content -Value "$($indents[4]){" -Path $jsonFile
                         Add-Content -Value "$($indents[5])^pinnedFabricCluster^ : ^$TiPCluster^" -Path $jsonFile  
@@ -1137,7 +1159,7 @@ Set-Content -Value "$($indents[0]){" -Path $jsonFile -Force
         #endregion
 
         #region CustomImages
-        if ($OsVHD -and $UseManagedDisks)
+        if ($OsVHD -and ($UseManagedDisks -or $UseManageDiskForCurrentTest))
         {
         Add-Content -Value "$($indents[2]){" -Path $jsonFile
             Add-Content -Value "$($indents[3])^apiVersion^: ^2017-12-01^," -Path $jsonFile
@@ -1818,7 +1840,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
             {
                 Add-Content -Value "$($indents[4])^[concat('Microsoft.Storage/storageAccounts/', variables('StorageAccountName'))]^," -Path $jsonFile
             }
-            if ( $UseManagedDisks -and $OsVHD )
+            if ( $OsVHD -and ($UseManagedDisks -or $UseManageDiskForCurrentTest) )
             {
                 Add-Content -Value "$($indents[4])^[resourceId('Microsoft.Compute/images', '$RGName-Image')]^," -Path $jsonFile
             }
@@ -1898,7 +1920,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
                         Add-Content -Value "$($indents[6])^version^: ^$version^" -Path $jsonFile
                     Add-Content -Value "$($indents[5])}," -Path $jsonFile
                 }
-                elseif ( $UseManagedDisks -and $OsVHD )
+                elseif ( $OsVHD -and ($UseManagedDisks -or $UseManageDiskForCurrentTest) )
                 {
                     Add-Content -Value "$($indents[5])^imageReference^ : " -Path $jsonFile
                     Add-Content -Value "$($indents[5]){" -Path $jsonFile
@@ -1909,7 +1931,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
                     Add-Content -Value "$($indents[5]){" -Path $jsonFile
                     if($osVHD)
                     {
-                        if ($UseManagedDisks)
+                        if ($UseManagedDisks -or $UseManageDiskForCurrentTest)
                         {
                             LogMsg ">>Using VHD : $osVHD (Converted to Managed Image)"
                             Add-Content -Value "$($indents[6])^osType^: ^Linux^," -Path $jsonFile
@@ -1942,7 +1964,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
                     }
                     else
                     {
-                        if ($UseManagedDisks)
+                        if ($UseManagedDisks -or $UseManageDiskForCurrentTest)
                         {
                             Add-Content -Value "$($indents[6])^name^: ^$vmName-OSDisk^," -Path $jsonFile
                             Add-Content -Value "$($indents[6])^createOption^: ^FromImage^," -Path $jsonFile
@@ -1977,7 +1999,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
                         Add-Content -Value "$($indents[6])," -Path $jsonFile
                         }
 
-                        if ($UseManagedDisks)
+                        if ($UseManagedDisks -or $UseManageDiskForCurrentTest)
                         {
                         Add-Content -Value "$($indents[6]){" -Path $jsonFile
                             Add-Content -Value "$($indents[7])^name^: ^$vmName-disk-lun-$($dataDisk.LUN)^," -Path $jsonFile
@@ -2529,8 +2551,198 @@ Function RestartAllAzureDeployments($allVMData)
 		$restartJobs = $tempJobs
 		Start-Sleep -Seconds 1
 	}
-	
+
 	Remove-Item -Path "$env:TEMP\$($currentGUID).azurecontext" -Force -ErrorAction SilentlyContinue | Out-Null
 	$isSSHOpened = isAllSSHPortsEnabledRG -AllVMDataObject $AllVMData
 	return $isSSHOpened
+}
+
+Function Set-SRIOVinAzureVMs {
+    param (
+        $ResourceGroup,
+        $VMNames, #... Optional
+        [switch]$Enable,
+        [switch]$Disable)
+    try {
+        Function Check-CurrentNICStatus () {
+            if ($Enable) {
+                if ($AllNics.Count -eq 1) {
+                    if ($AllNics.EnableAcceleratedNetworking -eq $true) {
+                        $StatusChangeNotRequired = $true
+                    }
+                }
+                else {
+                    if (-not $AllNics.EnableAcceleratedNetworking.Contains($false)) {
+                        $StatusChangeNotRequired = $true
+                    }
+                }
+            }
+            if ($Disable) {
+                if ($AllNics.Count -eq 1) {
+                    if ($AllNics.EnableAcceleratedNetworking -eq $false) {
+                        $StatusChangeNotRequired = $true
+                    }
+                }
+                else {
+                    if (-not $AllNics.EnableAcceleratedNetworking.Contains($true)) {
+                        $StatusChangeNotRequired = $true
+                    }
+                }
+            }
+            return $StatusChangeNotRequired
+        }
+
+        if ( $Enable -and $Disable ) {
+            Throw "Please mention either -Enable or -Disable. Don't use both switches."
+        }
+        $TargettedVMs = @()
+        $SuccessCount = 0
+        #"SS-R75SRIOV-Deploy2VM-ECMI-636723398793"
+        $AllVMs = Get-AzureRmVM -ResourceGroupName $ResourceGroup
+        if ($VMNames) {
+            $VMNames = $VMNames.Trim()
+            foreach ( $VMName in $VMNames.Split(",")) {
+                if ( -not $VMNames.Contains("$VMName")) {
+                    Throw "$VMName does not exist in $ResourceGroup."
+                }
+                else {
+                    $TargettedVMs += $ALLVMs | Where-Object { $_.Name -eq "$VMName" }
+                }
+            }
+        }
+        else {
+            $TargettedVMs = $AllVMs
+        }
+
+        foreach ( $TargetVM in $TargettedVMs) {
+            $VMName = $TargetVM.Name
+            $AllNics = Get-AzureRmNetworkInterface -ResourceGroupName $ResourceGroup `
+                | Where-Object { $($_.VirtualMachine.Id | Split-Path -leaf) -eq $VMName }
+
+            if ($Enable) {
+                $DesiredState = "Enabled"
+                if (Check-CurrentNICStatus) {
+                    LogMsg "Accelerated networking is already enabled for all nics in $VMName."
+                    $retValue = $true
+                    $VMPropertiesChanged = $false
+                }
+                else {
+                    $TargettedNics = $AllNics | Where-Object { $_.EnableAcceleratedNetworking -eq $false}
+                    LogMsg "Current Accelerated networking disabled NICs : $($TargettedNics.Name)"
+                    LogMsg "Shutting down $VMName..."
+                    $StopVM = Stop-AzureRmVM -ResourceGroup $ResourceGroup -Name $VMName -Force
+                    foreach ($TargetNic in $TargettedNics) {
+                        #Enable EnableAccelerated Networking
+                        $TargetNic.EnableAcceleratedNetworking = $true
+                        $ChangedNic = $TargetNic | Set-AzureRmNetworkInterface
+                        $VMPropertiesChanged = $true
+                        if ( $ChangedNic.EnableAcceleratedNetworking -eq $true) {
+                            LogMsg "$($TargetNic.Name) [EnableAcceleratedNetworking=true]| Set-AzureRmNetworkInterface : SUCCESS"
+                        }
+                        else {
+                            LogMsg "$($TargetNic.Name) [EnableAcceleratedNetworking=true]| Set-AzureRmNetworkInterface : FAIL"
+                        }
+                    }
+                }
+            }
+            if ($Disable) {
+                $DesiredState = "Disabled"
+                if (Check-CurrentNICStatus) {
+                    LogMsg "Accelerated networking is already disabled for all nics in $VMName."
+                    $retValue = $true
+                    $VMPropertiesChanged = $false
+                }
+                else {
+                    $TargettedNics = $AllNics | Where-Object { $_.EnableAcceleratedNetworking -eq $true}
+                    LogMsg "Current Accelerated networking enabled NICs : $($TargettedNics.Name)"
+                    LogMsg "Shutting down $VMName..."
+                    $StopVM = Stop-AzureRmVM -ResourceGroup $ResourceGroup -Name $VMName -Force
+                    foreach ($TargetNic in $TargettedNics) {
+                        #Enable EnableAccelerated Networking
+                        $TargetNic.EnableAcceleratedNetworking = $false
+                        $ChangedNic = $TargetNic | Set-AzureRmNetworkInterface
+                        $VMPropertiesChanged = $true
+                        if ( $ChangedNic.EnableAcceleratedNetworking -eq $false) {
+                            LogMsg "$($TargetNic.Name) [EnableAcceleratedNetworking=false] | Set-AzureRmNetworkInterface : SUCCESS"
+                        }
+                        else {
+                            LogMsg "$($TargetNic.Name) [EnableAcceleratedNetworking=false] | Set-AzureRmNetworkInterface : FAIL"
+                        }
+                    }
+                }
+            }
+        }
+        if ( $VMPropertiesChanged ) {
+            foreach ( $TargetVM in $TargettedVMs) {
+                #Start the VM..
+                LogMsg "Starting VM $($TargetVM.Name)..."
+                $StartVM = Start-AzureRmVM -ResourceGroup $ResourceGroup -Name $TargetVM.Name
+            }
+            #Public IP address changes most of the times, when we shutdown the VM.
+            #Hence, we need to refresh the data
+            $AllVMData = GetAllDeployementData -ResourceGroups $ResourceGroup
+            $TestVMData = @()
+            foreach ( $TargetVM in $TargettedVMs) {
+                $TestVMData += $AllVMData | Where-Object {$_.ResourceGroupName -eq $ResourceGroup `
+                        -and $_.RoleName -eq $TargetVM.Name }
+                #Start the VM..
+            }
+            $isSSHOpened = isAllSSHPortsEnabledRG -AllVMDataObject $TestVMData
+            if ($isSSHOpened -eq "True") {
+                $isRestarted = $true
+            }
+            else {
+                LogErr "VM is not available after restart"
+                $isRestarted = $false
+            }
+            foreach ( $TargetVM in $TargettedVMs) {
+                $VMName = $TargetVM.Name
+                $AllNics = Get-AzureRmNetworkInterface -ResourceGroupName $ResourceGroup `
+                    | Where-Object { $($_.VirtualMachine.Id | Split-Path -leaf) -eq $VMName }
+                if ($Enable) {
+                    if (Check-CurrentNICStatus) {
+                        LogMsg "Accelerated networking is successfully enabled for all nics in $VMName."
+                        $NicVerified = $true
+                    }
+                    else {
+                        LogMsg "Accelerated networking is failed to enable for all/some nics in $VMName."
+                        $NicVerified = $false
+                    }
+                }
+                if ($Disable) {
+                    if (Check-CurrentNICStatus) {
+                        LogMsg "Accelerated networking is successfully disabled for all nics in $VMName."
+                        $NicVerified = $true
+                    }
+                    else {
+                        LogMsg "Accelerated networking is failed to disable for all/some nics in $VMName."
+                        $NicVerified = $false
+                    }
+                }
+                if ($isRestarted -and $NicVerified) {
+                    $SuccessCount += 1
+                    LogMsg "Accelarated networking '$DesiredState' successfully for $VMName"
+                }
+                else {
+                    LogErr "Accelarated networking '$DesiredState' failed for $VMName"
+                }
+            }
+            if ( $TargettedVMs.Count -eq $SuccessCount ) {
+                $retValue = $true
+            }
+            else {
+                $retValue = $false
+            }
+        }
+        else {
+            LogMsg "Accelarated networking is already '$DesiredState'."
+        }
+    }
+    catch {
+        $retValue = $false
+        $ErrorMessage = $_.Exception.Message
+        $ErrorLine = $_.InvocationInfo.ScriptLineNumber
+        LogErr "EXCEPTION : $ErrorMessage at line: $ErrorLine"
+    }
+    return $retValue
 }

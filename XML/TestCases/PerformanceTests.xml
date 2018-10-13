@@ -1,51 +1,93 @@
 <TestCases>
     <test>
-        <testName>PERF-NETWORK-TCP-THROUGHPUT-MULTICONNECTION-Synthetic</testName>
-        <testScript>PERF-NETWORK-TCP-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
+        <testName>PERF-NETWORK-TCP-THROUGHPUT-MULTICONNECTION-NTTTCP-Synthetic</testName>
+        <testScript>PERF-NETWORK-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
         <setupType>M1S1</setupType>
         <AdditionalHWConfig>
             <Networking>Synthetic</Networking>
         </AdditionalHWConfig>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh,.\Testscripts\Linux\perf_ntttcp.sh,.\Testscripts\Linux\run-ntttcp-and-tcping.sh,.\Testscripts\Linux\report-ntttcp-and-tcping.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_ntttcp.sh</files>
         <TestParameters>
-            <param>testDuration=300</param>
+            <param>testDuration=NTTTCP_RUNTIME_IN_SECONDS</param>
+            <param>testType=tcp</param>
             <param>testConnections="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 6144 8192 10240"</param>
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
         <Area>Network</Area>
-        <Tags>tcp,network,hv_netvsc</Tags>
+        <Tags>network,hv_netvsc</Tags>
     </test>
     <test>
-        <testName>PERF-NETWORK-TCP-THROUGHPUT-MULTICONNECTION-SRIOV</testName>
-        <testScript>PERF-NETWORK-TCP-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
+        <testName>PERF-NETWORK-TCP-THROUGHPUT-MULTICONNECTION-NTTTCP-SRIOV</testName>
+        <testScript>PERF-NETWORK-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
         <setupType>M1S1</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
-        <files>.\Testscripts\Linux\azuremodules.sh,.\Testscripts\Linux\perf_ntttcp.sh,.\Testscripts\Linux\run-ntttcp-and-tcping.sh,.\Testscripts\Linux\report-ntttcp-and-tcping.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_ntttcp.sh</files>
         <TestParameters>
-            <param>testDuration=300</param>
+            <param>testDuration=NTTTCP_RUNTIME_IN_SECONDS</param>
+            <param>testType=tcp</param>
             <param>testConnections="1 2 4 8 16 32 64 128 256 512 1024 2048 4096 6144 8192 10240"</param>
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
         <Area>Network</Area>
-        <Tags>tcp,network,hv_netvsc,sriov</Tags>
+        <Tags>network,hv_netvsc,sriov</Tags>
     </test>
+    <test>
+        <testName>PERF-NETWORK-UDP-1K-THROUGHPUT-MULTICONNECTION-NTTTCP-Synthetic</testName>
+        <testScript>PERF-NETWORK-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
+        <setupType>M1S1</setupType>
+        <AdditionalHWConfig>
+            <Networking>Synthetic</Networking>
+        </AdditionalHWConfig>
+        <SubtestValues>This-tag-will-be-removed</SubtestValues>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_ntttcp.sh</files>
+        <TestParameters>
+            <param>testDuration=NTTTCP_RUNTIME_IN_SECONDS</param>
+            <param>testType=udp</param>
+            <param>bufferLength=1024</param>
+            <param>testConnections="1 2 4 8 16 32 64 128 256 512 1024"</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Performance</Category>
+        <Area>Network</Area>
+        <Tags>network,hv_netvsc</Tags>
+    </test>
+    <test>
+        <testName>PERF-NETWORK-UDP-1K-THROUGHPUT-MULTICONNECTION-NTTTCP-SRIOV</testName>
+        <testScript>PERF-NETWORK-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
+        <setupType>M1S1</setupType>
+        <AdditionalHWConfig>
+            <Networking>SRIOV</Networking>
+        </AdditionalHWConfig>
+        <SubtestValues>This-tag-will-be-removed</SubtestValues>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_ntttcp.sh</files>
+        <TestParameters>
+            <param>testDuration=NTTTCP_RUNTIME_IN_SECONDS</param>
+            <param>testType=udp</param>
+            <param>bufferLength=1024</param>
+            <param>testConnections="1 2 4 8 16 32 64 128 256 512 1024"</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Performance</Category>
+        <Area>Network</Area>
+        <Tags>network,hv_netvsc,sriov</Tags>
+    </test>    
     <test>
         <testName>PERF-NETWORK-TCP-LATENCY-MULTICONNECTION-Synthetic</testName>
         <testScript>PERF-NETWORK-TCP-LATENCY-MULTICONNECTION-LAGSCOPE.ps1</testScript>
         <setupType>M1S1</setupType>
-        <files>.\Testscripts\Linux\azuremodules.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_lagscope.sh</files>
         <TestParameters>
             <param>pingIteration=1000000</param>
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
         <Area>Network</Area>
-        <Tags>tcp,network,hv_netvsc</Tags>
+        <Tags>network,hv_netvsc</Tags>
     </test>
     <test>
         <testName>PERF-NETWORK-TCP-LATENCY-MULTICONNECTION-SRIOV</testName>
@@ -55,23 +97,23 @@
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_lagscope.sh</files>
         <TestParameters>
             <param>pingIteration=1000000</param>
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
         <Area>Network</Area>
-        <Tags>tcp,network,hv_netvsc,sriov</Tags>
+        <Tags>network,hv_netvsc,sriov</Tags>
     </test>
     <test>
         <testName>PERF-NETWORK-UDP-THROUGHPUT-MULTICONNECTION-Synthetic</testName>
         <testScript>PERF-NETWORK-UDP-THROUGHPUT-MULTICONNECTION-IPERF3.ps1</testScript>
         <setupType>M1S1</setupType>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_iperf3.sh</files>
         <TestParameters>
-            <param>testDuration=300</param>
+            <param>testDuration=IPERF3_RUNTIME_IN_SECONDS</param>
             <param>testType=udp</param>
             <param>max_parallel_connections_per_instance=64</param>
             <param>connections=(1 2 4 8 16 32 64 128 256 512 1024)</param>
@@ -81,7 +123,7 @@
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
         <Area>Network</Area>
-        <Tags>udp,network,hv_netvsc</Tags>
+        <Tags>network,hv_netvsc</Tags>
     </test>
     <test>
         <testName>PERF-NETWORK-UDP-THROUGHPUT-MULTICONNECTION-SRIOV</testName>
@@ -91,9 +133,9 @@
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_iperf3.sh</files>
         <TestParameters>
-            <param>testDuration=300</param>
+            <param>testDuration=IPERF3_RUNTIME_IN_SECONDS</param>
             <param>testType=udp</param>
             <param>max_parallel_connections_per_instance=64</param>
             <param>connections=(1 2 4 8 16 32 64 128 256 512 1024)</param>
@@ -103,21 +145,24 @@
         <Platform>Azure</Platform>
         <Category>Performance</Category>
         <Area>Network</Area>
-        <Tags>udp,network,hv_netvsc,sriov</Tags>
+        <Tags>network,hv_netvsc,sriov</Tags>
     </test>
     <test>
         <testName>PERF-STORAGE-4K-IO</testName>
         <testScript>PERF-STORAGE-MULTIDISK-RAID0-FIO.ps1</testScript>
         <setupType>DS14DISK12</setupType>
+        <AdditionalHWConfig>
+            <DiskType>Managed</DiskType>
+        </AdditionalHWConfig>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh,.\Testscripts\Linux\perf_fio.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Tools\gawk</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_fio.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Tools\gawk</files>
         <TestParameters>
             <param>modes='randread randwrite read write'</param>
             <param>startThread=1</param>
             <param>maxThread=1024</param>
             <param>startIO=4</param>
             <param>numjobs=1</param>
-            <param>ioruntime=300</param>
+            <param>ioruntime=FIO_RUNTIME_IN_SECONDS</param>
             <param>maxIO=4</param>
             <param>fileSize=1023G</param>
         </TestParameters>
@@ -130,15 +175,18 @@
         <testName>PERF-STORAGE-1024K-IO</testName>
         <testScript>PERF-STORAGE-MULTIDISK-RAID0-FIO.ps1</testScript>
         <setupType>DS14DISK12</setupType>
+        <AdditionalHWConfig>
+            <DiskType>Managed</DiskType>
+        </AdditionalHWConfig>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh,.\Testscripts\Linux\perf_fio.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Tools\gawk</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_fio.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Tools\gawk</files>
         <TestParameters>
             <param>modes='randread randwrite read write'</param>
             <param>startThread=1</param>
             <param>maxThread=1024</param>
             <param>startIO=1024</param>
             <param>numjobs=1</param>
-            <param>ioruntime=300</param>
+            <param>ioruntime=FIO_RUNTIME_IN_SECONDS</param>
             <param>maxIO=1024</param>
             <param>fileSize=1023G</param>
         </TestParameters>
@@ -152,14 +200,14 @@
         <testScript>PERF-STORAGE-OVER-NFS.ps1</testScript>
         <setupType>DS14DISK12NFS</setupType>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
         <TestParameters>
             <param>modes='randread randwrite read write'</param>
             <param>startThread=1</param>
             <param>maxThread=1024</param>
             <param>startIO=4</param>
             <param>numjobs=1</param>
-            <param>ioruntime=300</param>
+            <param>ioruntime=FIO_RUNTIME_IN_SECONDS</param>
             <param>maxIO=4</param>
             <param>fileSize=1023G</param>
             <param>nfsprotocol=tcp</param>
@@ -174,14 +222,14 @@
         <testScript>PERF-STORAGE-OVER-NFS.ps1</testScript>
         <setupType>DS14DISK12NFS</setupType>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
         <TestParameters>
             <param>modes='randread randwrite read write'</param>
             <param>startThread=1</param>
             <param>maxThread=1024</param>
             <param>startIO=4</param>
             <param>numjobs=1</param>
-            <param>ioruntime=300</param>
+            <param>ioruntime=FIO_RUNTIME_IN_SECONDS</param>
             <param>maxIO=4</param>
             <param>fileSize=1023G</param>
             <param>nfsprotocol=udp</param>
@@ -199,14 +247,14 @@
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
         <TestParameters>
             <param>modes='randread randwrite read write'</param>
             <param>startThread=1</param>
             <param>maxThread=1024</param>
             <param>startIO=4</param>
             <param>numjobs=1</param>
-            <param>ioruntime=300</param>
+            <param>ioruntime=FIO_RUNTIME_IN_SECONDS</param>
             <param>maxIO=4</param>
             <param>fileSize=1023G</param>
             <param>nfsprotocol=tcp</param>
@@ -224,14 +272,14 @@
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
         <TestParameters>
             <param>modes='randread randwrite read write'</param>
             <param>startThread=1</param>
             <param>maxThread=1024</param>
             <param>startIO=4</param>
             <param>numjobs=1</param>
-            <param>ioruntime=300</param>
+            <param>ioruntime=FIO_RUNTIME_IN_SECONDS</param>
             <param>maxIO=4</param>
             <param>fileSize=1023G</param>
             <param>nfsprotocol=tcp</param>
@@ -248,9 +296,9 @@
         <AdditionalHWConfig>
             <Networking>Synthetic</Networking>
         </AdditionalHWConfig>
-        <files></files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_iperf3.sh</files>
         <TestParameters>
-            <param>testDuration=120</param>
+            <param>testDuration=IPERF3_RUNTIME_IN_SECONDS</param>
             <param>testType=tcp</param>
             <param>max_parallel_connections_per_instance=64</param>
             <param>connections=(1)</param>
@@ -260,7 +308,7 @@
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
         <Area>Network</Area>
-        <Tags>hv_netvsc,network,tcp</Tags>
+        <Tags>hv_netvsc,network</Tags>
     </test>
     <test>
         <testName>PERF-NETWORK-TCP-SINGLE-CONNECTION-THROUGHPUT-SRIOV</testName>
@@ -269,9 +317,9 @@
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
-        <files></files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_iperf3.sh</files>
         <TestParameters>
-            <param>testDuration=120</param>
+            <param>testDuration=IPERF3_RUNTIME_IN_SECONDS</param>
             <param>testType=tcp</param>
             <param>max_parallel_connections_per_instance=64</param>
             <param>connections=(1)</param>
@@ -281,6 +329,92 @@
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
         <Area>Network</Area>
-        <Tags>hv_netvsc,network,tcp,sriov</Tags>
+        <Tags>hv_netvsc,network,sriov</Tags>
+    </test>
+    <test>
+        <testName>PERF-SYSCALL-BENCHMARK</testName>
+        <testScript>PERF-SYSCALL-BENCHMARK.ps1</testScript>
+        <setupType>SingleVM</setupType>
+        <OverrideVMSize>Standard_D15_v2</OverrideVMSize>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_syscallbenchmark.sh</files>
+        <TestParameters>
+            <param>syscallurl="https://github.com/arkanis/syscall-benchmark.git"</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Performance</Category>
+        <Area>CPU</Area>
+        <Tags>syscall</Tags>
+    </test>
+    <test>
+        <testName>PERF-NETWORK-TCP-NETPERF-SINGLE-PPS-Synthetic</testName>
+        <testScript>PERF-NETWORK-TCP-NETPERF.ps1</testScript>
+        <setupType>M1S1</setupType>
+        <AdditionalHWConfig>
+            <Networking>Synthetic</Networking>
+        </AdditionalHWConfig>
+        <OverrideVMSize>Standard_F32s_v2</OverrideVMSize>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_netperf.sh</files>
+        <TestParameters>
+            <param>test_duration=NETPERF_RUNTIME_IN_SECONDS</param>
+            <param>test_type="singlepps"</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Performance</Category>
+        <Area>Network</Area>
+        <Tags>network,hv_netvsc</Tags>
+    </test>
+    <test>
+        <testName>PERF-NETWORK-TCP-NETPERF-SINGLE-PPS-SRIOV</testName>
+        <testScript>PERF-NETWORK-TCP-NETPERF.ps1</testScript>
+        <setupType>M1S1</setupType>
+        <AdditionalHWConfig>
+            <Networking>SRIOV</Networking>
+        </AdditionalHWConfig>
+        <OverrideVMSize>Standard_F32s_v2</OverrideVMSize>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_netperf.sh</files>
+        <TestParameters>
+            <param>test_duration=NETPERF_RUNTIME_IN_SECONDS</param>
+            <param>test_type="singlepps"</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Performance</Category>
+        <Area>Network</Area>
+        <Tags>network,hv_netvsc</Tags>
+    </test>
+    <test>
+        <testName>PERF-NETWORK-TCP-NETPERF-MAX-PPS-Synthetic</testName>
+        <testScript>PERF-NETWORK-TCP-NETPERF.ps1</testScript>
+        <setupType>M1S1</setupType>
+        <AdditionalHWConfig>
+            <Networking>Synthetic</Networking>
+        </AdditionalHWConfig>
+        <OverrideVMSize>Standard_F32s_v2</OverrideVMSize>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_netperf.sh</files>
+        <TestParameters>
+            <param>test_duration=NETPERF_RUNTIME_IN_SECONDS</param>
+            <param>test_type="maxpps"</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Performance</Category>
+        <Area>Network</Area>
+        <Tags>network,hv_netvsc</Tags>
+    </test>
+    <test>
+        <testName>PERF-NETWORK-TCP-NETPERF-MAX-PPS-SRIOV</testName>
+        <testScript>PERF-NETWORK-TCP-NETPERF.ps1</testScript>
+        <setupType>M1S1</setupType>
+        <AdditionalHWConfig>
+            <Networking>SRIOV</Networking>
+        </AdditionalHWConfig>
+        <OverrideVMSize>Standard_F32s_v2</OverrideVMSize>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_netperf.sh</files>
+        <TestParameters>
+            <param>test_duration=NETPERF_RUNTIME_IN_SECONDS</param>
+            <param>test_type="maxpps"</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Performance</Category>
+        <Area>Network</Area>
+        <Tags>network,hv_netvsc</Tags>
     </test>
 </TestCases>

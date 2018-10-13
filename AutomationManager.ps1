@@ -58,7 +58,8 @@ param (
 [switch] $ForceDeleteResources
 )
 
-Get-ChildItem .\Libraries -Recurse | Where-Object { $_.FullName.EndsWith(".psm1") } | ForEach-Object { Import-Module $_.FullName -Force -Global}
+Get-ChildItem .\Libraries -Recurse | Where-Object { $_.FullName.EndsWith(".psm1") } | `
+	ForEach-Object { Import-Module $_.FullName -Force -Global -DisableNameChecking}
 
 $xmlConfig = [xml](Get-Content $xmlConfigFile)
 $user = $xmlConfig.config.$TestPlatform.Deployment.Data.UserName
@@ -177,6 +178,13 @@ try {
 		}
 	}
 
+	Set-Variable -Name IsWindows -Value $false -Scope Global
+	if($xmlconfig.config.testsDefinition.test.Tags `
+           -and $xmlconfig.config.testsDefinition.test.Tags.ToString().Contains("win"))
+	{
+		Set-Variable -Name IsWindows -Value $true -Scope Global
+	}
+
 	$AzureSetup = $xmlConfig.config.$TestPlatform.General
 	LogMsg  ("Info : AzureAutomationManager.ps1 - LIS on Azure Automation")
 	LogMsg  ("Info : Created test results directory:$LogDir" )
@@ -208,9 +216,11 @@ try {
 		LogMsg "ServiceEndpoint        : $($SelectedSubscription.Environment.ActiveDirectoryServiceEndpointResourceId)"
 		LogMsg "CurrentStorageAccount  : $($AzureSetup.ARMStorageAccount)"
 	} elseif  ( $TestPlatform -eq "HyperV") {
-		LogMsg "HyperV Host            : $($xmlConfig.config.Hyperv.Host.ServerName)"
-		LogMsg "Source VHD Path        : $($xmlConfig.config.Hyperv.Host.SourceOsVHDPath)"
-		LogMsg "Destination VHD Path   : $($xmlConfig.config.Hyperv.Host.DestinationOsVHDPath)"
+		for( $index=0 ; $index -lt $xmlConfig.config.Hyperv.Hosts.ChildNodes.Count ; $index++ ) {
+			LogMsg "HyperV Host            : $($xmlConfig.config.Hyperv.Hosts.ChildNodes[$($index)].ServerName)"
+			LogMsg "Source VHD Path        : $($xmlConfig.config.Hyperv.Hosts.ChildNodes[$($index)].SourceOsVHDPath)"
+			LogMsg "Destination VHD Path   : $($xmlConfig.config.Hyperv.Hosts.ChildNodes[$($index)].DestinationOsVHDPath)"
+		}
 	}
 
 	if($DoNotDeleteVMs) {

@@ -42,19 +42,19 @@ function Send-ResultToDatabase ($xmlConfig, $logDir) {
         # Get host info
         $hostType    = "Azure"
         $hostBy    = ($xmlConfig.config.Azure.General.Location).Replace('"','')
-        $hostOS    = cat "$logDir\VM_properties.csv" | Select-String "Host Version"| %{$_ -replace ",Host Version,",""}
+        $hostOS    = Get-Content "$logDir\VM_properties.csv" | Select-String "Host Version"| ForEach-Object{$_ -replace ",Host Version,",""}
 
         # Get L1 guest info
-        $l1GuestDistro    = cat "$logDir\VM_properties.csv" | Select-String "OS type"| %{$_ -replace ",OS type,",""}
+        $l1GuestDistro    = Get-Content "$logDir\VM_properties.csv" | Select-String "OS type"| ForEach-Object{$_ -replace ",OS type,",""}
         $l1GuestOSType    = "Linux"
         $l1GuestSize = $AllVMData.InstanceSize
-        $l1GuestKernelVersion    = cat "$logDir\VM_properties.csv" | Select-String "Kernel version"| %{$_ -replace ",Kernel version,",""}
+        $l1GuestKernelVersion    = Get-Content "$logDir\VM_properties.csv" | Select-String "Kernel version"| ForEach-Object{$_ -replace ",Kernel version,",""}
         $imageInfo = $xmlConfig.config.Azure.Deployment.Data.Distro.ARMImage
         $imageName = "$($imageInfo.Publisher) $($imageInfo.Offer) $($imageInfo.Sku) $($imageInfo.Version)"
 
         # Get L2 guest info
-        $l2GuestDistro    = cat "$logDir\nested_properties.csv" | Select-String "OS type"| %{$_ -replace ",OS type,",""}
-        $l2GuestKernelVersion    = cat "$logDir\nested_properties.csv" | Select-String "Kernel version"| %{$_ -replace ",Kernel version,",""}
+        $l2GuestDistro    = Get-Content "$logDir\nested_properties.csv" | Select-String "OS type"| ForEach-Object{$_ -replace ",OS type,",""}
+        $l2GuestKernelVersion    = Get-Content "$logDir\nested_properties.csv" | Select-String "Kernel version"| ForEach-Object{$_ -replace ",Kernel version,",""}
 
         foreach ($param in $currentTestData.TestParameters.param) {
             if ($param -match "NestedCpuNum") {
@@ -135,7 +135,7 @@ function Main {
         }
 
         # Collect L1 VM properties
-        RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm1sshport -command ". azuremodules.sh && collect_VM_properties" -runAsSudo
+        RunLinuxCmd -username $user -password $password -ip $hs1VIP -port $hs1vm1sshport -command ". utils.sh && collect_VM_properties" -runAsSudo
         RemoteCopy -download -downloadFrom $hs1VIP -files "/home/$user/VM_properties.csv" -downloadTo $LogDir -port $hs1vm1sshport -username $user -password $password
 
         if ($testResult -imatch $resultPass) {

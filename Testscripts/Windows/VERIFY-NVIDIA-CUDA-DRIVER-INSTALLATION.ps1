@@ -3,8 +3,6 @@
 
 function Main {
     # Create test result 
-    $testResult = ""
-    $currentTestResult = CreateTestResultObject
     $resultArr = @()
 
     try {
@@ -23,7 +21,7 @@ function Main {
         $myString = @"
 cd /root/
 ./InstallCUDADrivers.sh -logFolder /root &> GPUConsoleLogs.txt
-. azuremodules.sh
+. utils.sh
 collect_VM_properties
 "@
         $StartScriptName = "StartGPUDriverInstall.sh"

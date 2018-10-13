@@ -24,64 +24,112 @@
 #>
 ###############################################################################################
 
-Function ValidateParameters()
+function Validate-AzureParameters {
+    $parameterErrors = @()
+    if ( !$ARMImageName -and !$OsVHD ) {
+        $parameterErrors += "-ARMImageName '<Publisher> <Offer> <Sku> <Version>', or -OsVHD <'VHD_Name.vhd'> is required."
+    }
+
+    if (($ARMImageName.Trim().Split(" ").Count -ne 4) -and ($ARMImageName -ne "")) {
+        $parameterErrors += ("Invalid value for the provided ARMImageName parameter: <'${ARMImageName}'>." + `
+                             "The ARM image should be in the format: '<Publisher> <Offer> <Sku> <Version>'.")
+    }
+
+    if ($OsVHD -and [System.IO.Path]::GetExtension($OsVHD) -ne ".vhd") {
+        $parameterErrors += "-OsVHD $OsVHD does not have .vhd extension required by Platform Azure."
+    }
+
+    if ( !$TestLocation) {
+        $parameterErrors += "-TestLocation <AzureRegion> is required."
+    }
+
+    if ([string]$VMGeneration -eq "2") {
+        $parameterErrors += "-VMGeneration 2 is not supported on Azure."
+    }
+    return $parameterErrors
+}
+
+function Validate-HyperVParameters {
+    $parameterErrors = @()
+    if (!$OsVHD ) {
+        $parameterErrors += "-OsVHD <'VHD_Name.vhd'> is required."
+    }
+    return $parameterErrors
+}
+
+function Validate-Parameters {
+    $parameterErrors = @()
+    $supportedPlatforms = @("Azure", "HyperV")
+
+    if ($supportedPlatforms.contains($TestPlatform)) {
+
+        # Validate general parameters
+        if ( !$RGIdentifier ) {
+            $parameterErrors += "-RGIdentifier <ResourceGroupIdentifier> is required."
+        }
+        if (!$VMGeneration) {
+             $parameterErrors += "-VMGeneration <VMGeneration> is required."
+        } else {
+            $supportedVMGenerations = @("1","2")
+            if ($supportedVMGenerations.contains([string]$VMGeneration)) {
+                if ([string]$VMGeneration -eq "2" -and $OsVHD `
+                         -and [System.IO.Path]::GetExtension($OsVHD) -ne ".vhdx") {
+                    $parameterErrors += "-VMGeneration 2 requires .vhdx files."
+                }
+            } else {
+                $parameterErrors += "-VMGeneration $VMGeneration is not yet supported."
+            }
+        }
+
+        # Validate platform dependent parameters
+        $parameterErrors += & "Validate-${TestPlatform}Parameters"
+    } else {
+        if ($TestPlatform) {
+            $parameterErrors += "$TestPlatform is not yet supported."
+        } else {
+            $parameterErrors += "'-TestPlatform' is not provided."
+        }
+    }
+
+    if ($parameterErrors.Count -gt 0) {
+        $parameterErrors | ForEach-Object { LogError $_ }
+        throw "Failed to validate the test parameters provided. Please fix above issues and retry."
+    } else {
+        LogMsg "Test parameters have been validated successfully. Continue running the test."
+    }
+}
+
+Function Add-ReplaceableTestParameters($XmlConfigFilePath)
 {
-	$ParameterErrors = @()
-	if ($TestPlatform -eq "Azure")
+	$ReplacableTestParameters = [xml](Get-Content -Path "$WorkingDirectory\XML\Other\ReplaceableTestParameters.xml")
+	if ($CustomParameters)
 	{
-		#region Validate Parameters
-		if ( !$ARMImageName -and !$OsVHD )
+		LogMsg "Checking custom parameters"
+		$CustomParameters = $CustomParameters.Trim().Trim(";").Split(";")
+		foreach ($CustomParameter in $CustomParameters)
 		{
-			$ParameterErrors += "-ARMImageName '<Publisher> <Offer> <Sku> <Version>', or -OsVHD <'VHD_Name.vhd'> is required."
+			$CustomParameter = $CustomParameter.Trim()
+			$ReplaceThis = $CustomParameter.Split("=")[0]
+			$ReplaceWith = $CustomParameter.Split("=")[1]
+			$OldValue = ($ReplacableTestParameters.ReplaceableTestParameters.Parameter | Where-Object `
+			{ $_.ReplaceThis -eq $ReplaceThis }).ReplaceWith
+			($ReplacableTestParameters.ReplaceableTestParameters.Parameter | Where-Object `
+			{ $_.ReplaceThis -eq $ReplaceThis }).ReplaceWith = $ReplaceWith
+			LogMsg "Custom Parameter: $ReplaceThis=$OldValue --> $ReplaceWith"
 		}
-		if (($ARMImageName.Trim().Split(" ").Count -ne 4) -and ($ARMImageName -ne "")) 
-		{
-			$ParameterErrors += ("Invalid value for the provided ARMImageName parameter: <'${ARMImageName}'>." + `
-                                 "The ARM image should be in the format: '<Publisher> <Offer> <Sku> <Version>'.")
-		}
-		if ( !$TestLocation)
-		{
-			$ParameterErrors += "-TestLocation <AzureRegion> is required."
-		}
-		if ( !$RGIdentifier )
-		{
-			$ParameterErrors += "-RGIdentifier <ResourceGroupIdentifier> is required."
-		}   
-		#endregion
+		LogMsg "Custom parameter(s) are ready to be injected along with default parameters, if any."
 	}
-	elseif ($TestPlatform -eq "HyperV")
+
+	$XmlConfigContents = (Get-Content -Path $XmlConfigFilePath) 
+	foreach ($ReplaceableParameter in $ReplacableTestParameters.ReplaceableTestParameters.Parameter)
 	{
-		#region Validate Parameters
-		if (!$OsVHD )
+		if ($XmlConfigContents -match $ReplaceableParameter.ReplaceThis)
 		{
-			$ParameterErrors += "-OsVHD <'VHD_Name.vhd'> is required."
+			$XmlConfigContents = $XmlConfigContents.Replace($ReplaceableParameter.ReplaceThis,$ReplaceableParameter.ReplaceWith)
+			LogMsg "$($ReplaceableParameter.ReplaceThis)=$($ReplaceableParameter.ReplaceWith) injected into $XmlConfigFilePath"
 		}
-		if ( !$RGIdentifier )
-		{
-			$ParameterErrors += "-RGIdentifier <ResourceGroupIdentifier> is required."
-		}
-		#endregion
-	}	
-	elseif ($TestPlatform)
-	{
-		$ParameterErrors += "$TestPlatform is not yet supported."
 	}
-	else
-	{
-		$ParameterErrors += "'-TestPlatform' is not provided."
-	}
-	
-	
-	
-	if ( $ParameterErrors.Count -gt 0)
-	{
-		$ParameterErrors | ForEach-Object { LogError $_ }
-		Throw "Failed to validate the test parameters provided. Please fix above issues and retry."
-	}
-	else 
-	{
-		LogMsg "Test parameters have been validated successfully. Continue running the test."
-	}	
+	Set-Content -Value $XmlConfigContents -Path $XmlConfigFilePath -Force
 }
 
 Function UpdateGlobalConfigurationXML()
@@ -140,27 +188,45 @@ Function UpdateGlobalConfigurationXML()
 	}
 	if ($TestPlatform -eq "HyperV")
 	{
-		if ( $TestLocation)
+		if ( $SourceOsVHDPath )
 		{
-			$GlobalConfiguration.Global.$TestPlatform.Host.ServerName = $TestLocation
-			$VMs = Get-VM -ComputerName $GlobalConfiguration.Global.$TestPlatform.Host.ServerName
-			if ($?)
-			{
-				LogMsg "Set '$TestLocation' to As GlobalConfiguration.Global.HyperV.Host.ServerName"
+			for( $index=0 ; $index -lt $GlobalConfiguration.Global.$TestPlatform.Hosts.ChildNodes.Count ; $index++ ) {
+				$GlobalConfiguration.Global.$TestPlatform.Hosts.ChildNodes[$index].SourceOsVHDPath = $SourceOsVHDPath
 			}
-			else 
+		}
+		if ( $DestinationOsVHDPath )
+		{
+			for( $index=0 ; $index -lt $GlobalConfiguration.Global.$TestPlatform.Hosts.ChildNodes.Count ; $index++ ) {
+				$GlobalConfiguration.Global.$TestPlatform.Hosts.ChildNodes[$index].DestinationOsVHDPath = $DestinationOsVHDPath
+			}
+		}
+		if ($TestLocation)
+		{
+			$Locations = $TestLocation.split(',')
+			$index = 0
+			foreach($Location in $Locations)
 			{
-				LogErr "Did you used -TestLocation XXXXXXX. In HyperV mode, -TestLocation can be used to Override HyperV server mentioned in GlobalConfiguration XML file."
-				LogErr "In HyperV mode, -TestLocation can be used to Override HyperV server mentioned in GlobalConfiguration XML file."
-				Throw "Unable to access HyperV server - $TestLocation"	
+				$GlobalConfiguration.Global.$TestPlatform.Hosts.ChildNodes[$index].ServerName = $Location
+				Get-VM -ComputerName $GlobalConfiguration.Global.$TestPlatform.Hosts.ChildNodes[$index].ServerName | Out-Null
+				if ($?)
+				{
+					LogMsg "Set '$($Location)' to As GlobalConfiguration.Global.HyperV.Hosts.ChildNodes[$($index)].ServerName"
+				}
+				else
+				{
+					LogErr "Did you used -TestLocation XXXXXXX. In HyperV mode, -TestLocation can be used to Override HyperV server mentioned in GlobalConfiguration XML file."
+					LogErr "In HyperV mode, -TestLocation can be used to Override HyperV server mentioned in GlobalConfiguration XML file."
+					Throw "Unable to access HyperV server - '$($Location)'"
+				}
+				$index++
 			}
 		}
 		else
 		{
-            $VMs = Get-VM -ComputerName $TestLocation
+			$TestLocation = $GlobalConfiguration.Global.$TestPlatform.Hosts.ChildNodes[0].ServerName
+			LogMsg "Read Test Location from GlobalConfiguration.Global.HyperV.Hosts.ChildNodes[0].ServerName"
+			Get-VM -ComputerName $TestLocation | Out-Null
 		}
-        
-		
 	}
 	#If user provides Result database / result table, then add it to the GlobalConfiguration.
 	if( $ResultDBTable -or $ResultDBTestTag)
@@ -899,7 +965,7 @@ Function UploadTestResultToDatabase ($TestPlatform,$TestLocation,$TestCategory,$
 				}
 				if ( $TestPlatform -eq "HyperV")
 				{
-					$TestLocation = ($GlobalConfiguration.Global.$TestPlatform.Host.ServerName).ToLower()
+					$TestLocation = ($GlobalConfiguration.Global.$TestPlatform.Hosts.ChildNodes[0].ServerName).ToLower()
 				}
 				elseif ($TestPlatform -eq "Azure")
 				{
@@ -950,6 +1016,37 @@ Function UploadTestResultToDatabase ($TestPlatform,$TestLocation,$TestCategory,$
 		else 
 		{
 			LogErr "Unable to send telemetry data to Azure. XML Secrets file not provided."	
+		}
+	}
+}
+
+Function Get-LISAv2Tools($XMLSecretFile)
+{
+	# Copy required binary files to working folder
+	$CurrentDirectory = Get-Location
+	$CmdArray = @('7za.exe','dos2unix.exe','gawk','jq','plink.exe','pscp.exe', `
+					'kvp_client32','kvp_client64','nc.exe')
+
+	if ($XMLSecretFile) {
+		$WebClient = New-Object System.Net.WebClient
+		$xmlSecret = [xml](Get-Content $XMLSecretFile)
+		$toolFileAccessLocation = $xmlSecret.secrets.blobStorageLocation
+	}
+
+	$CmdArray | ForEach-Object {
+		# Verify the binary file in Tools location
+		if ( Test-Path $CurrentDirectory/Tools/$_ ) {
+			LogMsg "$_ file found in Tools folder."
+		} elseif (! $toolFileAccessLocation) {
+			Throw "$_ file is not found, please either download the file to Tools folder, or specify the blobStorageLocation in XMLSecretFile"
+		} else {
+			LogMsg "$_ file not found in Tools folder."
+			LogMsg "Downloading required files from blob Storage Location"
+
+			$WebClient.DownloadFile("$toolFileAccessLocation/$_","$CurrentDirectory\Tools\$_")
+
+			# Successfully downloaded files
+			LogMsg "File $_ successfully downloaded in Tools folder: $_."
 		}
 	}
 }

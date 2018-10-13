@@ -41,13 +41,17 @@ Param(
 
 	#[Required] for Azure.
 	[string] $TestLocation="",
-	[string] $RGIdentifier = "",
 	[string] $ARMImageName = "",
 	[string] $StorageAccount="",
 
 	#[Required] for HyperV
+	[string] $SourceOsVHDPath="",
+
+	#[Required] for Two Hosts HyperV
+	[string] $DestinationOsVHDPath="",
 
 	#[Required] Common for HyperV and Azure.
+	[string] $RGIdentifier = "",
 	[string] $OsVHD = "",   #... [Azure: Required only if -ARMImageName is not provided.]
 							#... [HyperV: Mandatory]
 	[string] $TestCategory = "",
@@ -72,13 +76,15 @@ Param(
 	[switch] $UpdateGlobalConfigurationFromSecretsFile,
 	[switch] $UpdateXMLStringsFromSecretsFile,
 
-	#[Optional] Parameters for Overriding VM Configuration. Azure only.
+	#[Optional] Parameters for Overriding VM Configuration.
+	[string] $CustomParameters = "",
 	[string] $OverrideVMSize = "",
 	[switch] $EnableAcceleratedNetworking,
 	[string] $OverrideHyperVDiskMode = "",
 	[switch] $ForceDeleteResources,
 	[switch] $UseManagedDisks,
 	[switch] $DoNotDeleteVMs,
+	[string] $VMGeneration = "1",
 
 	[string] $ResultDBTable = "",
 	[string] $ResultDBTestTag = "",
@@ -87,35 +93,10 @@ Param(
 )
 
 #Import the Functions from Library Files.
-Get-ChildItem .\Libraries -Recurse | Where-Object { $_.FullName.EndsWith(".psm1") } | ForEach-Object { Import-Module $_.FullName -Force -Global }
+Get-ChildItem .\Libraries -Recurse | Where-Object { $_.FullName.EndsWith(".psm1") } | `
+	ForEach-Object { Import-Module $_.FullName -Force -Global -DisableNameChecking}
 
 try {
-	# Copy required binary files to working folder
-	$CurrentDirectory = Get-Location
-	$CmdArray = '7za.exe','dos2unix.exe', 'gawk','jq','plink.exe','pscp.exe'
-
-	if ($XMLSecretFile) {
-		$WebClient = New-Object System.Net.WebClient
-		$xmlSecret = [xml](Get-Content $XMLSecretFile)
-		$toolFileAccessLocation = $xmlSecret.secrets.blobStorageLocation
-	}
-
-	$CmdArray | ForEach-Object {
-		# Verify the binary file in Tools location
-		if ( Test-Path $CurrentDirectory/Tools/$_ ) {
-			Write-Output "$_ file found in Tools folder."
-		} elseif (! $toolFileAccessLocation) {
-			Throw "$_ file is not found, please either download the file to Tools folder, or specify the blobStorageLocation in XMLSecretFile"
-		} else {
-			Write-Output "$_ file not found in Tools folder."
-			Write-Output "Downloading required files from blob Storage Location"
-
-			$WebClient.DownloadFile("$toolFileAccessLocation/$_","$CurrentDirectory\Tools\$_")
-
-			# Successfully downloaded files
-			Write-Output "File $_ successfully downloaded in Tools folder: $_."
-		}
-	}
 
 	#region Prepare / Clean the powershell console.
 	$MaxDirLength = 32
@@ -165,8 +146,11 @@ try {
 	}
 	#endregion
 
-	#Validate the test parameters.
-	ValidateParameters
+	#Download the tools required for LISAv2 execution.
+	Get-LISAv2Tools -XMLSecretFile $XMLSecretFile
+
+	# Validate the test parameters.
+	Validate-Parameters
 
 	UpdateGlobalConfigurationXML
 
@@ -188,6 +172,10 @@ try {
 
 	#Validate all XML files in working directory.
 	$allTests = CollectTestCases -TestXMLs $TestXMLs
+
+	if( !$allTests.innerXML ) {
+		Throw "Specified -TestNames or -TestCategory not found"
+	}
 
 	#region Create Test XML
 	$SetupTypes = $allTests.SetupType | Sort-Object | Get-Unique
@@ -236,6 +224,7 @@ try {
 							$xmlContent += ("$($tab[6])" + "<Version>" + "$($ARMImage[3])" + "</Version>`n")
 						$xmlContent += ("$($tab[5])" + "</ARMImage>`n")
 						$xmlContent += ("$($tab[5])" + "<OsVHD>" + "$OsVHD" + "</OsVHD>`n")
+						$xmlContent += ("$($tab[5])" + "<VMGeneration>" + "$VMGeneration" + "</VMGeneration>`n")
 					$xmlContent += ("$($tab[4])" + "</Distro>`n")
 					$xmlContent += ("$($tab[4])" + "<UserName>" + "$($GlobalConfiguration.Global.$TestPlatform.TestCredentials.LinuxUsername)" + "</UserName>`n")
 					$xmlContent += ("$($tab[4])" + "<Password>" + "$($GlobalConfiguration.Global.$TestPlatform.TestCredentials.LinuxPassword)" + "</Password>`n")
@@ -261,13 +250,22 @@ try {
 	} elseif ($TestPlatform -eq "Hyperv") {
 		$xmlContent += ("$($tab[1])" + "<Hyperv>`n")
 
-			#region Add Subscription Details
-			$xmlContent += ("$($tab[2])" + "<Host>`n")
+			#region Add Hosts Details
+			$xmlContent += ("$($tab[2])" + "<Hosts>`n")
+				$xmlContent += ("$($tab[3])" + "<Host>`n")
+				foreach ( $line in $GlobalConfiguration.Global.HyperV.Hosts.FirstChild.InnerXml.Replace("><",">`n<").Split("`n")) {
+					$xmlContent += ("$($tab[4])" + "$line`n")
+				}
+				$xmlContent += ("$($tab[3])" + "</Host>`n")
 
-			foreach ( $line in $GlobalConfiguration.Global.HyperV.Host.InnerXml.Replace("><",">`n<").Split("`n")) {
-				$xmlContent += ("$($tab[3])" + "$line`n")
-			}
-			$xmlContent += ("$($tab[2])" + "</Host>`n")
+				if($TestLocation -and $TestLocation.split(',').Length -eq 2){
+					$xmlContent += ("$($tab[3])" + "<Host>`n")
+					foreach ( $line in $GlobalConfiguration.Global.HyperV.Hosts.LastChild.InnerXml.Replace("><",">`n<").Split("`n")) {
+						$xmlContent += ("$($tab[4])" + "$line`n")
+					}
+					$xmlContent += ("$($tab[3])" + "</Host>`n")
+				}
+			$xmlContent += ("$($tab[2])" + "</Hosts>`n")
 			#endregion
 
 			#region Database details
@@ -346,6 +344,9 @@ try {
 	$xmlContent += ("$($tab[0])" + "</config>`n")
 	Set-Content -Value $xmlContent -Path $xmlFile -Force
 
+	#This function will inject default / custom replacable test parameters to TestConfiguration.xml
+	Add-ReplaceableTestParameters -XmlConfigFilePath $xmlFile
+
 	try {
 		$xmlConfig = [xml](Get-Content $xmlFile)
 		$xmlConfig.Save("$xmlFile")
@@ -384,7 +385,7 @@ try {
 	$out = ZipFiles -zipfilename $zipFile -sourcedir $LogDir
 
 	if ($out -match "Everything is Ok") {
-		LogMsg "$currentDir\$zipfilename created successfully."
+		LogMsg "$WorkingDirectory\$zipfilename created successfully."
 	}
 
 	try {
@@ -429,13 +430,13 @@ try {
 	$ExitCode = 1
 } finally {
 	if ( $finalWorkingDirectory ) {
-		Write-Output "Copying all files back to original working directory: $originalWorkingDirectory."
+		Write-Host "Copying all files back to original working directory: $originalWorkingDirectory."
 		$tmpDest = '\\?\' + $originalWorkingDirectory
 		Copy-Item -Path "$finalWorkingDirectory\*" -Destination $tmpDest -Force -Recurse | Out-Null
 		Set-Location ..
-		Write-Output "Cleaning up $finalWorkingDirectory"
+		Write-Host "Cleaning up $finalWorkingDirectory"
 		Remove-Item -Path $finalWorkingDirectory -Force -Recurse -ErrorAction SilentlyContinue
-		Write-Output "Setting workspace back to original location: $originalWorkingDirectory"
+		Write-Host "Setting workspace back to original location: $originalWorkingDirectory"
 		Set-Location $originalWorkingDirectory
 	}
 	Get-Variable -Exclude PWD,*Preference,ExitCode | Remove-Variable -Force -ErrorAction SilentlyContinue
@@ -443,3 +444,4 @@ try {
 
 	exit $ExitCode
 }
+

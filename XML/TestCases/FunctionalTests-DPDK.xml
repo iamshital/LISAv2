@@ -7,15 +7,49 @@
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>        
         <SubtestValues>This-tag-will-be-removed</SubtestValues>
-        <files>.\Testscripts\Linux\azuremodules.sh</files>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\dpdkSetup.sh,.\Testscripts\Linux\dpdkTestPmd.sh</files>
         <TestParameters>
-            <param>dpdkSrcLink="https://eosgcloudstorage.blob.core.windows.net/testpackages/dpdk/dpdk-18.05.tar.xz"</param>
-            <param>testDuration=120</param>
+            <param>dpdkSrcLink="DPDK_SOURCE_URL"</param>
+            <param>testDuration=DPDK_TEST_DURATION_IN_SECONDS</param>
             <param>modes="rxonly io"</param>
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Functional</Category>
         <Area>DPDK</Area>
         <Tags>dpdk,network,hv_netvsc,sriov</Tags>
-    </test>	
+    </test>
+    <test>
+        <testName>VERIFY-SRIOV-FAILSAFE-FOR-DPDK</testName>
+        <testScript>VERIFY-SRIOV-FAILSAFE-FOR-DPDK.ps1</testScript>
+        <setupType>DPDK</setupType>
+        <AdditionalHWConfig>
+            <Networking>SRIOV</Networking>
+        </AdditionalHWConfig>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\dpdkSetup.sh,.\Testscripts\Linux\dpdkTestPmd.sh</files>
+        <TestParameters>
+            <param>dpdkSrcLink="DPDK_SOURCE_URL"</param>
+            <param>testDuration=30</param>
+            <param>modes="rxonly"</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Functional</Category>
+        <Area>DPDK</Area>
+        <Tags>dpdk,network,hv_netvsc,sriov</Tags>
+    </test>
+    <test>
+        <testName>VERIFY-DPDK-COMPLIANCE</testName>
+        <testScript>VERIFY-DPDK-COMPLIANCE.ps1</testScript>
+        <setupType>DPDK1VM3NICs</setupType>
+        <AdditionalHWConfig>
+            <Networking>SRIOV</Networking>
+        </AdditionalHWConfig>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\dpdkSetup.sh</files>
+        <TestParameters>
+            <param>dpdkSrcLink="DPDK_SOURCE_URL"</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Functional</Category>
+        <Area>DPDK</Area>
+        <Tags>dpdk,network,hv_netvsc,sriov</Tags>
+    </test> 	
 </TestCases>
