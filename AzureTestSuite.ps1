@@ -214,8 +214,8 @@ Function RunTestsOnCycle ($cycleName , $xmlConfig, $Distro, $TestIterations ) {
 							$tempHtmlText = ($testSummary).Substring(0,((($testSummary).Length)-6))
 						}
 						catch {
-							ThrowException $_
-							$tempHtmlText = "Unable to parse the results. Will be fixed shortly."
+							LogErr "Unable to parse HTML Logs."
+							$tempHtmlText = "Unable to parse the results."
 						}
 						$executionCount += 1
 						$testRunDuration = GetStopWatchElapasedTime $stopWatch "mm"
