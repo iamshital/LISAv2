@@ -904,16 +904,8 @@ Function GetAndCheckKernelLogs($allDeployedVMs, $status, $vmUser, $vmPassword)
 					if ( $UseAzureResourceManager )
 					{
 						LogMsg "Preserving the Resource Group(s) $($VM.ResourceGroupName)"
-						LogMsg "Setting tags : $preserveKeyword = yes; testName = $testName"
-						$hash = @{}
-						$hash.Add($preserveKeyword,"yes")
-						$hash.Add("testName","$testName")
-						$Null = Set-AzureRmResourceGroup -Name $($VM.ResourceGroupName) -Tag $hash
-						LogMsg "Setting tags : calltrace = yes; testName = $testName"
-						$hash = @{}
-						$hash.Add("calltrace","yes")
-						$hash.Add("testName","$testName")
-						$Null = Set-AzureRmResourceGroup -Name $($VM.ResourceGroupName) -Tag $hash
+						Add-ResourceGroupTag -ResourceGroup $VM.ResourceGroupName -TagName $preserveKeyword -TagValue "yes"
+						Add-ResourceGroupTag -ResourceGroup $VM.ResourceGroupName -TagName "calltrace" -TagValue "yes"
 					}
 					else
 					{
@@ -2005,11 +1997,7 @@ Function DoTestCleanUp($CurrentTestResult, $testName, $DeployedServices, $Resour
 						LogMsg "Preserving the Resource Group(s) $group"
 						if ($TestPlatform -eq "Azure")
 						{
-							LogMsg "Setting tags : preserve = yes; testName = $testName"
-							$hash = @{}
-							$hash.Add($preserveKeyword,"yes")
-							$hash.Add("testName","$testName")
-							$out = Set-AzureRmResourceGroup -Name $group -Tag $hash
+							Add-ResourceGroupTag -ResourceGroup $group -TagName $preserveKeyword -TagValue "yes"
 						}
 						LogMsg "Collecting VM logs.."
 						if ( !$isVMLogsCollected)
