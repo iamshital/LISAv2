@@ -1,7 +1,12 @@
 name: 'code_functionality'
 variables:
-  enable_all: 'true'
+  enable_all: 'true' 
 jobs:
+# Download Secure File
+# Download a secure file to a temporary location on the build or release agent
+  - task: DownloadSecureFile@1
+    inputs:
+      secureFile: AzureSecrets.xml   
   - job: 'verify_deployment_provision'
     timeoutInMinutes: 20
     cancelTimeoutInMinutes: 12
@@ -10,5 +15,6 @@ jobs:
     pool:
       vmImage: 'win1803'
     steps:
-    - powershell: Install-Module -Name AzureRM -Scope CurrentUser -Force -SkipPublisherCheck -AllowClobber -MinimumVersion 6.10.3
-    - powershell: Get-AzureRmSubscription
+#    - powershell: Install-Module -Name AzureRM -Scope CurrentUser -Force -SkipPublisherCheck -AllowClobber -MinimumVersion 6.10.3
+#    - powershell: Get-AzureRmSubscription
+    - powershell: Get-ChildItem -Recurse    
