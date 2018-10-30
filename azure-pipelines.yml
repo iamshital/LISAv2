@@ -1,40 +1,14 @@
-name: 'code_quality'
+name: 'code_functionality'
 variables:
   enable_all: 'true'
 jobs:
-  - job: 'UnitTests_Pester'
-    timeoutInMinutes: 10
+  - job: 'verify_deployment_provision'
+    timeoutInMinutes: 20
     cancelTimeoutInMinutes: 12
     strategy:
       parallel: 1
     pool:
       vmImage: 'win1803'
     steps:
-    - powershell: Install-Module -Name Pester -Scope CurrentUser -Force -SkipPublisherCheck -AllowClobber
-    - powershell: Invoke-Pester -OutputFile "$(System.DefaultWorkingDirectory)\test.xml" -OutputFormat NUnitXml
-    - task: PublishTestResults@2
-      inputs:
-        testRunner: 'NUnit'
-        testResultsFiles: 'test.xml'
-    - task: PublishBuildArtifacts@1
-      inputs:
-        pathtoPublish: '$(System.DefaultWorkingDirectory)\test.xml'
-        artifactName: 'TestResult'
-  - job: 'PowerShellCodeCheck_PSScriptAnalyzer'
-    timeoutInMinutes: 10
-    cancelTimeoutInMinutes: 12
-    strategy:
-      parallel: 1
-    pool:
-      vmImage: 'win1803'
-    steps:
-    - powershell: Install-Module -Name PSScriptAnalyzer -Scope CurrentUser -Force -SkipPublisherCheck -AllowClobber
-    - powershell:
-        $rules = @(
-                 "PSUseDeclaredVarsMoreThanAssignments"
-                );
-        $errors = Invoke-ScriptAnalyzer -Path . -Recurse -IncludeRule $rules;
-        if ($errors.Count -gt 0) {
-            echo $errors;
-            exit 1;
-        }
+    - powershell: Install-Module -Name AzureRM -Scope CurrentUser -Force -SkipPublisherCheck -AllowClobber -MinimumVersion 6.10.3
+    - powershell: Get-AzureRmSubscription
