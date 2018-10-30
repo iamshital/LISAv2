@@ -791,9 +791,12 @@ Function GenerateAzureDeployJSONFile ($RGName, $osImage, $osVHD, $RGXMLData, $Lo
 #Random Data
 $RGrandomWord = ([System.IO.Path]::GetRandomFileName() -replace '[^a-z]')
 $RGRandomNumber = Get-Random -Minimum 11111 -Maximum 99999
-if ( $CurrentTestData.AdditionalHWConfig.DiskType -eq "Managed" )
+if ( $CurrentTestData.AdditionalHWConfig.DiskType -eq "Managed" -or $UseManagedDisks )
 {
-    $UseManageDiskForCurrentTest = $true
+    if ( $CurrentTestData.AdditionalHWConfig.DiskType -eq "Managed" )
+    {
+        $UseManageDiskForCurrentTest = $true
+    }
     $DiskType = "Managed"
 }
 else
@@ -2024,10 +2027,9 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
                         }
                         else
                         {
-                            Add-Content -Value "$($indents[6])^caching^: ^ReadWrite^" -Path $jsonFile
+                            Add-Content -Value "$($indents[6])^caching^: ^ReadWrite^," -Path $jsonFile
                         }                            
                             Add-Content -Value "$($indents[6])^createOption^: ^FromImage^" -Path $jsonFile
-                            LogMsg "Added $DiskType OS disk : $vmName-OSDisk"
                         }
                         else 
                         {
@@ -2041,6 +2043,7 @@ foreach ( $newVM in $RGXMLData.VirtualMachine)
                         }
                     }
                     Add-Content -Value "$($indents[5])}," -Path $jsonFile
+                    LogMsg "Added $DiskType OS disk : $vmName-OSDisk"
                     $dataDiskAdded = $false
                     Add-Content -Value "$($indents[5])^dataDisks^ : " -Path $jsonFile
                     Add-Content -Value "$($indents[5])[" -Path $jsonFile
