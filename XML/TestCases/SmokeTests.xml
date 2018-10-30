@@ -22,7 +22,7 @@
         <Platform>Azure</Platform>
         <Category>Smoke</Category>
         <Area>default</Area>
-        <Tags>bvt,disk</Tags>
+        <Tags>ephemeral_os_disk</Tags>
     </test>        
     <test>
         <TestName>VERIFY-DEPLOYMENT-PROVISION-SRIOV</TestName>
