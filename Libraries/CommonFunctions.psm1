@@ -1156,7 +1156,7 @@ Function RemoteCopy($uploadTo, $downloadFrom, $downloadTo, $port, $files, $usern
 						if($usePrivateKey)
 						{
 							LogMsg "Uploading $tarFileName to $username : $uploadTo, port $port using PrivateKey authentication"
-							Write-Output y | .\tools\pscp -i .\ssh\$sshKey -q -P $port $tarFileName $username@${uploadTo}:
+							Write-Output "yes" | .\tools\pscp -i .\ssh\$sshKey -q -P $port $tarFileName $username@${uploadTo}:
 							$returnCode = $LASTEXITCODE
 						}
 						else
@@ -1165,7 +1165,7 @@ Function RemoteCopy($uploadTo, $downloadFrom, $downloadTo, $port, $files, $usern
 							$curDir = $PWD
 							$uploadStatusRandomFile = ".\Temp\UploadStatusFile" + (Get-Random -Maximum 9999 -Minimum 1111) + ".txt"
 							$uploadStartTime = Get-Date
-							$uploadJob = Start-Job -ScriptBlock { Set-Location $args[0]; Write-Output $args; Set-Content -Value "1" -Path $args[6]; $username = $args[4]; $uploadTo = $args[5]; Write-Output y | .\tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ; Set-Content -Value $LASTEXITCODE -Path $args[6];} -ArgumentList $curDir,$password,$port,$tarFileName,$username,${uploadTo},$uploadStatusRandomFile
+							$uploadJob = Start-Job -ScriptBlock { Set-Location $args[0]; Write-Output $args; Set-Content -Value "1" -Path $args[6]; $username = $args[4]; $uploadTo = $args[5]; Write-Output "yes" | .\tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ; Set-Content -Value $LASTEXITCODE -Path $args[6];} -ArgumentList $curDir,$password,$port,$tarFileName,$username,${uploadTo},$uploadStatusRandomFile
 							Start-Sleep -Milliseconds 100
 							$uploadJobStatus = Get-Job -Id $uploadJob.Id
 							$uploadTimout = $false
@@ -1238,7 +1238,7 @@ Function RemoteCopy($uploadTo, $downloadFrom, $downloadTo, $port, $files, $usern
 						if($usePrivateKey)
 						{
 							LogMsg "Uploading $testFile to $username : $uploadTo, port $port using PrivateKey authentication"
-							Write-Output y | .\tools\pscp -i .\ssh\$sshKey -q -P $port $testFile $username@${uploadTo}:
+							Write-Output "yes" | .\tools\pscp -i .\ssh\$sshKey -q -P $port $testFile $username@${uploadTo}:
 							$returnCode = $LASTEXITCODE
 						}
 						else
@@ -1247,7 +1247,7 @@ Function RemoteCopy($uploadTo, $downloadFrom, $downloadTo, $port, $files, $usern
 							$curDir = $PWD
 							$uploadStatusRandomFile = ".\Temp\UploadStatusFile" + (Get-Random -Maximum 9999 -Minimum 1111) + ".txt"
 							$uploadStartTime = Get-Date
-							$uploadJob = Start-Job -ScriptBlock { Set-Location $args[0]; Write-Output $args; Set-Content -Value "1" -Path $args[6]; $username = $args[4]; $uploadTo = $args[5]; Write-Output y | .\tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ; Set-Content -Value $LASTEXITCODE -Path $args[6];} -ArgumentList $curDir,$password,$port,$testFile,$username,${uploadTo},$uploadStatusRandomFile
+							$uploadJob = Start-Job -ScriptBlock { Set-Location $args[0]; Write-Output $args; Set-Content -Value "1" -Path $args[6]; $username = $args[4]; $uploadTo = $args[5]; Write-Output "yes" | .\tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ; Set-Content -Value $LASTEXITCODE -Path $args[6];} -ArgumentList $curDir,$password,$port,$testFile,$username,${uploadTo},$uploadStatusRandomFile
 							Start-Sleep -Milliseconds 100
 							$uploadJobStatus = Get-Job -Id $uploadJob.Id
 							$uploadTimout = $false
@@ -1313,7 +1313,7 @@ Function RemoteCopy($uploadTo, $downloadFrom, $downloadTo, $port, $files, $usern
 						$curDir = $PWD
 						$downloadStatusRandomFile = ".\Temp\DownloadStatusFile" + (Get-Random -Maximum 9999 -Minimum 1111) + ".txt"
 						$downloadStartTime = Get-Date
-						$downloadJob = Start-Job -ScriptBlock { $curDir=$args[0];$sshKey=$args[1];$port=$args[2];$testFile=$args[3];$username=$args[4];${downloadFrom}=$args[5];$downloadTo=$args[6];$downloadStatusRandomFile=$args[7]; Set-Location $curDir; Set-Content -Value "1" -Path $args[6]; Write-Output y | .\tools\pscp -i .\ssh\$sshKey -q -P $port $username@${downloadFrom}:$testFile $downloadTo; Set-Content -Value $LASTEXITCODE -Path $downloadStatusRandomFile;} -ArgumentList $curDir,$sshKey,$port,$testFile,$username,${downloadFrom},$downloadTo,$downloadStatusRandomFile
+						$downloadJob = Start-Job -ScriptBlock { $curDir=$args[0];$sshKey=$args[1];$port=$args[2];$testFile=$args[3];$username=$args[4];${downloadFrom}=$args[5];$downloadTo=$args[6];$downloadStatusRandomFile=$args[7]; Set-Location $curDir; Set-Content -Value "1" -Path $args[6]; Write-Output "yes" | .\tools\pscp -i .\ssh\$sshKey -q -P $port $username@${downloadFrom}:$testFile $downloadTo; Set-Content -Value $LASTEXITCODE -Path $downloadStatusRandomFile;} -ArgumentList $curDir,$sshKey,$port,$testFile,$username,${downloadFrom},$downloadTo,$downloadStatusRandomFile
 						Start-Sleep -Milliseconds 100
 						$downloadJobStatus = Get-Job -Id $downloadJob.Id
 						$downloadTimout = $false
@@ -1350,7 +1350,7 @@ Function RemoteCopy($uploadTo, $downloadFrom, $downloadTo, $port, $files, $usern
 							$downloadTo=$args[6];
 							$downloadStatusRandomFile=$args[7];
 							Set-Location $curDir;
-							Write-Output y | .\tools\pscp.exe  -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+							Write-Output "yes" | .\tools\pscp.exe  -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
 							Add-Content -Value "DownloadExtiCode_$LASTEXITCODE" -Path $downloadStatusRandomFile;
 						} -ArgumentList $curDir,$password,$port,$testFile,$username,${downloadFrom},$downloadTo,$downloadStatusRandomFile
 						Start-Sleep -Milliseconds 100
@@ -2687,12 +2687,12 @@ function Check-Systemd {
 	$check1 = $true
 	$check2 = $true
 
-	.\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "ls -l /sbin/init | grep systemd"
+	Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "ls -l /sbin/init | grep systemd"
 	if ($LASTEXITCODE -ne "True") {
 	LogMsg "Systemd not found on VM"
 	$check1 = $false
 	}
-	.\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "systemd-analyze --help"
+	Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "systemd-analyze --help"
 	if ($LASTEXITCODE -ne "True") {
 		LogMsg "Systemd-analyze not present on VM."
 		$check2 = $false
@@ -2732,8 +2732,8 @@ function Get-VMFeatureSupportStatus {
 		[String] $SupportKernel
 	)
 
-	Write-Output y | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 'exit 0'
-	$currentKernel = .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4  "uname -r"
+	Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 'exit 0'
+	$currentKernel = Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4  "uname -r"
 	if( $LASTEXITCODE -eq $false){
 		LogMsg "Warning: Could not get kernel version".
 	}
@@ -2774,12 +2774,12 @@ function Get-SelinuxAVCLog() {
 	$TEXT_HV = "hyperv"
 	$TEXT_AVC = "type=avc"
 
-	Write-Output y | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "ls /var/log/audit/audit.log > /dev/null 2>&1"
+	Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "ls /var/log/audit/audit.log > /dev/null 2>&1"
 	if (-not $LASTEXITCODE) {
 		LogErr "Warning: Unable to find audit.log from the VM, ignore audit log check"
 		return $True
 	}
-	.\Tools\pscp -C -pw $Password -P $SSHPort $Username@${Ipv4}:/var/log/audit/audit.log $filename
+	Write-Output "yes" | .\Tools\pscp -C -pw $Password -P $SSHPort $Username@${Ipv4}:/var/log/audit/audit.log $filename
 	if (-not $LASTEXITCODE) {
 		LogErr "ERROR: Unable to copy audit.log from the VM"
 		return $False
@@ -2806,7 +2806,7 @@ function Get-VMFeatureSupportStatus {
 		[String] $SupportKernel
 	)
 
-	$currentKernel = .\Tools\plink.exe -C -pw $Password -P $VmPort $UserName@$VmIp "uname -r"
+	$currentKernel = Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $VmPort $UserName@$VmIp "uname -r"
 	if ($LASTEXITCODE -eq $False) {
 		Write-Output "Warning: Could not get kernel version".
 	}
@@ -2935,10 +2935,10 @@ function Check-FileInLinuxGuest{
 #>
 	if ($checkSize) {
 
-		.\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "wc -c < $fileName"
+		Write-Output "yes" | .\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "wc -c < $fileName"
 	}
 	else {
-		.\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "stat ${fileName} >/dev/null"
+		Write-Output "yes" | .\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "stat ${fileName} >/dev/null"
 	}
 
 	if (-not $?) {
@@ -2946,7 +2946,7 @@ function Check-FileInLinuxGuest{
 	}
 	if ($checkContent) {
 
-		.\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "cat ${fileName}"
+		Write-Output "yes" | .\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "cat ${fileName}"
 		if (-not $?) {
 			return $False
 		}
@@ -2991,7 +2991,7 @@ function Send-CommandToVM {
 	}
 
 	# get around plink questions
-	Write-Output y | .\Tools\plink.exe -C -pw ${vmPassword} -P ${vmPort} root@$ipv4 'exit 0'
+	Write-Output "yes" | .\Tools\plink.exe -C -pw ${vmPassword} -P ${vmPort} root@$ipv4 'exit 0'
 	$process = Start-Process .\Tools\plink.exe -ArgumentList "-C -pw ${vmPassword} -P ${vmPort} root@$ipv4 ${command}" -PassThru -NoNewWindow -Wait
 	if ($process.ExitCode -eq 0)
 	{
@@ -3021,13 +3021,13 @@ function Check-FcopyDaemon{
 
 	$filename = ".\fcopy_present"
 
-	.\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "ps -ef | grep '[h]v_fcopy_daemon\|[h]ypervfcopyd' > /tmp/fcopy_present"
+	Write-Output "yes" | .\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "ps -ef | grep '[h]v_fcopy_daemon\|[h]ypervfcopyd' > /tmp/fcopy_present"
 	if (-not $?) {
 		LogErr  "Unable to verify if the fcopy daemon is running"
 		return $False
 	}
 
-	.\tools\pscp.exe  -v -2 -unsafe -pw $vmPassword -q -P ${vmPort} $vmUserName@${ipv4}:/tmp/fcopy_present .
+	Write-Output "yes" | .\tools\pscp.exe  -v -2 -unsafe -pw $vmPassword -q -P ${vmPort} $vmUserName@${ipv4}:/tmp/fcopy_present .
 	if (-not $?) {
 		LogErr "Unable to copy the confirmation file from the VM"
 		return $False
@@ -3289,7 +3289,7 @@ function Check-Result{
 
 	while ($timeout -ne 0 )
 	{
-		.\tools\pscp.exe  -v -2 -unsafe -pw $vmPassword -q -P ${vmPort} root@${ipv4}:${stateFile} ${localStateFile} #| out-null
+		Write-Output "yes" | .\tools\pscp.exe  -v -2 -unsafe -pw $vmPassword -q -P ${vmPort} root@${ipv4}:${stateFile} ${localStateFile} #| out-null
 		$sts = $?
 		if ($sts)
 		{
@@ -3439,7 +3439,7 @@ function Stop-FcopyDaemon{
 	)
 	$sts = check_fcopy_daemon  -vmPassword $vmPassword -vmPort $vmPort -vmUserName $vmUserName -ipv4 $ipv4
 	if ($sts[-1] -eq $True ){
-		.\Tools\plink.exe -C -pw ${vmPassword} -P ${vmPort} ${vmUserName}@${ipv4} "pkill -f 'fcopy'"
+		Write-Output "yes" | .\Tools\plink.exe -C -pw ${vmPassword} -P ${vmPort} ${vmUserName}@${ipv4} "pkill -f 'fcopy'"
 		if (-not $?) {
 			LogErr "Unable to kill hypervfcopy daemon"
 			return $False
@@ -3526,12 +3526,12 @@ function Check-Systemd {
 	$check1 = $true
 	$check2 = $true
 
-	.\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "ls -l /sbin/init | grep systemd"
+	Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "ls -l /sbin/init | grep systemd"
 	if ($LASTEXITCODE -gt "0") {
 	LogMsg "Systemd not found on VM"
 	$check1 = $false
 	}
-	.\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "systemd-analyze --help"
+	Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 "systemd-analyze --help"
 	if ($LASTEXITCODE -gt "0") {
 		LogMsg "Systemd-analyze not present on VM."
 		$check2 = $false
@@ -3630,7 +3630,7 @@ function Get-IPv4AndWaitForSSHStart {
 	}
 
 	# Cache fingerprint, Check ssh is functional after reboot
-	Write-Output y | .\Tools\plink.exe -C -pw $Password -P $VmPort $User@$new_ip 'exit 0'
+	Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $VmPort $User@$new_ip 'exit 0'
 	$TestConnection = .\Tools\plink.exe -C -pw $Password -P $VmPort $User@$new_ip "echo Connected"
 	if ($TestConnection -ne "Connected") {
 		LogErr "GetIPv4AndWaitForSSHStart: SSH is not working correctly after boot up"
@@ -4278,6 +4278,259 @@ Function Remove-InvalidCharactersFromFileName
     $Regex = "[{0}]" -f [RegEx]::Escape($WindowsInvalidCharacters)
     return ($FileName -replace $Regex)
 }
+
+Function Check-VSSDemon {
+    param (
+        [String] $VMName,
+        [String] $HvServer,
+        [String] $VMIpv4,
+        [String] $VMPort
+    )
+    $remoteScript="STOR_VSS_Check_VSS_Daemon.sh"
+    $retval = Invoke-RemoteScriptAndCheckStateFile $remoteScript $user $password $VMIpv4 $VMPort
+    if ($retval -eq $False) {
+        LogErr "Running $remoteScript script failed on VM!"
+        return $False
+    }
+    LogMsg "VSS Daemon is running"
+    return $True
+}
+
+Function New-BackupSetup {
+    param (
+        [String] $VMName,
+        [String] $HvServer
+    )
+    LogMsg "Removing old backups"
+    Remove-WBBackupSet -Force -WarningAction SilentlyContinue
+    if(-not $?) {
+        LogErr "Not able to remove existing backup"
+        return $False
+    }
+    # Check if the VM VHD in not on the same drive as the backup destination
+    $vm = Get-VM -Name $VMName -ComputerName $HvServer
+    # Get drive letter
+    $sts = Get-DriveLetter $VMName $HvServer
+    $driveletter = $global:driveletter
+    if (-not $sts[-1]) {
+        LogErr "Cannot get the drive letter"
+        return $False
+    }
+    foreach ($drive in $vm.HardDrives) {
+        if ( $drive.Path.StartsWith("$driveletter")) {
+            LogErr "Backup partition $driveletter is same as partition hosting the VMs disk $($drive.Path)"
+            return $False
+        }
+    }
+    return $True
+}
+
+Function New-Backup {
+    param (
+        [String] $VMName,
+        [String] $DriveLetter,
+        [String] $HvServer,
+        [String] $VMIpv4,
+        [String] $VMPort
+    )
+    # Remove Existing Backup Policy
+    try {
+        Remove-WBPolicy -all -force
+    }
+    Catch {
+        LogMsg "No existing backup policy to remove"
+    }
+    # Set up a new Backup Policy
+    $policy = New-WBPolicy
+    # Set the backup location
+    $backupLocation = New-WBBackupTarget -VolumePath $DriveLetter
+    # Define VSS WBBackup type
+    Set-WBVssBackupOption -Policy $policy -VssCopyBackup
+    # Add the Virtual machines to the list
+    $VM = Get-WBVirtualMachine | Where-Object VMName -like $VMName
+    Add-WBVirtualMachine -Policy $policy -VirtualMachine $VM
+    Add-WBBackupTarget -Policy $policy -Target $backupLocation
+    # Start the backup
+    LogMsg "Backing to $DriveLetter"
+    Start-WBBackup -Policy $policy
+    # Review the results
+    $BackupTime = (New-Timespan -Start (Get-WBJob -Previous 1).StartTime -End (Get-WBJob -Previous 1).EndTime).Minutes
+    LogMsg "Backup duration: $BackupTime minutes"
+    $sts=Get-WBJob -Previous 1
+    if ($sts.JobState -ne "Completed" -or $sts.HResult -ne 0) {
+        LogErr "VSS Backup failed"
+        return $False
+    }
+    LogMsg "Backup successful!"
+    # Let's wait a few Seconds
+    Start-Sleep -Seconds 5
+    # Delete file on the VM
+    $vmState = $(Get-VM -name $VMName -ComputerName $HvServer).state
+    if (-not $vmState) {
+        RunLinuxCmd -username $user -password $password -ip $VMIpv4 -port $VMPort -command "rm /root/1" -runAsSudo
+        if (-not $?) {
+            LogErr "Cannot delete test file!"
+            return $False
+        }
+        LogMsg "File deleted on VM: $VMName"
+    }
+    return $backupLocation
+}
+
+Function Restore-Backup {
+    param (
+        $BackupLocation,
+        $HypervGroupName,
+        $VMName
+    )
+    # Start the Restore
+    LogMsg "Now let's restore the VM from backup."
+    # Get BackupSet
+    $BackupSet = Get-WBBackupSet -BackupTarget $BackupLocation
+    # Start restore
+    Start-WBHyperVRecovery -BackupSet $BackupSet -VMInBackup $BackupSet.Application[0].Component[0] -Force -WarningAction SilentlyContinue
+    $sts=Get-WBJob -Previous 1
+    if ($sts.JobState -ne "Completed" -or $sts.HResult -ne 0) {
+        LogErr "VSS Restore failed"
+        return $False
+    }
+    # Add VM to VMGroup
+    Add-VMGroupMember -Name $HypervGroupName -VM $(Get-VM -name $VMName)
+    return $True
+}
+
+Function Check-VMStateAndFileStatus {
+    param (
+        [String] $VMName,
+        [String] $HvServer,
+        [String] $VMIpv4,
+        [String] $VMPort
+    )
+
+    # Review the results
+    $RestoreTime = (New-Timespan -Start (Get-WBJob -Previous 1).StartTime -End (Get-WBJob -Previous 1).EndTime).Minutes
+    LogMsg "Restore duration: $RestoreTime minutes"
+    # Make sure VM exists after VSS backup/restore operation
+    $vm = Get-VM -Name $VMName -ComputerName $HvServer
+    if (-not $vm) {
+        LogErr "VM ${VMName} does not exist after restore"
+        return $False
+    }
+    LogMsg "Restore success!"
+    $vmState = (Get-VM -name $VMName -ComputerName $HvServer).state
+    LogMsg "VM state is $vmState"
+    $ip_address = Get-IPv4ViaKVP $VMName $HvServer
+    $timeout = 300
+    if ($vmState -eq "Running") {
+        if ($null -eq $ip_address) {
+            LogMsg "Restarting VM ${VMName} to bring up network"
+            Restart-VM -vmName $VMName -ComputerName $HvServer
+            Wait-ForVMToStartKVP $VMName $HvServer $timeout
+            $ip_address = Get-IPv4ViaKVP $VMName $HvServer
+        }
+    }
+    elseif ($vmState -eq "Off" -or $vmState -eq "saved" ) {
+        LogMsg "Starting VM : ${VMName}"
+        Start-VM -vmName $VMName -ComputerName $HvServer
+        if (-not (Wait-ForVMToStartKVP $VMName $HvServer $timeout )) {
+            LogErr "${VMName} failed to start"
+            return $False
+        }
+        else {
+            $ip_address = Get-IPv4ViaKVP $VMName $HvServer
+        }
+    }
+    elseif ($vmState -eq "Paused") {
+        LogMsg "Resuming VM : ${VMName}"
+        Resume-VM -vmName $VMName -ComputerName $HvServer
+        if (-not (Wait-ForVMToStartKVP $VMName $HvServer $timeout )) {
+            LogErr "${VMName} failed to resume"
+            return $False
+        }
+        else {
+            $ip_address = Get-IPv4ViaKVP $VMName $HvServer
+        }
+    }
+    LogMsg "${VMName} IP is $ip_address"
+    # check selinux denied log after ip injection
+    $sts=Get-SelinuxAVCLog -ipv4 $VMIpv4 -SSHPort $VMPort -Username "root" -Password $password
+    if (-not $sts) {
+        return $False
+    }
+    # only check restore file when ip available
+    $stsipv4 = Test-NetConnection $VMIpv4 -Port 22 -WarningAction SilentlyContinue
+    if ($stsipv4.TcpTestSucceeded) {
+        $sts=Check-FileInLinuxGuest -VMPassword $password -VMPort $VMPort -VMUserName "root" -Ipv4 $VMIpv4 -fileName "/root/1"
+        if (-not $sts) {
+            LogErr "No /root/1 file after restore"
+            return $False
+        }
+        else {
+            LogMsg "there is /root/1 file after restore"
+        }
+    }
+    else {
+        LogMsg "Ignore checking file /root/1 when no network"
+    }
+    return $True
+}
+
+Function Remove-Backup {
+    param (
+        [String] $BackupLocation
+    )
+    # Remove Created Backup
+    LogMsg "Removing old backups from $BackupLocation"
+    try {
+        Remove-WBBackupSet -BackupTarget $BackupLocation -Force -WarningAction SilentlyContinue
+    }
+    Catch {
+        LogMsg "No existing backups to remove"
+    }
+}
+
+Function Get-BackupType() {
+    # check the latest successful job backup type, "online" or "offline"
+    $backupType = $null
+    $sts = Get-WBJob -Previous 1
+    if ($sts.JobState -ne "Completed" -or $sts.HResult -ne 0) {
+        LogErr "Error: VSS Backup failed "
+        return $backupType
+    }
+    $contents = get-content $sts.SuccessLogPath
+    foreach ($line in $contents ) {
+        if ( $line -match "Caption" -and $line -match "online") {
+            LogMsg "VSS Backup type is online"
+            $backupType = "online"
+        }
+        elseif ($line -match "Caption" -and $line -match "offline") {
+            LogMsg "VSS Backup type is offline"
+            $backupType = "offline"
+        }
+    }
+    return $backupType
+}
+
+Function Get-DriveLetter {
+    param (
+        [string] $VMName,
+        [string] $HvServer
+    )
+    if ($null -eq $VMName) {
+        LogErr "VM ${VMName} name was not specified."
+        return $False
+    }
+    # Get the letter of the mounted backup drive
+    $tempFile = (Get-VMHost -ComputerName $HvServer).VirtualHardDiskPath + "\" + $VMName + "_DRIVE_LETTER.txt"
+    if(Test-Path ($tempFile)) {
+        $global:driveletter = Get-Content -Path $tempFile
+        return $True
+    }
+    else {
+        return $False
+    }
+}
+
 #Check if stress-ng is installed
 Function Is-StressNgInstalled {
     param (
