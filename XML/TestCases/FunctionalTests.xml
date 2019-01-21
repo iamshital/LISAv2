@@ -681,7 +681,7 @@
         <setupType>OneVM</setupType>
         <TestParameters>
             <!-- Param required to specify multiple disk mount or umount needed -->
-            <param>DUALMOUNT=true</param> 
+            <param>DUALMOUNT=true</param>
             <param>IDE=1,1,Dynamic,512</param>
             <param>SCSI=1,1,Dynamic,512</param>
             <param>FILESYS=ext4</param>
@@ -912,5 +912,105 @@
         <Area>RUNTIME_MEMORY</Area>
         <Tags>memory</Tags>
         <Priority>2</Priority>
+    </test>
+    <test>
+        <testName>LIS-DEPLOY-SCENARIO-GROUP-1</testName>
+        <testScript>LIS-INSTALL-SCENARIOS.ps1</testScript>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>LIS-Install-Scenario-1</param>
+            <param>LIS-Install-Scenario-5</param>
+            <param>LIS-Install-Scenario-8</param>
+            <param>LIS_TARBALL_URL_CURRENT=LIS_CURRENT_URL</param>
+            <param>LIS_TARBALL_URL_OLD=LIS_OLD_URL</param>
+        </TestParameters>
+        <Timeout>2400</Timeout>
+        <Platform>Azure,HyperV</Platform>s
+        <Category>Functional</Category>
+        <Area>LIS_DEPLOY</Area>
+        <Tags>lis</Tags>
+        <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>LIS-DEPLOY-SCENARIO-GROUP-2</testName>
+        <testScript>LIS-INSTALL-SCENARIOS.ps1</testScript>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>LIS-Install-Scenario-2</param>
+            <param>LIS-Install-Scenario-3</param>
+            <param>LIS-Install-Scenario-6</param>
+            <param>LIS_TARBALL_URL_CURRENT=LIS_CURRENT_URL</param>
+            <param>LIS_TARBALL_URL_OLD=LIS_OLD_URL</param>
+        </TestParameters>
+        <Timeout>2400</Timeout>
+        <Platform>Azure,HyperV</Platform>s
+        <Category>Functional</Category>
+        <Area>LIS_DEPLOY</Area>
+        <Tags>lis</Tags>
+        <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>LIS-DEPLOY-SCENARIO-SCENARIO-4</testName>
+        <testScript>LIS-INSTALL-SCENARIOS.ps1</testScript>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>LIS-Install-Scenario-4</param>
+            <param>LIS_TARBALL_URL_CURRENT=LIS_CURRENT_URL</param>
+            <param>LIS_TARBALL_URL_OLD=LIS_OLD_URL</param>
+        </TestParameters>
+        <Timeout>2400</Timeout>
+        <Platform>Azure,HyperV</Platform>s
+        <Category>Functional</Category>
+        <Area>LIS_DEPLOY</Area>
+        <Tags>lis</Tags>
+        <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>LIS-DEPLOY-SCENARIO-SCENARIO-7</testName>
+        <testScript>LIS-INSTALL-SCENARIOS.ps1</testScript>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>LIS-Install-Scenario-7</param>
+            <param>LIS_TARBALL_URL_CURRENT=LIS_CURRENT_URL</param>
+            <param>LIS_TARBALL_URL_OLD=LIS_OLD_URL</param>
+        </TestParameters>
+        <Timeout>2400</Timeout>
+        <Platform>Azure,HyperV</Platform>s
+        <Category>Functional</Category>
+        <Area>LIS_DEPLOY</Area>
+        <Tags>lis</Tags>
+        <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>LIS-DEPLOY-SCENARIO-SCENARIO-9</testName>
+        <testScript>LIS-INSTALL-SCENARIOS.ps1</testScript>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>LIS-Install-Scenario-9</param>
+            <param>LIS_TARBALL_URL_CURRENT=LIS_CURRENT_URL</param>
+            <param>LIS_TARBALL_URL_OLD=LIS_OLD_URL</param>
+        </TestParameters>
+        <Timeout>2400</Timeout>
+        <Platform>Azure,HyperV</Platform>s
+        <Category>Functional</Category>
+        <Area>LIS_DEPLOY</Area>
+        <Tags>lis</Tags>
+        <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>LIS-DEPLOY-SCENARIO-SCENARIO-10</testName>
+        <testScript>LIS-INSTALL-SCENARIOS.ps1</testScript>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>LIS-Install-Scenario-10</param>
+            <param>LIS_TARBALL_URL_CURRENT=LIS_CURRENT_URL</param>
+            <param>LIS_TARBALL_URL_OLD=LIS_OLD_URL</param>
+        </TestParameters>
+        <Timeout>2400</Timeout>
+        <Platform>Azure,HyperV</Platform>s
+        <Category>Functional</Category>
+        <Area>LIS_DEPLOY</Area>
+        <Tags>lis</Tags>
+        <Priority>1</Priority>
     </test>
 </TestCases>
