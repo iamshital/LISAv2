@@ -8,7 +8,7 @@
     Verify that memory changes while stress tool is running.
 	Only 1 VM is required for this test.
 #>
-param([string] $TestParams)
+param([string] $testParams, [object] $AllVmData)
 #######################################################################
 #
 # Main script body
@@ -16,8 +16,9 @@ param([string] $TestParams)
 #######################################################################
 function Main {
     param (
-        $testParams
+        $testParams, $allVMData
     )
+    $currentTestResult = Create-TestResultObject
     try {
         $testResult = $null
         $captureVMData = $allVMData
@@ -76,7 +77,7 @@ function Main {
             [int64]$vm1BeforeAssigned = ($VmInfo.MemoryAssigned/1MB)
             [int64]$vm1BeforeDemand = ($VmInfo.MemoryDemand/1MB)
             $lisDriversCmd = "cat /proc/meminfo | grep -i MemFree | awk '{ print `$2 }'"
-            [int64]$vm1BeforeAssignedGuest =Run-LinuxCmd -username $user -password $password -ip $Ipv4 -port $VMPort -command $lisDriversCmd -runAsSudo
+            [int64]$vm1BeforeAssignedGuest = Run-LinuxCmd -username $user -password $password -ip $Ipv4 -port $VMPort -command $lisDriversCmd -runAsSudo
             if (($vm1BeforeAssigned -gt 0) -and ($vm1BeforeDemand -gt 0) -and ($vm1BeforeAssignedGuest -gt 0)) {
                 break
             }
@@ -174,4 +175,4 @@ function Main {
 	$currentTestResult.TestResult = Get-FinalResultHeader -resultarr $resultArr
 	return $currentTestResult.TestResult
 }
-Main -TestParams (ConvertFrom-StringData $TestParams.Replace(";","`n"))
+Main -TestParams (ConvertFrom-StringData $TestParams.Replace(";","`n")) -allVMData $AllVmData

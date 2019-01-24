@@ -11,7 +11,8 @@
     If the above ping succeeded, the test passed.
 #>
 
-param([string] $TestParams)
+param([String] $TestParams,
+      [object] $AllVmData)
 
 function Main {
     param (
@@ -27,7 +28,6 @@ function Main {
     $switchNic = $null
     $bootproto = "static"
     $currentDir = "$pwd\"
-    $guestUsername = "root"
 
     # Get MAC for test VM NIC
     $macFileTestVM = "macAddress.file"
@@ -68,7 +68,7 @@ function Main {
     # Switch network connection type in case is needed
     if ($switchNic) {
         # Switch the NIC on test VM from External to Private
-        $retVal = .\Testscripts\Windows\SETUP-NET-Switch-NIC.ps1 -VMName $VMName -testParams "SWITCH=$switchNic"
+        $retVal = .\Testscripts\Windows\SETUP-NET-Switch-NIC.ps1 -AllVMData $AllVMData -testParams "SWITCH=$switchNic"
         if (-not $retVal) {
             Write-LogErr "Failed to switch connection type for $VMName on $HvServer"
             return "FAIL"
@@ -76,7 +76,7 @@ function Main {
 
         # Switch the NIC on dependency VM from External to Private
         $switchNic = $switchNic+","+$vm2MacAddress
-        $retVal = .\Testscripts\Windows\SETUP-NET-Switch-NIC.ps1 -VMName $VM2Name -testParams "SWITCH=$switchNic"
+        $retVal = .\Testscripts\Windows\SETUP-NET-Switch-NIC.ps1 -AllVMData $AllVMData -testParams "SWITCH=$switchNic"
         if (-not $retVal) {
             Write-LogErr "Failed to switch connection type for $VM2Name on $HvServer"
             return "FAIL"
@@ -90,7 +90,7 @@ function Main {
             $i++
         }
     }
-    $retVal = Set-GuestInterface $guestUsername $IPv4 $VMPort $VMPassword $vm1MacAddress `
+    $retVal = Set-GuestInterface $VMUserName $IPv4 $VMPort $VMPassword $vm1MacAddress `
         $vm1StaticIP $bootproto $netmask $VMName
     if (-not $?) {
         Write-LogErr "Couldn't configure the test interface on $VMName"
@@ -98,7 +98,7 @@ function Main {
     }
 
     # Try to ping with the private network interfaces. This should pass
-    $retVal = Test-GuestInterface $guestUsername $vm2StaticIP $IPv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $vm2StaticIP $IPv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber
     if ($retVal -eq $False) {
         Write-LogErr "Could not $pingVersion from $vm1StaticIP to $vm2StaticIP"
@@ -108,7 +108,7 @@ function Main {
     }
 
     # Try to ping a wrong IP
-    $retVal = Test-GuestInterface $guestUsername $failIP1 $IPv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $failIP1 $IPv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber
     if ($retVal -eq $True) {
         Write-LogErr "$pingVersion from $vm1StaticIP to $failIP1 shouldn't have worked"
@@ -117,7 +117,7 @@ function Main {
         Write-LogInfo "$pingVersion from $vm1StaticIP to $failIP1 failed - AS EXPECTED -"
     }
 
-    $retVal = Test-GuestInterface $guestUsername $failIP2 $IPv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $failIP2 $IPv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber
     if ($retVal -eq $True) {
         Write-LogErr "$pingVersion from $vm1StaticIP to $failIP2 shouldn't have worked"
@@ -128,6 +128,6 @@ function Main {
     return "PASS"
 }
 
-Main -VMName $AllVMData.RoleName -HvServer $xmlConfig.config.Hyperv.Hosts.ChildNodes[0].ServerName `
+Main -VMName $AllVMData.RoleName -HvServer $GlobalConfig.Global.Hyperv.Hosts.ChildNodes[0].ServerName `
      -VMPort $AllVMData.SSHPort -VMUserName $user -VMPassword $password `
      -IPv4 $AllVMData.PublicIP -TestParams $TestParams

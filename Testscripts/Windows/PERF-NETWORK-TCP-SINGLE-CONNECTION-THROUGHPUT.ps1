@@ -1,7 +1,9 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
 param(
-    [String] $TestParams
+    [String] $TestParams,
+    [object] $AllVmData,
+    [object] $CurrentTestData
 )
 
 function Write-TestInformation {
@@ -88,12 +90,12 @@ function Consume-Iperf3Results {
         $ClientVMData
     )
 
-    $dataSource = $xmlConfig.config.$TestPlatform.database.server
-    $user = $xmlConfig.config.$TestPlatform.database.user
-    $password = $xmlConfig.config.$TestPlatform.database.password
-    $database = $xmlConfig.config.$TestPlatform.database.dbname
-    $dataTableName = $xmlConfig.config.$TestPlatform.database.dbtable
-    $TestCaseName = $xmlConfig.config.$TestPlatform.database.testTag
+    $dataSource = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.server
+    $user = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.user
+    $password = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.password
+    $database = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.dbname
+    $dataTableName = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.dbtable
+    $TestCaseName = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.testTag
 
     if (!($dataSource -and $user -and $password -and $database -and $dataTableName)) {
         Write-LogInfo "Invalid database details. Failed to upload result to database!"
@@ -131,7 +133,7 @@ function Consume-Iperf3Results {
 
 function Main {
     param (
-        $TestParams
+        $TestParams, $AllVmData
     )
 
     try {
@@ -158,7 +160,7 @@ function Main {
         Write-TestInformation $clientVMData $serverVMData
         Provision-VMsForLisa -allVMData $allVMData -installPackagesOnRoleNames "none"
 
-        if ($EnableAcceleratedNetworking -or $currentTestData.AdditionalHWConfig.Networking -imatch "SRIOV") {
+        if ($currentTestData.AdditionalHWConfig.Networking -imatch "SRIOV") {
             $DataPath = "SRIOV"
         } else {
             $DataPath = "Synthetic"
@@ -279,4 +281,4 @@ collect_VM_properties
     return $testResult
 }
 
-Main -TestParams (ConvertFrom-StringData $TestParams.Replace(";","`n"))
+Main -TestParams (ConvertFrom-StringData $TestParams.Replace(";","`n")) -AllVmData $AllVmData

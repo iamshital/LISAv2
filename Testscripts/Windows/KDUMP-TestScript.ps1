@@ -1,7 +1,8 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
 
-param([string] $TestParams)
+param([String] $TestParams,
+      [object] $AllVmData)
 
 function Main {
     param (
@@ -105,7 +106,8 @@ function Main {
         -command "export HOME=``pwd``;chmod u+x KDUMP-Config.sh && ./KDUMP-Config.sh" -runAsSudo
 
     # Rebooting the VM in order to apply the kdump settings
-    .\Tools\plink.exe -C -pw $VMPassword -P $VMPort root@$Ipv4 "reboot"
+    Run-LinuxCmd -username $VMUserName -password $VMPassword -ip $Ipv4 -port $VMPort `
+        -command "reboot" -runAsSudo -RunInBackGround
     Write-LogInfo "Rebooting VM $VMName after kdump configuration..."
     Start-Sleep 10 # Wait for kvp & ssh services stop
 
@@ -174,8 +176,7 @@ function Main {
     return "PASS"
 }
 
-
-Main -VMName $AllVMData.RoleName -HvServer $TestLocation `
+Main -VMName $AllVMData.RoleName -HvServer $GlobalConfig.Global.Hyperv.Hosts.ChildNodes[0].ServerName `
          -ipv4 $AllVMData.PublicIP -VMPort $AllVMData.SSHPort `
          -VMUserName $user -VMPassword $password -rootDir $WorkingDirectory `
-         -testParams $testParams -TestPlatform $XmlConfig.config.CurrentTestPlatform
+         -testParams $testParams -TestPlatform $global:TestPlatform

@@ -10,7 +10,8 @@
     the Linux VM, and then checks if the size is matching.
 
 #>
-param([String] $TestParams)
+param([String] $TestParams,
+      [object] $AllVmData)
 
 function Main {
     param (
@@ -102,24 +103,20 @@ else {
 }
 
 # Verifying if /tmp folder on guest exists; if not, it will be created
-Run-LinuxCmd -username $VMUserName -password $VMPassword -ip $Ipv4 -port $VMPort -command "[ -d /tmp ]" -runAsSudo
-if (-not $?){
-    Write-LogInfo "Folder /tmp not present on guest. It will be created"
-    .\Tools\plink.exe -C -pw $VMPassword -P $VMPort $VMUserName@$Ipv4 "mkdir /tmp"
-}
-
+$sts = Run-LinuxCmd -username $VMUserName -password $VMPassword -ip $Ipv4 -port $VMPort -command "if [ -d /tmp ]; then echo tmp exists ; else mkdir /tmp; fi" -runAsSudo
+Write-LogInfo "Verifying if /tmp folder on guest exists"
 #
 # The fcopy daemon must be running on the Linux guest VM
 #
 
 $sts = Check-FcopyDaemon -vmPassword $VMPassword -VmPort $VMPort -vmUserName $VMUserName -ipv4 $Ipv4
-if (-not $sts[-1]) {
+if (-not $sts) {
     Write-LogErr "File copy daemon is not running inside the Linux guest VM!"
     return "FAIL"
 }
 
-$sts = Mount-disk -vmPassword $VMPassword -vmPort $VMPort -ipv4 $Ipv4
-if (-not $sts[-1]) {
+$sts = Mount-Disk -vmUsername $VMUserName -vmPassword $VMPassword -vmPort $VMPort -ipv4 $Ipv4
+if (-not $sts) {
     Write-LogErr "FAIL to mount the disk in the VM."
     return "FAIL"
 }
@@ -135,7 +132,7 @@ if (-not $sts[-1]) {
         }
         Write-LogInfo "File has been successfully copied to guest VM '${vmName}'"
 
-        $sts = Check-FileInLinuxGuest  -vmPassword $VMPassword -vmPort $VMPort -vmUserName $VMUserName -ipv4 $Ipv4   -fileName "/mnt/$testfile" -checkSize $true
+        $sts = Check-FileInLinuxGuest  -vmPassword $VMPassword -vmPort $VMPort -vmUserName $VMUserName -ipv4 $Ipv4   -fileName "/mnt/test/$testfile" -checkSize $true
         if (-not $sts) {
             Write-LogErr "File check error on the guest VM '${vmName}'!"
             return "FAIL"
@@ -143,9 +140,9 @@ if (-not $sts[-1]) {
         }
         Write-LogInfo "The file copied matches the ${originalFileSize} size."
 
-        $sts = Send-CommandToVM -vmPassword $VMPassword -vmPort $VMPort -ipv4 $Ipv4 "rm -f /mnt/$filePath"
+        $sts = Run-LinuxCmd -username $VMUserName -password $VMPassword -port $VMPort -ip $Ipv4 "rm -f /mnt/test/$testfile" -runAsSudo
         if (-not $sts) {
-            Write-LogErr "FAIL to remove file from VM $VMName."
+            Write-LogErr "Failed to remove file from VM $VMName."
             return  "FAIL"
             break
         }
@@ -159,7 +156,7 @@ if (-not $?) {
     return "FAIL"
 }
 }
-Main -VMName $AllVMData.RoleName -HvServer $xmlConfig.config.Hyperv.Hosts.ChildNodes[0].ServerName `
+Main -VMName $AllVMData.RoleName -HvServer $GlobalConfig.Global.Hyperv.Hosts.ChildNodes[0].ServerName `
          -Ipv4 $AllVMData.PublicIP -VMPort $AllVMData.SSHPort `
          -VMUserName $user -VMPassword $password -RootDir $WorkingDirectory `
          -TestParams $TestParams

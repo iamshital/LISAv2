@@ -1,6 +1,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
-
+param([object] $AllVmData, [object] $CurrentTestData)
 function Main {
     # Create test result
     $currentTestResult = Create-TestResultObject
@@ -10,7 +10,7 @@ function Main {
         Provision-VMsForLisa -allVMData $allVMData -installPackagesOnRoleNames "none"
         Copy-RemoteFiles -uploadTo $allVMData.PublicIP -port $allVMData.SSHPort -files $currentTestData.files -username "root" -password $password -upload
 
-        $constantsFile = Join-Path $env:TEMP "xfstests-config-$TestID.config"
+        $constantsFile = Join-Path $env:TEMP "xfstests-config.config"
         Write-LogInfo "Generating $constantsFile ..."
         Set-Content -Value "" -Path $constantsFile -NoNewline
         foreach ($param in $currentTestData.TestParameters.param) {
@@ -60,3 +60,5 @@ function Main {
     $currentTestResult.TestResult = Get-FinalResultHeader -resultarr $resultArr
     return $currentTestResult.TestResult
 }
+
+Main

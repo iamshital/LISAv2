@@ -6,13 +6,15 @@
     This script tests ip injection from host to guest functionality
 #>
 
-param([string] $TestParams)
+param([String] $TestParams,
+      [object] $AllVmData)
+
 $NamespaceV2 = "root\virtualization\v2"
 
 # Checks if hv_set_ifconfig is present in the VM
 function Get-HvSetConfig() {
-    $sts = Run-LinuxCmd -username "root" -password $VMPassword -ip $Ipv4 -port $VMPort `
-        -command "find /usr/|grep hv_set_ifconfig" -ignoreLinuxExitCode:$true
+    $sts = Run-LinuxCmd -username $VMUserName -password $VMPassword -ip $Ipv4 -port $VMPort `
+        -command "find /usr/|grep hv_set_ifconfig" -ignoreLinuxExitCode:$true -RunAsSudo
     if (-not $sts) {
         Write-LogErr "hv_set_ifconfig is not present or verification failed"
         break
@@ -238,6 +240,6 @@ function Main {
     return "PASS"
 }
 
-Main -VMName $AllVMData.RoleName -HvServer $xmlConfig.config.Hyperv.Hosts.ChildNodes[0].ServerName `
+Main -VMName $AllVMData.RoleName -HvServer $GlobalConfig.Global.Hyperv.Hosts.ChildNodes[0].ServerName `
     -IPv4 $AllVMData.PublicIP -VMPort $AllVMData.SSHPort -VMUserName $user `
     -VMPassword $password -TestParams $TestParams

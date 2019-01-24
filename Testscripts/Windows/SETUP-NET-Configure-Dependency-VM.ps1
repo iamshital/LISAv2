@@ -13,7 +13,7 @@
     Afterwards the main test is started together with the main VM.
 #>
 
-param([string] $TestParams)
+param([string] $TestParams, [object] $AllVMData)
 
 function Main {
     param (
@@ -28,7 +28,6 @@ function Main {
     $netmask = $null
     $bootproto = $null
     $checkpointName = $null
-    $guestUsername = "root"
 
     $params = $TestParams.Split(';')
     foreach ($p in $params) {
@@ -126,7 +125,9 @@ function Main {
             }
         }
 
-        .\Testscripts\Windows\SETUP-NET-Add-NIC.ps1 -TestParams $vm2NicAddParam -VMName $VM2Name
+        $vm2Data = New-Object -TypeName PSObject
+        Add-Member -InputObject $vm2Data -MemberType NoteProperty -Name RoleName -Value $VM2Name -Force
+        .\Testscripts\Windows\SETUP-NET-Add-NIC.ps1 -TestParams $vm2NicAddParam -AllVMData $vm2Data
         if (-not $?) {
             Write-LogErr "Cannot add new NIC to $VM2Name"
             return $False
@@ -154,11 +155,11 @@ function Main {
         }
     }
     if ($vlanId) {
-        $null = Set-GuestInterface -VMUser $guestUsername -VMIpv4 $vm2ipv4 -VMPort $VMPort `
+        $null = Set-GuestInterface -VMUser $VMUserName -VMIpv4 $vm2ipv4 -VMPort $VMPort `
             -VMPassword $VMPassword -InterfaceMAC $vm2MacAddress -VMStaticIP $vm2StaticIP `
             -Netmask $netmask -VMName $VM2Name -VlanID $vlanID
     } else {
-        $null = Set-GuestInterface $guestUsername $vm2ipv4 $VMPort $VMPassword $vm2MacAddress `
+        $null = Set-GuestInterface $VMUserName $vm2ipv4 $VMPort $VMPassword $vm2MacAddress `
             $vm2StaticIP $bootproto $netmask $VM2Name
     }
 
@@ -169,6 +170,6 @@ function Main {
     return $True
 }
 
-Main -VMName $AllVMData.RoleName -HvServer $xmlConfig.config.Hyperv.Hosts.ChildNodes[0].ServerName `
+Main -VMName $AllVMData.RoleName -HvServer $GlobalConfig.Global.Hyperv.Hosts.ChildNodes[0].ServerName `
      -VMPort $AllVMData.SSHPort -VMUserName $user -VMPassword $password `
      -TestParams $TestParams

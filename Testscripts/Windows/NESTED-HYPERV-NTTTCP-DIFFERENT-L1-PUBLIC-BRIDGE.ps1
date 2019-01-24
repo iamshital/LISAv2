@@ -1,6 +1,8 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
 
+param([object] $AllVmData, [object] $CurrentTestData, [object] $TestProvider)
+
 $testScript = "nested_hyperv_ntttcp_different_l1_public_bridge.sh"
 
 function Start-TestExecution ($ip, $port, $cmd) {
@@ -50,20 +52,20 @@ function Download-OSvhd ($session, $srcPath, $dstPath) {
 	}  -ArgumentList $srcPath, $dstPath
 }
 
-function Send-ResultToDatabase ($xmlConfig, $logDir) {
+function Send-ResultToDatabase ($GlobalConfig, $logDir) {
 	Write-LogInfo "Uploading the test results.."
-	$dataSource = $xmlConfig.config.$TestPlatform.database.server
-	$user = $xmlConfig.config.$TestPlatform.database.user
-	$password = $xmlConfig.config.$TestPlatform.database.password
-	$database = $xmlConfig.config.$TestPlatform.database.dbname
-	$dataTableName = $xmlConfig.config.$TestPlatform.database.dbtable
-	$TestCaseName = $xmlConfig.config.$TestPlatform.database.testTag
+	$dataSource = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.server
+	$user = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.user
+	$password = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.password
+	$database = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.dbname
+	$dataTableName = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.dbtable
+	$TestCaseName = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.testTag
 	if ($dataSource -And $user -And $password -And $database -And $dataTableName)
 	{
 		# Get host info
-		$HostType	= $xmlConfig.config.CurrentTestPlatform
+		$HostType	= $global:TestPlatform
 		$HostBy	= $TestLocation
-		$HostOS	= (Get-WmiObject -Class Win32_OperatingSystem -ComputerName $xmlConfig.config.$TestPlatform.Hosts.ChildNodes[0].ServerName).Version
+		$HostOS	= (Get-WmiObject -Class Win32_OperatingSystem -ComputerName $GlobalConfig.Global.$TestPlatform.Hosts.ChildNodes[0].ServerName).Version
 
 		# Get L1 guest info
 		$L1GuestKernelVersion = Get-Content "$LogDir\nested_properties.csv" | Select-String "Host Version"| ForEach-Object{$_ -replace ",Host Version,",""}
@@ -146,11 +148,11 @@ function Main () {
 		$cred = Get-Cred $user $password
 		foreach($vm in $AllVMData)
 		{
-			if($vm.RoleName.Contains("server"))
+			if($vm.RoleName.Contains("role-0"))
 			{
 				$hs1VIP = $vm.PublicIP
 			}
-			if($vm.RoleName.Contains("client"))
+			if($vm.RoleName.Contains("role-1"))
 			{
 				$hs2VIP = $vm.PublicIP
 			}
@@ -161,7 +163,7 @@ function Main () {
 		}
 
 		Write-LogInfo "Restart VMs to make sure Hyper-V install completely"
-		Restart-AllHyperVDeployments -allVMData $AllVMData
+		$TestProvider.RestartAllDeployments($AllVMData)
 
 		Start-Sleep 20
 		$serverSession = New-PSSession -ComputerName $hs1VIP -Credential $cred
@@ -276,12 +278,12 @@ function Main () {
 
 			$NestedVMNode = Create-NestedVMNode
 			$NestedVMNode.PublicIP = $IPAddresses
-			if($vm.RoleName.Contains("server"))
+			if($vm.RoleName.Contains("role-0"))
 			{
 				$NestedVMNode.RoleName = "ntttcp-server"
 				$nttcpServerIP = $IPAddresses
 			}
-			if($vm.RoleName.Contains("client"))
+			if($vm.RoleName.Contains("role-1"))
 			{
 				$NestedVMNode.RoleName = "ntttcp-client"
 				$nttcpClientIP = $IPAddresses
@@ -290,7 +292,7 @@ function Main () {
 			$NestedVMNode = ""
 		}
 		Set-Variable -Name IsWindows -Value $false -Scope Global
-		Check-SSHPortsEnabled $allDeployedNestedVMs
+		Is-VmAlive $allDeployedNestedVMs
 		Set-Variable -Name IsWindows -Value $true -Scope Global
 
 		Remove-PSSession -Session $serverSession
@@ -375,7 +377,7 @@ function Main () {
 				Write-LogInfo "Zero throughput for some connections, results will not be uploaded to database!"
 			}
 			else {
-				Send-ResultToDatabase -xmlConfig $xmlConfig -logDir $LogDir
+				Send-ResultToDatabase -GlobalConfig $GlobalConfig -logDir $LogDir
 			}
 		}
 	}

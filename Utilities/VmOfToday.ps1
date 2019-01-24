@@ -33,7 +33,7 @@
 
 param
 (
-	[ValidateSet('Release','GetAndLock', IgnoreCase = $false)]
+	[ValidateSet('Lock','Unlock', IgnoreCase = $false)]
 	[string]$Operation,
 	[string]$UserName,
 	[string]$AzureSecretsFile,
@@ -134,8 +134,8 @@ Function Lock-LatestResourceGroup($UserName, $AzureSecretsFile, $RgPattern, $Tag
 		try {
 			Write-LogInfo "Start to validate the deployments in resource group $($rg.ResourceGroupName)"
 			$vmData = Get-AllDeploymentData -ResourceGroups $rg.ResourceGroupName
-			$isSSHOpened = Check-SSHPortsEnabled -AllVMDataObject $vmData
-			if (!$isSSHOpened) {
+			$isVmAlive = Is-VmAlive -AllVMDataObject $vmData
+			if ($isVmAlive -eq "False") {
 				Write-LogErr "Failed to connect to $($vmData.RoleName), trying to find previous VM"
 			} else {
 				if ($UserName -ne $timerUser) {
@@ -222,7 +222,7 @@ Function Unlock-LockedResourceGroup($UserName, $AzureSecretsFile, $RgPattern, $T
 					$rgLockedLong += $rg.ResourceGroupName
 				}
 			}
-			if ($locks.Count -gt 0)
+			if ($locks)
 			{
 				$isLatestLocked = $false
 			}
@@ -237,9 +237,9 @@ Function Unlock-LockedResourceGroup($UserName, $AzureSecretsFile, $RgPattern, $T
 	}
 }
 
-if ($Operation -eq "Release") {
+if ($Operation -eq "Unlock") {
 	Unlock-LockedResourceGroup -UserName $UserName -AzureSecretsFile $AzureSecretsFile -RgPattern $RgPattern -TagName $TagName -TagValue $TagValue
 }
-elseif ($Operation -eq "GetAndLock") {
+elseif ($Operation -eq "Lock") {
 	Lock-LatestResourceGroup -UserName $UserName -AzureSecretsFile $AzureSecretsFile -RgPattern $RgPattern -TagName $TagName -TagValue $TagValue
 }

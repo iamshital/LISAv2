@@ -4,8 +4,8 @@
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 
-$moduleName = "LISAV2-Framework"
-$modulePath = Join-Path $here "../../Libraries/${moduleName}.psm1"
+$moduleName = "TestLogs"
+$modulePath = Join-Path $here "../../../Libraries/${moduleName}.psm1"
 
 if (Get-Module $moduleName -ErrorAction SilentlyContinue) {
     Remove-Module $moduleName

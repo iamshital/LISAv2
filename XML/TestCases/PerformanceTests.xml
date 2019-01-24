@@ -2,7 +2,7 @@
     <test>
         <testName>PERF-NETWORK-TCP-THROUGHPUT-MULTICONNECTION-NTTTCP-Synthetic</testName>
         <testScript>PERF-NETWORK-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>Synthetic</Networking>
         </AdditionalHWConfig>
@@ -26,7 +26,7 @@
     <test>
         <testName>PERF-NETWORK-TCP-THROUGHPUT-MULTICONNECTION-NTTTCP-SRIOV</testName>
         <testScript>PERF-NETWORK-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
@@ -40,6 +40,7 @@
             <param>testDuration=NTTTCP_RUNTIME_IN_SECONDS</param>
             <param>testType=tcp</param>
             <param>testConnections=NTTTCP_TCP_CONNECTIONS</param>
+            <param>ntttcpVersion=NTTTCP_VERSION</param>
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
@@ -50,7 +51,7 @@
     <test>
         <testName>PERF-NETWORK-UDP-1K-THROUGHPUT-MULTICONNECTION-NTTTCP-Synthetic</testName>
         <testScript>PERF-NETWORK-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>Synthetic</Networking>
         </AdditionalHWConfig>
@@ -75,7 +76,7 @@
     <test>
         <testName>PERF-NETWORK-UDP-1K-THROUGHPUT-MULTICONNECTION-NTTTCP-SRIOV</testName>
         <testScript>PERF-NETWORK-THROUGHPUT-MULTICONNECTION-NTTTCP.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
@@ -100,7 +101,7 @@
     <test>
         <testName>PERF-NETWORK-TCP-LATENCY-MULTICONNECTION-Synthetic</testName>
         <testScript>PERF-NETWORK-TCP-LATENCY-MULTICONNECTION-LAGSCOPE.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <setupScript>.\Testscripts\Windows\SETUP-Check-PowerPlan.ps1,.\Testscripts\Windows\SETUP-PERF-Add-NIC.ps1</setupScript>
         <runSetupScriptOnlyOnce>yes</runSetupScriptOnlyOnce>
         <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_lagscope.sh</files>
@@ -119,7 +120,7 @@
     <test>
         <testName>PERF-NETWORK-TCP-LATENCY-MULTICONNECTION-SRIOV</testName>
         <testScript>PERF-NETWORK-TCP-LATENCY-MULTICONNECTION-LAGSCOPE.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
@@ -141,7 +142,7 @@
     <test>
         <testName>PERF-NETWORK-UDP-THROUGHPUT-MULTICONNECTION-Synthetic</testName>
         <testScript>PERF-NETWORK-UDP-THROUGHPUT-MULTICONNECTION-IPERF3.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <setupScript>.\Testscripts\Windows\SETUP-Check-PowerPlan.ps1,.\Testscripts\Windows\SETUP-PERF-Add-NIC.ps1</setupScript>
         <runSetupScriptOnlyOnce>yes</runSetupScriptOnlyOnce>
         <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_iperf3.sh</files>
@@ -165,7 +166,7 @@
     <test>
         <testName>PERF-NETWORK-UDP-THROUGHPUT-MULTICONNECTION-SRIOV</testName>
         <testScript>PERF-NETWORK-UDP-THROUGHPUT-MULTICONNECTION-IPERF3.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
@@ -192,7 +193,7 @@
     <test>
         <testName>PERF-STORAGE-4K-IO</testName>
         <testScript>PERF-STORAGE-MULTIDISK-RAID0-FIO.ps1</testScript>
-        <setupType>OneVM12Disks</setupType>
+        <setupType>OneVM12Disk</setupType>
         <AdditionalHWConfig>
             <DiskType>Managed</DiskType>
         </AdditionalHWConfig>
@@ -219,7 +220,7 @@
     <test>
         <testName>PERF-STORAGE-1024K-IO</testName>
         <testScript>PERF-STORAGE-MULTIDISK-RAID0-FIO.ps1</testScript>
-        <setupType>OneVM12Disks</setupType>
+        <setupType>OneVM12Disk</setupType>
         <AdditionalHWConfig>
             <DiskType>Managed</DiskType>
         </AdditionalHWConfig>
@@ -242,7 +243,7 @@
     <test>
         <testName>PERF-STORAGE-OVER-NFS-Synthetic-TCP-4K</testName>
         <testScript>PERF-STORAGE-OVER-NFS.ps1</testScript>
-        <setupType>DS14DISK12NFS</setupType>
+        <setupType>TwoVM12Disk</setupType>
         <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
         <TestParameters>
             <param>modes='randread randwrite read write'</param>
@@ -264,7 +265,7 @@
     <test>
         <testName>PERF-STORAGE-OVER-NFS-Synthetic-UDP-4K</testName>
         <testScript>PERF-STORAGE-OVER-NFS.ps1</testScript>
-        <setupType>DS14DISK12NFS</setupType>
+        <setupType>TwoVM12Disk</setupType>
         <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Testscripts\Linux\perf_fio_nfs.sh,.\Testscripts\Linux\CreateRaid.sh</files>
         <TestParameters>
             <param>modes='randread randwrite read write'</param>
@@ -286,7 +287,7 @@
     <test>
         <testName>PERF-STORAGE-OVER-NFS-SRIOV-TCP-4K</testName>
         <testScript>PERF-STORAGE-OVER-NFS.ps1</testScript>
-        <setupType>DS14DISK12NFS</setupType>
+        <setupType>TwoVM12Disk</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
@@ -311,7 +312,7 @@
     <test>
         <testName>PERF-STORAGE-OVER-NFS-SRIOV-UDP-4K</testName>
         <testScript>PERF-STORAGE-OVER-NFS.ps1</testScript>
-        <setupType>DS14DISK12NFS</setupType>
+        <setupType>TwoVM12Disk</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
@@ -336,7 +337,7 @@
     <test>
         <testName>PERF-NETWORK-TCP-SINGLE-CONNECTION-THROUGHPUT-SYNTHETIC</testName>
         <testScript>PERF-NETWORK-TCP-SINGLE-CONNECTION-THROUGHPUT.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>Synthetic</Networking>
         </AdditionalHWConfig>
@@ -363,7 +364,7 @@
     <test>
         <testName>PERF-NETWORK-TCP-SINGLE-CONNECTION-THROUGHPUT-SRIOV</testName>
         <testScript>PERF-NETWORK-TCP-SINGLE-CONNECTION-THROUGHPUT.ps1</testScript>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
@@ -407,7 +408,7 @@
         <testScript>PERF-NETWORK-TCP-NETPERF.ps1</testScript>
         <setupScript>.\Testscripts\Windows\SETUP-Check-PowerPlan.ps1,.\Testscripts\Windows\SETUP-PERF-Add-NIC.ps1</setupScript>
         <runSetupScriptOnlyOnce>yes</runSetupScriptOnlyOnce>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>Synthetic</Networking>
         </AdditionalHWConfig>
@@ -431,7 +432,7 @@
         <testScript>PERF-NETWORK-TCP-NETPERF.ps1</testScript>
         <setupScript>.\Testscripts\Windows\SETUP-Check-PowerPlan.ps1,.\Testscripts\Windows\SETUP-PERF-Add-NIC.ps1</setupScript>
         <runSetupScriptOnlyOnce>yes</runSetupScriptOnlyOnce>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
@@ -455,7 +456,7 @@
         <testScript>PERF-NETWORK-TCP-NETPERF.ps1</testScript>
         <setupScript>.\Testscripts\Windows\SETUP-Check-PowerPlan.ps1,.\Testscripts\Windows\SETUP-PERF-Add-NIC.ps1</setupScript>
         <runSetupScriptOnlyOnce>yes</runSetupScriptOnlyOnce>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>Synthetic</Networking>
         </AdditionalHWConfig>
@@ -479,7 +480,7 @@
         <testScript>PERF-NETWORK-TCP-NETPERF.ps1</testScript>
         <setupScript>.\Testscripts\Windows\SETUP-Check-PowerPlan.ps1,.\Testscripts\Windows\SETUP-PERF-Add-NIC.ps1</setupScript>
         <runSetupScriptOnlyOnce>yes</runSetupScriptOnlyOnce>
-        <setupType>M1S1</setupType>
+        <setupType>TwoVM2Host</setupType>
         <AdditionalHWConfig>
             <Networking>SRIOV</Networking>
         </AdditionalHWConfig>
@@ -497,5 +498,76 @@
         <Area>Network</Area>
         <Tags>network,hv_netvsc</Tags>
         <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>PERF-NVME-4K-IO-SINGLE</testName>
+        <testScript>PERF-STORAGE-MULTIDISK-RAID0-FIO.ps1</testScript>
+        <setupType>OneVM</setupType>
+        <OverrideVMSize>Standard_L8s_v2</OverrideVMSize>
+        <setupScript>.\Testscripts\Windows\SETUP-Check-PowerPlan.ps1,.\TestScripts\Windows\SETUP-Config-VM.ps1,.\Testscripts\Windows\SETUP-Add-NVME-Disk.ps1</setupScript>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_fio.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Tools\gawk</files>
+        <TestParameters>
+            <param>vmCpuNumber=8</param>
+            <param>vmMemory=8GB</param>
+            <param>SINGLE_DISK=yes</param>
+            <param>HYPERV_DISK_COUNT=1</param>
+            <param>modes=PERF-STORAGE-4K-IO-MODES</param>
+            <param>startQDepth=1</param>
+            <param>maxQDepth=256</param>
+            <param>startIO=4</param>
+            <param>ioruntime=FIO_RUNTIME_IN_SECONDS</param>
+            <param>maxIO=4</param>
+            <param>fileSize=1023G</param>
+            <param>PHYSICAL_NUMBER=1</param>
+        </TestParameters>
+        <cleanupScript>.\Testscripts\Windows\SETUP-Remove-NVME-Disk.ps1</cleanupScript>
+        <Platform>Azure,HyperV</Platform>
+        <Category>Performance</Category>
+        <Area>NVME</Area>
+        <Tags>nvme,storage</Tags>
+        <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>PERF-NVME-4K-IO-MULTI</testName>
+        <testScript>PERF-STORAGE-MULTIDISK-RAID0-FIO.ps1</testScript>
+        <setupType>OneVM</setupType>
+        <OverrideVMSize>Standard_L64s_v2</OverrideVMSize>
+        <setupScript>.\Testscripts\Windows\SETUP-Check-PowerPlan.ps1,.\TestScripts\Windows\SETUP-Config-VM.ps1,.\Testscripts\Windows\SETUP-Add-NVME-Disk.ps1</setupScript>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\perf_fio.sh,.\Testscripts\Linux\fio_jason_parser.sh,.\Testscripts\Linux\JSON.awk,.\Tools\gawk</files>
+        <TestParameters>
+            <param>vmCpuNumber=8</param>
+            <param>vmMemory=8GB</param>
+            <param>NVME=yes</param>
+            <param>modes=PERF-STORAGE-4K-IO-MODES</param>
+            <param>startQDepth=1</param>
+            <param>maxQDepth=256</param>
+            <param>startIO=4</param>
+            <param>ioruntime=FIO_RUNTIME_IN_SECONDS</param>
+            <param>maxIO=4</param>
+            <param>fileSize=1023G</param>
+            <param>PHYSICAL_NUMBER=1</param>
+        </TestParameters>
+        <cleanupScript>.\Testscripts\Windows\SETUP-Remove-NVME-Disk.ps1</cleanupScript>
+        <Platform>Azure,HyperV</Platform>
+        <Category>Performance</Category>
+        <Area>NVME</Area>
+        <Tags>nvme,storage</Tags>
+        <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>PERF-GOLANG-BENCHMARK</testName>
+        <TestScript>PERF-GOLANG-BENCHMARK.ps1</TestScript>
+        <setupType>OneVM</setupType>
+        <OverrideVMSize>Standard_D13_v2</OverrideVMSize>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\golang-benchmark.sh</files>
+        <Platform>Azure,HyperV</Platform>
+        <TestParameters>
+            <param>GOLANG_BENCHMARK_CODE=https://partnerpipelineshare.blob.core.windows.net/binarytools/golang_benchmark.tar.gz</param>
+            <param>GOLANG_INSTALL_PACKAGE=https://partnerpipelineshare.blob.core.windows.net/binarytools/go1.11.4.linux-amd64.tar.gz</param>
+        </TestParameters>
+        <Category>Performance</Category>
+        <Area>Golang</Area>
+        <Tags>golang</Tags>
+        <Priority>2</Priority>
     </test>
 </TestCases>

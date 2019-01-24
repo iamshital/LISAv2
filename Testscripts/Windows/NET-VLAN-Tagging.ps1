@@ -6,7 +6,8 @@
     Use two VMs to test the VLAN tagging (access) feature.
 #>
 
-param([string] $TestParams)
+param([String] $TestParams,
+      [object] $AllVmData)
 
 function Main {
     param (
@@ -21,7 +22,6 @@ function Main {
     $testIPv6 = "no"
     $bootproto = "static"
     $currentDir = "$pwd\"
-    $guestUsername = "root"
 
     # Get MAC for test VM NIC
     $macFileTestVM = "macAddress.file"
@@ -113,7 +113,7 @@ function Main {
         }
     }
     $IPv4 = Get-IPv4ViaKVP $VMName $HvServer
-    $retVal = Set-GuestInterface $guestUsername $IPv4 $VMPort $VMPassword $vm1MacAddress `
+    $retVal = Set-GuestInterface $VMUserName $IPv4 $VMPort $VMPassword $vm1MacAddress `
         $vm1StaticIP $bootproto $netmask $VMName
     if (-not $?) {
         Write-LogErr "Couldn't configure the test interface on $VMName"
@@ -121,7 +121,7 @@ function Main {
     }
 
     # Test interface without any vlan tags
-    $retVal = Test-GuestInterface $guestUsername $vm2StaticIP $IPv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $vm2StaticIP $IPv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber
     if ($retVal -eq $False) {
         Write-LogErr "Could not $pingVersion from $vm1StaticIP to $vm2StaticIP"
@@ -140,7 +140,7 @@ function Main {
     Write-LogInfo "Successfully configured $vm1Nic"
     Start-Sleep -s 10
 
-    $retVal = Test-GuestInterface $guestUsername $vm2StaticIP $IPv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $vm2StaticIP $IPv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber
     if ($retVal -eq $True) {
         Write-LogErr "$pingVersion should have failed from $vm1StaticIP to $vm2StaticIP"
@@ -159,7 +159,7 @@ function Main {
     Write-LogInfo "Successfully configured $vm2nic"
     Start-Sleep -s 10
 
-    $retVal = Test-GuestInterface $guestUsername $vm2StaticIP $IPv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $vm2StaticIP $IPv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber
     if ($retVal -eq $False) {
         Write-LogErr "Could not $pingVersion from $vm1StaticIP to $vm2StaticIP"
@@ -177,7 +177,7 @@ function Main {
     }
     Write-LogInfo "Successfully configured $vm1Nic"
     Start-Sleep -s 10
-    $retVal = Test-GuestInterface $guestUsername $vm2StaticIP $IPv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $vm2StaticIP $IPv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber
     if ($retVal -eq $True) {
         Write-LogErr "$pingVersion should have failed from $vm1StaticIP to $vm2StaticIP"
@@ -190,6 +190,6 @@ function Main {
     return "PASS"
 }
 
-Main -VMName $AllVMData.RoleName -HvServer $xmlConfig.config.Hyperv.Hosts.ChildNodes[0].ServerName `
+Main -VMName $AllVMData.RoleName -HvServer $GlobalConfig.Global.Hyperv.Hosts.ChildNodes[0].ServerName `
      -VMPort $AllVMData.SSHPort -VMUserName $user -VMPassword $password `
      -TestParams $TestParams

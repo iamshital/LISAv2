@@ -12,7 +12,8 @@
 
 #>
 
-param([String] $TestParams)
+param([String] $TestParams,
+      [object] $AllVmData)
 
 function Main {
     param (
@@ -113,15 +114,9 @@ if ($createfile -notlike "File *testfile-*.file is created") {
 	Write-LogErr "Could not create the sample test file in the working directory!"
 	return "FAIL"
 }
-# Verifying if /mnt folder on guest exists; if not, it will be created
-Run-LinuxCmd -username $VMUserName -password $VMPassword -ip $Ipv4 -port $VMPort -command "[ -d /mnt ]" -runAsSudo
-if (-not $?){
-    Write-LogInfo "Folder /mnt not present on guest. It will be created"
-    Run-LinuxCmd -username $VMUserName -password $VMPassword -ip $Ipv4 -port $VMPort -command "mkdir /mnt" -runAsSudo
-}
 
-$sts = Mount-Disk -vmPassword $VMPassword -vmPort $VMPort -ipv4 $Ipv4
-if (-not $sts[-1]) {
+$sts = Mount-Disk -vmUsername $VMUserName -vmPassword $VMPassword -vmPort $VMPort -ipv4 $Ipv4
+if (-not $sts) {
     Write-LogErr "FAIL to mount the disk in the VM."
     return "FAIL"
 }
@@ -131,7 +126,7 @@ if (-not $sts[-1]) {
 
 $Error.Clear()
 $copyDuration = (Measure-Command { Copy-VMFile -vmName $VMName -ComputerName $HvServer -SourcePath $filePath -DestinationPath `
-    "/mnt/" -FileSource Host }).totalseconds
+    "/mnt/test/" -FileSource Host }).totalseconds
 if ($Error.Count -eq 0) {
 	Write-LogInfo "File has been successfully copied to guest VM '${vmName}'"
 }
@@ -147,7 +142,7 @@ Write-LogInfo "The file copy process took ${copyDuration} seconds"
 #
 # Checking if the file is present on the guest and file size is matching
 #
-$sts = Check-FileInLinuxGuest -vmUserName $VMUserName -vmPassword $VMPassword -vmPort $VMPort -ipv4 $Ipv4 -fileName "/mnt/$testfile"  -checkSize $True  -checkContent $False
+$sts = Check-FileInLinuxGuest -vmUserName $VMUserName -vmPassword $VMPassword -vmPort $VMPort -ipv4 $Ipv4 -fileName "/mnt/test/$testfile"  -checkSize $True  -checkContent $False
 if  (-not $sts[-1]) {
 	Write-LogInfo "File is not present on the guest VM '${vmName}'!"
 	return "FAIL"
@@ -170,7 +165,7 @@ if (-not $?) {
 }
 }
 
-Main -VMName $AllVMData.RoleName -HvServer $xmlConfig.config.Hyperv.Hosts.ChildNodes[0].ServerName `
+Main -VMName $AllVMData.RoleName -HvServer $GlobalConfig.Global.Hyperv.Hosts.ChildNodes[0].ServerName `
          -Ipv4 $AllVMData.PublicIP -VMPort $AllVMData.SSHPort `
          -VMUserName $user -VMPassword $password -RootDir $WorkingDirectory `
          -TestParams $TestParams

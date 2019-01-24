@@ -7,7 +7,7 @@
 	Verify that memory changes if multiple memory add/remove operations are done.
 	Only 1 VM is required for this test.
 #>
-param([string] $testParams)
+param([string] $testParams, [object] $AllVmData)
 #######################################################################
 #
 # Main script body
@@ -15,8 +15,9 @@ param([string] $testParams)
 #######################################################################
 function Main {
     param (
-        $testParams
+        $testParams, $allVMData
     )
+    $currentTestResult = Create-TestResultObject
     try {
         $testResult = $null
         $captureVMData = $allVMData
@@ -61,9 +62,8 @@ function Main {
         }
         Write-LogInfo "Checking if stress-ng is installed"
         $retVal = Publish-App "stress-ng" $Ipv4 $appGitURL $appGitTag $VMPort
-            -VMPassword $password
         if ( -not $retVal ) {
-            Throw "Dependency tool stress-ng is not installed."
+            Throw "Stress-ng is not installed! Please install it before running the memory stress tests."
         }
         Write-LogInfo "Stress-ng is installed! Will begin running memory stress tests shortly."
         # Get memory stats from VmInfo
@@ -264,5 +264,5 @@ function Main {
     $currentTestResult.TestResult = Get-FinalResultHeader -resultarr $resultArr
 	return $currentTestResult.TestResult
 }
-Main -TestParams (ConvertFrom-StringData $TestParams.Replace(";","`n"))
+Main -TestParams (ConvertFrom-StringData $TestParams.Replace(";","`n")) -allVMData $AllVmData
 

@@ -1,14 +1,18 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
 param(
-    [String] $TestParams
+    [String] $TestParams,
+    [object] $AllVMData,
+    [object] $CurrentTestData
 )
 
 function Main {
     param (
-        $TestParams
+        $TestParams,
+        $AllVMData
     )
     # Create test result
+    $CurrentTestResult = Create-TestResultObject
     $resultArr = @()
 
     try {
@@ -62,7 +66,7 @@ function Main {
         } else {
             Throw "Server and client SRIOV NICs are not same."
         }
-        if($EnableAcceleratedNetworking -or ($currentTestData.AdditionalHWConfig.Networking -imatch "SRIOV")) {
+        if ($currentTestData.AdditionalHWConfig.Networking -imatch "SRIOV") {
             $DataPath = "SRIOV"
         } else {
             $DataPath = "Synthetic"
@@ -140,10 +144,10 @@ collect_VM_properties
 
                 if ($CurrentTestData.testName -imatch "udp") {
                     $testType = "UDP"
-                    $test_connections = $line.Trim().Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Split(" ")[0]
-                    $tx_throughput_gbps = $line.Trim().Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Split(" ")[1]
-                    $rx_throughput_gbps = $line.Trim().Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Split(" ")[2]
-                    $datagram_loss = $line.Trim().Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Split(" ")[3]
+                    $test_connections = ($line.Trim() -Replace " +"," ").Split(" ")[0]
+                    $tx_throughput_gbps = ($line.Trim() -Replace " +"," ").Split(" ")[1]
+                    $rx_throughput_gbps = ($line.Trim() -Replace " +"," ").Split(" ")[2]
+                    $datagram_loss = ($line.Trim() -Replace " +"," ").Split(" ")[3]
                     $connResult = "tx_throughput=$tx_throughput_gbps`Gbps rx_throughput=$rx_throughput_gbps`Gbps datagram_loss=$datagram_loss"
                     $currentNtttcpResultObject["meta_data"]["connections"] = $test_connections
                     $currentNtttcpResultObject["meta_data"]["type"] = $testType
@@ -152,16 +156,22 @@ collect_VM_properties
                     $currentNtttcpResultObject["datagram_loss"] = $datagram_loss
                 } else {
                     $testType = "TCP"
-                    $test_connections = $line.Trim().Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Split(" ")[0]
-                    $throughput_gbps = $line.Trim().Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Split(" ")[1]
-                    $cycle_per_byte = $line.Trim().Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Split(" ")[2]
-                    $average_tcp_latency = $line.Trim().Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Replace("  "," ").Split(" ")[3]
+                    $test_connections = ($line.Trim() -Replace " +"," ").Split(" ")[0]
+                    $throughput_gbps = ($line.Trim() -Replace " +"," ").Split(" ")[1]
+                    $cycle_per_byte = ($line.Trim() -Replace " +"," ").Split(" ")[2]
+                    $average_tcp_latency = ($line.Trim() -Replace " +"," ").Split(" ")[3]
+                    $txpackets_sender = ($line.Trim() -Replace " +"," ").Split(" ")[4]
+                    $rxpackets_sender = ($line.Trim() -Replace " +"," ").Split(" ")[5]
+                    $pktsInterrupt_sender = ($line.Trim() -Replace " +"," ").Split(" ")[6]
                     $connResult = "throughput=$throughput_gbps`Gbps cyclePerBytet=$cycle_per_byte Avg_TCP_lat=$average_tcp_latency"
                     $currentNtttcpResultObject["meta_data"]["connections"] = $test_connections
                     $currentNtttcpResultObject["meta_data"]["type"] = $testType
                     $currentNtttcpResultObject["cycle_per_byte"] = $cycle_per_byte
                     $currentNtttcpResultObject["tx_throughput_gbps"] = $throughput_gbps
                     $currentNtttcpResultObject["average_tcp_latency"] = $average_tcp_latency
+                    $currentNtttcpResultObject["txpackets_sender"] = $txpackets_sender
+                    $currentNtttcpResultObject["rxpackets_sender"] = $rxpackets_sender
+                    $currentNtttcpResultObject["pktsInterrupt_sender"] = $pktsInterrupt_sender
                 }
                 $ntttcpResults += $currentNtttcpResultObject
                 $metadata = "Connections=$test_connections"
@@ -202,12 +212,12 @@ collect_VM_properties
         Write-Host ($ntttcpDataCsv | Format-Table * | Out-String)
 
         Write-LogInfo "Uploading the test results.."
-        $dataSource = $xmlConfig.config.$TestPlatform.database.server
-        $user = $xmlConfig.config.$TestPlatform.database.user
-        $password = $xmlConfig.config.$TestPlatform.database.password
-        $database = $xmlConfig.config.$TestPlatform.database.dbname
-        $dataTableName = $xmlConfig.config.$TestPlatform.database.dbtable
-        $TestCaseName = $xmlConfig.config.$TestPlatform.database.testTag
+        $dataSource = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.server
+        $user = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.user
+        $password = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.password
+        $database = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.dbname
+        $dataTableName = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.dbtable
+        $TestCaseName = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.testTag
         if ($dataSource -And $user -And $password -And $database -And $dataTableName) {
             $GuestDistro = Get-Content "$LogDir\VM_properties.csv" | Select-String "OS type"| ForEach-Object{$_ -replace ",OS type,",""}
             $HostOS = Get-Content "$LogDir\VM_properties.csv" | Select-String "Host Version"| ForEach-Object{$_ -replace ",Host Version,",""}
@@ -225,17 +235,17 @@ collect_VM_properties
                     $SQLQuery += "('$TestCaseName','$(Get-Date -Format yyyy-MM-dd)','$TestPlatform','$TestLocation','$HostOS','$GuestOSType','$GuestDistro','$GuestSize','$KernelVersion','$IPVersion','$ProtocolType','$DataPath','$testBuffer',$($Line[0]),$($Line[1]),$($Line[2]),$($Line[3])),"
                 }
             } else {
-                $SQLQuery = "INSERT INTO $dataTableName (TestCaseName,TestDate,HostType,HostBy,HostOS,GuestOSType,GuestDistro,GuestSize,KernelVersion,IPVersion,ProtocolType,DataPath,NumberOfConnections,Throughput_Gbps,Latency_ms) VALUES "
+                $SQLQuery = "INSERT INTO $dataTableName (TestCaseName,TestDate,HostType,HostBy,HostOS,GuestOSType,GuestDistro,GuestSize,KernelVersion,IPVersion,ProtocolType,DataPath,NumberOfConnections,Throughput_Gbps,Latency_ms,TXpackets,RXpackets,PktsInterrupts) VALUES "
                 for ($i = 1; $i -lt $LogContents.Count; $i++) {
                     $Line = $LogContents[$i].Trim() -split '\s+'
-                    $SQLQuery += "('$TestCaseName','$(Get-Date -Format yyyy-MM-dd)','$TestPlatform','$TestLocation','$HostOS','$GuestOSType','$GuestDistro','$GuestSize','$KernelVersion','$IPVersion','$ProtocolType','$DataPath',$($Line[0]),$($Line[1]),$($Line[2])),"
+                    $SQLQuery += "('$TestCaseName','$(Get-Date -Format yyyy-MM-dd)','$TestPlatform','$TestLocation','$HostOS','$GuestOSType','$GuestDistro','$GuestSize','$KernelVersion','$IPVersion','$ProtocolType','$DataPath',$($Line[0]),$($Line[1]),$($Line[3]),$($Line[4]),$($Line[5]),$($Line[6])),"
                 }
             }
             $SQLQuery = $SQLQuery.TrimEnd(',')
             if ($uploadResults) {
                 Upload-TestResultToDatabase $SQLQuery
             } else {
-                Write-LogErr "Uploading the test results cancelled due to zero throughput for some connections!!"
+                Write-LogErr "Uploading the test results ignored due to zero throughput for some connections!!"
                 $testResult = "FAIL"
             }
 
@@ -256,7 +266,7 @@ collect_VM_properties
     }
 
     $currentTestResult.TestResult = Get-FinalResultHeader -resultarr $resultArr
-    return $currentTestResult.TestResult
+    return $currentTestResult
 }
 
-Main -TestParams (ConvertFrom-StringData $TestParams.Replace(";","`n"))
+Main -TestParams (ConvertFrom-StringData $TestParams.Replace(";","`n")) -AllVMData $AllVmData

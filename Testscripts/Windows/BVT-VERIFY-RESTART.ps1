@@ -1,7 +1,9 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
+param([object] $AllVmData)
 
 function Main {
+    param([object] $AllVMData)
     # Create test result
     $currentTestResult = Create-TestResultObject
     $resultArr = @()
@@ -10,8 +12,8 @@ function Main {
         Write-LogInfo "Trying to restart $($AllVMData.RoleName)..."
         $restartVM = Restart-AzureRmVM -ResourceGroupName $AllVMData.ResourceGroupName -Name $AllVMData.RoleName -Verbose
         if ( $restartVM.Status -eq "Succeeded" ) {
-            $isSSHOpened = Check-SSHPortsEnabled -AllVMDataObject $AllVMData
-            if ($isSSHOpened -eq "True") {
+            $isVmAlive = Is-VmAlive -AllVMDataObject $AllVMData
+            if ($isVmAlive -eq "True") {
                 $isRestarted = $true
             } else {
                 Write-LogErr "VM is not available after restart"
@@ -40,7 +42,7 @@ function Main {
     }
 
     $currentTestResult.TestResult = Get-FinalResultHeader -resultarr $resultArr
-    return $currentTestResult.TestResult
+    return $currentTestResult
 }
 
-Main
+Main -AllVMData $AllVmData

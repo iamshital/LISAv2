@@ -1,5 +1,6 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
+param([object] $AllVmData, [object] $CurrentTestData)
 
 $testScript = "nested_kvm_ntttcp_different_l1_public_bridge.sh"
 if(($($currentTestData.TestName)).Contains("NESTED-KVM-NTTTCP-DIFFERENT-L1-NAT"))
@@ -17,18 +18,18 @@ function Start-TestExecution ($ip, $port, $cmd) {
 	}
 }
 
-function Send-ResultToDatabase ($xmlConfig, $logDir) {
+function Send-ResultToDatabase ($GlobalConfig, $logDir) {
 	Write-LogInfo "Uploading the test results.."
-	$dataSource = $xmlConfig.config.$TestPlatform.database.server
-	$user = $xmlConfig.config.$TestPlatform.database.user
-	$password = $xmlConfig.config.$TestPlatform.database.password
-	$database = $xmlConfig.config.$TestPlatform.database.dbname
-	$dataTableName = $xmlConfig.config.$TestPlatform.database.dbtable
-	$TestCaseName = $xmlConfig.config.$TestPlatform.database.testTag
+	$dataSource = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.server
+	$user = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.user
+	$password = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.password
+	$database = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.dbname
+	$dataTableName = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.dbtable
+	$TestCaseName = $GlobalConfig.Global.$TestPlatform.ResultsDatabase.testTag
 	if ($dataSource -And $user -And $password -And $database -And $dataTableName)
 	{
 		# Get host info
-		$HostType	= $xmlConfig.config.CurrentTestPlatform
+		$HostType	= $global:TestPlatform
 		$HostBy	= $TestLocation
 		$HostOS	= Get-Content "$LogDir\VM_properties.csv" | Select-String "Host Version"| ForEach-Object{$_ -replace ",Host Version,",""}
 
@@ -50,11 +51,8 @@ function Send-ResultToDatabase ($xmlConfig, $logDir) {
 		{
 			$flag=0
 		}
-		$imageName = " "
-		if($TestPlatform -eq "Azure"){
-			$imageInfo = $xmlConfig.config.Azure.Deployment.Data.Distro.ARMImage
-			$imageName = "$($imageInfo.Publisher) $($imageInfo.Offer) $($imageInfo.Sku) $($imageInfo.Version)"
-		}
+
+		$imageName = $global:ARMImageName
 
 		foreach ( $param in $currentTestData.TestParameters.param)
 		{
@@ -110,13 +108,13 @@ function Main () {
 	{
 		foreach($vm in $AllVMData)
 		{
-			if($vm.RoleName.Contains("server"))
+			if($vm.RoleName.Contains("role-0") -or $vm.RoleName.Contains("receiver"))
 			{
 				$hs1VIP = $vm.PublicIP
 				$hs1vm1sshport = $vm.SSHPort
 				$hs1secondip = $vm.SecondInternalIP
 			}
-			if($vm.RoleName.Contains("client"))
+			if($vm.RoleName.Contains("role-1") -or $vm.RoleName.Contains("sender"))
 			{
 				$hs2VIP = $vm.PublicIP
 				$hs2vm1sshport = $vm.SSHPort
@@ -211,7 +209,7 @@ function Main () {
 				Write-LogInfo "Zero throughput for some connections, results will not be uploaded to database!"
 			}
 			else {
-				Send-ResultToDatabase -xmlConfig $xmlConfig -logDir $LogDir
+				Send-ResultToDatabase -GlobalConfig $GlobalConfig -logDir $LogDir
 			}
 		}
 	}

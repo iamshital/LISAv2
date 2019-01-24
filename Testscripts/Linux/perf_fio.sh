@@ -1,14 +1,13 @@
 #!/bin/bash
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
 #
-# Sample script to run sysbench.
+#
 # In this script, we want to bench-mark device IO performance on a mounted folder.
 # You can adapt this script to other situations easily like for stripe disks as RAID0.
 # The only thing to keep in mind is that each different configuration you're testing
@@ -20,8 +19,6 @@ LogMsg()
 	echo "[$(date +"%x %r %Z")] ${1}"
 	echo "[$(date +"%x %r %Z")] ${1}" >> "${HOMEDIR}/runlog.txt"
 }
-LogMsg "Sleeping 10 seconds.."
-sleep 10
 
 CONSTANTS_FILE="$HOMEDIR/constants.sh"
 UTIL_FILE="$HOMEDIR/utils.sh"
@@ -68,7 +65,7 @@ RunFIO()
 	JSONFILELOG="${LOGDIR}/jsonLog"
 	IOSTATLOGDIR="${LOGDIR}/iostatLog"
 	BLKTRACELOGDIR="${LOGDIR}/blktraceLog"
-	LOGFILE="${LOGDIR}/fio-test.log.txt"	
+	LOGFILE="${LOGDIR}/fio-test.log.txt"
 
 	# redirect blktrace files directory
 	Resource_mount=$(mount -l | grep /sdb1 | awk '{print$3}')
@@ -78,15 +75,14 @@ RunFIO()
 	####################################
 	LogMsg "Test log created at: ${LOGFILE}"
 	LogMsg "===================================== Starting Run $(date +"%x %r %Z") ================================"
-	LogMsg "===================================== Starting Run $(date +"%x %r %Z") script generated 2/9/2015 4:24:44 PM ================================"
-
+	
 	chmod 666 $LOGFILE
 	LogMsg "--- Kernel Version Information ---"
 	uname -a >> $LOGFILE
 	cat /proc/version >> $LOGFILE
 	if [ -f /usr/share/clear/version ]; then
 		cat /usr/share/clear/version >> $LOGFILE
-	elif [ -f /etc/*-release ]; then
+	elif [[ -n `ls /etc/*-release` ]]; then
 		cat /etc/*-release >> $LOGFILE
 	fi
 	LogMsg "--- PCI Bus Information ---"
@@ -105,7 +101,7 @@ RunFIO()
 			do
 				numJob=${NUM_JOBS[$numJobIterator]}
 				if [ -z "$numJob" ]; then
-					numJob=${NUM_JOBS[-1]}	
+					numJob=${NUM_JOBS[-1]}
 				fi
 				thread=$((qDepth/numJob))
 
@@ -134,7 +130,7 @@ RunFIO()
 		done
 	done
 	####################################
-	LogMsg "===================================== Completed Run $(date +"%x %r %Z") script generated 2/9/2015 4:24:44 PM ================================"
+	LogMsg "===================================== Completed Run at $(date +"%x %r %Z") ================================"
 
 	compressedFileName="${HOMEDIR}/FIOTest-$(date +"%m%d%Y-%H%M%S").tar.gz"
 	LogMsg "INFO: Please wait...Compressing all results to ${compressedFileName}..."
@@ -145,35 +141,58 @@ RunFIO()
 }
 
 CreateRAID0()
-{	
-	disks=$(ls -l /dev | grep sd[c-z]$ | awk '{print $10}')
-	
+{
+	if [ -n "${NVME}" ]; then
+		disk_location="nvme[0-9]n[0-9]"
+		partition_location="nvme[0-9]n[0-9]p[0-9]"
+		update_repos
+		install_package "nvme-cli"
+	else
+		disk_location="sd[c-z]"
+		partition_location="sd[c-z][1-5]"
+	fi
+
+	disks=$(ls -l /dev | grep ${disk_location}$ | awk '{print $10}')
 	LogMsg "INFO: Check and remove RAID first"
-	mdvol=$(cat /proc/mdstat | grep "active raid" | awk {'print $1'})
+	mdvol=$(cat /proc/mdstat | grep active | awk {'print $1'})
 	if [ -n "$mdvol" ]; then
 		LogMsg "/dev/${mdvol} already exist...removing first"
 		umount /dev/${mdvol}
 		mdadm --stop /dev/${mdvol}
 		mdadm --remove /dev/${mdvol}
-		mdadm --zero-superblock /dev/sd[c-z][1-5]
+		mdadm --zero-superblock /dev/${partition_location}
 	fi
-	
+
 	LogMsg "INFO: Creating Partitions"
 	count=0
 	for disk in ${disks}
-	do		
+	do
 		LogMsg "formatting disk /dev/${disk}"
+		if [ -n "${NVME}" ]; then
+			nvme format /dev/${disk}
+		fi
 		(echo d; echo n; echo p; echo 1; echo; echo; echo t; echo fd; echo w;) | fdisk /dev/${disk}
-		count=$(( $count + 1 ))
+		count=$(($count + 1))
 		sleep 1
 	done
 	LogMsg "INFO: Creating RAID of ${count} devices."
 	sleep 1
-	mdadm --create ${mdVolume} --level 0 --raid-devices ${count} /dev/sd[c-z][1-5]
+	mdadm --create ${mdVolume} --level 0 --raid-devices ${count} /dev/${partition_location}
+}
+
+CreateSinglePartition()
+{
+	namespace=$(ls -l /dev | grep -w nvme[0-9]n[0-9]$ | awk '{print $10}' | head -1)
+	# Format disk
+	nvme format /dev/${namespace}
+	sleep 1
+	(echo d; echo n; echo p; echo 1; echo ; echo; echo ; echo w) | fdisk /dev/${namespace}
+	sleep 1
+	mdVolume="/dev/${namespace}"
 }
 
 CreateLVM()
-{	
+{
 	disks=$(ls -l /dev | grep sd[c-z]$ | awk '{print $10}')
 	vgExist=$(vgdisplay)
 	if [ -n "$vgExist" ]; then
@@ -181,16 +200,16 @@ CreateLVM()
 		lvremove -A n -f /dev/${vggroup}/lv1
 		vgremove ${vggroup} -f
 	fi
-	
+
 	LogMsg "INFO: Creating Partition"
 	count=0
 	for disk in ${disks}
-	do		
+	do
 		echo "formatting disk /dev/${disk}"
 		(echo d; echo n; echo p; echo 1; echo; echo; echo t; echo fd; echo w;) | fdisk /dev/${disk}
-		count=$(( $count + 1 )) 
+		count=$(( $count + 1 ))
 	done
-	
+
 	LogMsg "INFO: Creating LVM with all data disks"
 	pvcreate /dev/sd[c-z][1-5]
 	vgcreate ${vggroup} /dev/sd[c-z][1-5]
@@ -198,7 +217,7 @@ CreateLVM()
 }
 
 ############################################################
-#	Main body
+# Main body
 ############################################################
 
 HOMEDIR=$HOME
@@ -232,7 +251,11 @@ else
 fi
 
 # Creating RAID before triggering test
-CreateRAID0
+if [ -n "${SINGLE_DISK}" ]; then
+	CreateSinglePartition
+else
+	CreateRAID0
+fi
 
 # Run test from here
 LogMsg "*********INFO: Starting test execution*********"

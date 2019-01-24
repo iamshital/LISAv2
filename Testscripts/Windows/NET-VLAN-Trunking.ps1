@@ -26,7 +26,8 @@
      to ping the first VM again. This must fail.
 #>
 
-param([string] $TestParams)
+param([String] $TestParams,
+      [object] $AllVmData)
 
 function Main {
     param (
@@ -40,7 +41,7 @@ function Main {
     $packetNumber = "11"
     $testIPv6 = "no"
     $currentDir = "$((Get-Location).Path)\"
-    $guestUsername = "root"
+
 
     # Get MAC for test VM NIC
     $macFileTestVM = "macAddress.file"
@@ -143,7 +144,7 @@ function Main {
     }
 
     # Create vlan on both VMs
-    $retVal = Set-GuestInterface -VMUser $guestUsername -VMIpv4 $ipv4 -VMPort $VMPort `
+    $retVal = Set-GuestInterface -VMUser $VMUserName -VMIpv4 $ipv4 -VMPort $VMPort `
         -VMPassword $VMPassword -InterfaceMAC $vm1MacAddress -VMStaticIP $vm1StaticIP `
         -Netmask $netmask -VMName $VMName -VlanID $vlanID
     if (-not $?) {
@@ -152,7 +153,7 @@ function Main {
     }
 
     # Try to ping. If it fails, restart the vm & try again
-    $retVal = Test-GuestInterface $guestUsername $vm2StaticIP $ipv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $vm2StaticIP $ipv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber "yes"
     if ($retVal -eq $True) {
         Write-LogErr "$pingVersion should have failed from $vm1StaticIP to $vm2StaticIP"
@@ -173,7 +174,7 @@ function Main {
         return "FAIL"
     }
 
-    $retVal = Test-GuestInterface $guestUsername $vm2StaticIP $ipv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $vm2StaticIP $ipv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber "yes"
     if ($retVal -eq $False) {
         Write-LogErr "Could not $pingVersion from $vm1StaticIP to $vm2StaticIP"
@@ -195,7 +196,7 @@ function Main {
         return "FAIL"
     }
 
-    $retVal = Test-GuestInterface $guestUsername $vm2StaticIP $ipv4 $VMPort $VMPassword `
+    $retVal = Test-GuestInterface $VMUserName $vm2StaticIP $ipv4 $VMPort $VMPassword `
         $vm1MacAddress $pingVersion $packetNumber "yes"
     if ($retVal -eq $True) {
         Write-LogErr "$pingVersion should have failed from $vm1StaticIP to $vm2StaticIP"
@@ -208,6 +209,6 @@ function Main {
     return "PASS"
 }
 
-Main -VMName $AllVMData.RoleName -HvServer $xmlConfig.config.Hyperv.Hosts.ChildNodes[0].ServerName `
+Main -VMName $AllVMData.RoleName -HvServer $GlobalConfig.Global.Hyperv.Hosts.ChildNodes[0].ServerName `
      -VMPort $AllVMData.SSHPort -VMUserName $user -VMPassword $password `
      -TestParams $TestParams
