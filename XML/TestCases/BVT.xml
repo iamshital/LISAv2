@@ -81,7 +81,7 @@
         <testScript>BVT-VERIFY-BOOT-ERROR-WARNINGS.py</testScript>
         <files>.\Testscripts\Linux\azuremodules.py,.\Testscripts\Linux\BVT-VERIFY-BOOT-ERROR-WARNINGS.py,.\XML\Other\ignorable-boot-errors.xml</files>
         <setupType>OneVM</setupType>
-        <Platform>Azure</Platform>
+        <Platform>Azure,WSL</Platform>
         <Category>BVT</Category>
         <Area>BVT</Area>
         <Tags>provision</Tags>
