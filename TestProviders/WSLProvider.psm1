@@ -1,5 +1,5 @@
 ##############################################################################################
-# HyperVProvider.psm1
+# WSLProvider.psm1
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
 # Operations :
@@ -7,7 +7,7 @@
 <#
 .SYNOPSIS
 	PS modules for LISAv2 test automation
-	This module provides the test operations on WSL
+	This module provides the test operations on Windows Subsystem of Linux
 
 .PARAMETER
 	<Parameters>

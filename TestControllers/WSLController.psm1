@@ -1,5 +1,5 @@
 ##############################################################################################
-# HyperVController.psm1
+# WSLController.psm1
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
 # Operations :
@@ -7,7 +7,7 @@
 <#
 .SYNOPSIS
 	PS modules for LISAv2 test automation
-	This module drives the test on WSL
+	This module drives the test on Windows Subsystem of Linux
 
 .PARAMETER
 	<Parameters>

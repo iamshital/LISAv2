@@ -53,4 +53,30 @@
             <HostFwdPort>1234</HostFwdPort>
         </TestCredentials>
     </OL>
+    <WSL>
+        <Hosts>
+            <Host>
+                <ServerName>localhost</ServerName>
+                <OsDistro></OsDistro>
+                <DestinationOsVHDPath></DestinationOsVHDPath>
+            </Host>
+            <Host>
+                <ServerName>localhost</ServerName>
+                <OsDistro></OsDistro>
+                <DestinationOsVHDPath></DestinationOsVHDPath>
+            </Host>
+        </Hosts>
+        <ResultsDatabase>
+            <server></server>
+            <user></user>
+            <password></password>
+            <dbname></dbname>
+            <dbtable></dbtable>
+            <testTag></testTag>
+        </ResultsDatabase>
+        <TestCredentials>
+            <LinuxUsername>YOUR_USERNAME</LinuxUsername>
+            <LinuxPassword>xxxxxxxxxxxxxxxxxxxxxxxxx</LinuxPassword>
+        </TestCredentials>
+    </WSL>
 </Global>
