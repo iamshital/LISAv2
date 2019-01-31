@@ -74,10 +74,10 @@ Class OLProvider : AzureProvider
             throw "error"
         } else {
             Write-LogInfo "Sucesfully deployed OL VM"
-            $allVMData.SSHPort = $this.HostFwdPort       
+            $allVMData.SSHPort = $this.HostFwdPort
         }
         Set-Variable -Name user -Value $this.OLUserName -Scope Global -Force
-        Set-Variable -Name password -Value $this.OLUserPassword -Scope Global -Force    
+        Set-Variable -Name password -Value $this.OLUserPassword -Scope Global -Force
         return $allVMData
     }
 
