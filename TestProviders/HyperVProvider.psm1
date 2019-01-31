@@ -29,6 +29,8 @@ using Module ".\TestProvider.psm1"
 Class HyperVProvider : TestProvider
 {
 	[string] $VMGeneration
+	[string] $BaseCheckpoint = "ICAbase"
+	[bool]   $ReuseVmOnFailure = $true
 
 	[object] DeployVMs([xml] $GlobalConfig, [object] $SetupTypeData, [object] $TestCaseData, [string] $TestLocation, [string] $RGIdentifier, [bool] $UseExistingRG) {
 		$allVMData = @()
@@ -73,7 +75,7 @@ Class HyperVProvider : TestProvider
 				}
 
 				# Create the initial checkpoint
-				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName "ICAbase"
+				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName $this.BaseCheckpoint
 				$allVMData = Check-IP -VMData $AllVMData
 			}
 			else
@@ -104,7 +106,7 @@ Class HyperVProvider : TestProvider
 			Remove-AllFilesFromHomeDirectory -allDeployedVMs $VmData
 			Write-LogInfo "Removed all files from home directory."
 		} elseif ($ApplyCheckPoint) {
-			Apply-HyperVCheckpoint -VMData $VmData -CheckpointName "ICAbase"
+			Apply-HyperVCheckpoint -VMData $VmData -CheckpointName $this.BaseCheckpoint
 			$VmData = Check-IP -VMData $VmData
 			Write-LogInfo "Public IP found for all VMs in deployment after checkpoint restore"
 		}
@@ -159,8 +161,7 @@ Class HyperVProvider : TestProvider
 				}
 			}
 
-			([TestProvider]$this).RunTestCaseCleanup($AllVMData, $CurrentTestData, $CurrentTestResult, $CollectVMLogs, $RemoveFiles, $User, $Password, $SetupTypeData)
-
+			([TestProvider]$this).RunTestCaseCleanup($AllVMData, $CurrentTestData, $CurrentTestResult, $CollectVMLogs, $RemoveFiles, $User, $Password, $SetupTypeData, $TestParameters)
 			if ($CurrentTestResult.TestResult -ne "PASS") {
 				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName "$($CurrentTestData.TestName)-$($CurrentTestResult.TestResult)" `
 					-ShouldTurnOffVMBeforeCheckpoint $false -ShouldTurnOnVMAfterCheckpoint $false

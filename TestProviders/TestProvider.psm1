@@ -30,6 +30,7 @@ Class TestProvider
 {
 	[string] $CustomKernel
 	[string] $CustomLIS
+	[bool]   $ReuseVmOnFailure = $false
 
 	[object] DeployVMs([xml] $GlobalConfig, [object] $SetupTypeData, [object] $TestCaseData, [string] $TestLocation, [string] $RGIdentifier, [bool] $UseExistingRG) {
 		return $null
