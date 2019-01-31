@@ -3295,3 +3295,31 @@ function ConsumeMemory() {
     wait
     return 0
 }
+
+function Format_Mount_NVME()
+{
+    if [[ $# == 2 ]]; then
+        local namespace=$1
+        local filesystem=$2
+    else
+        return 1
+    fi
+    # Partition disk
+    echo "Creating  partition on ${namespace} disk "
+    (echo n; echo p; echo 1; echo ; echo; echo ; echo w) | fdisk /dev/"${namespace}"
+    check_exit_status "${namespace} partition creation"
+    sleep 1
+    # Create fileSystem
+    echo "Creating ${filesystem} filesystem on ${namespace} disk "
+    echo "y" | mkfs."${filesystem}" -f "/dev/${namespace}p1"
+    check_exit_status "${filesystem} filesystem creation"
+    sleep 1
+    # Mount the disk
+    LogMsg "Mounting ${namespace}p1 disk "
+    mkdir "$namespace"
+    mount "/dev/${namespace}p1" "$namespace"
+    check_exit_status "${filesystem} filesystem Mount"
+    sleep 1
+    return 0
+}
+
