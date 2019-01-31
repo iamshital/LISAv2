@@ -1,5 +1,5 @@
 ##############################################################################################
-# AzureProvider.psm1
+# OLProvider.psm1
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the Apache License.
 # Operations :

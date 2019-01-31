@@ -30,10 +30,10 @@ using Module "..\TestProviders\OLProvider.psm1"
 Class OLController : AzureController
 {
 	[string] $OLUserName
-    [string] $OLUserPassword
-    [string] $OLImageUrl
-    [string] $OLImageName
-    [string] $HostFwdPort
+	[string] $OLUserPassword
+	[string] $OLImageUrl
+	[string] $OLImageName
+	[string] $HostFwdPort
 
 	OLController() {
 		$this.TestProvider = New-Object -TypeName "OLProvider"
@@ -42,21 +42,21 @@ Class OLController : AzureController
 
 	[void] ParseAndValidateParameters([Hashtable]$ParamTable) {
 		([AzureController]$this).ParseAndValidateParameters([Hashtable]$ParamTable)
-    }
+	}
 
-    [void] PrepareTestEnvironment($XMLSecretFile) {
+	[void] PrepareTestEnvironment($XMLSecretFile) {
 		([AzureController]$this).PrepareTestEnvironment($XMLSecretFile)
 		$OLConfig = $this.GlobalConfig.Global.OL
 		if ($this.XMLSecrets) {
 			$secrets = $this.XMLSecrets.secrets
 			$OLConfig.TestCredentials.OLUserName = $secrets.OLUserName
-            $OLConfig.TestCredentials.OLUserPassword = $secrets.OLUserPassword
-            $OLConfig.TestCredentials.OLImageUrl = $secrets.OLImageUrl
-            $OLConfig.TestCredentials.OLImageName = $secrets.OLImageName
+			$OLConfig.TestCredentials.OLUserPassword = $secrets.OLUserPassword
+			$OLConfig.TestCredentials.OLImageUrl = $secrets.OLImageUrl
+			$OLConfig.TestCredentials.OLImageName = $secrets.OLImageName
 		}
 		$this.OLUserName = $OLConfig.TestCredentials.OLUserName
-        $this.OLUserPassword = $OLConfig.TestCredentials.OLUserPassword
-        $this.OLImageUrl = $OLConfig.TestCredentials.OLImageUrl
+		$this.OLUserPassword = $OLConfig.TestCredentials.OLUserPassword
+		$this.OLImageUrl = $OLConfig.TestCredentials.OLImageUrl
 		$this.OLImageName = $OLConfig.TestCredentials.OLImageName
 		$this.HostFwdPort = $OLConfig.TestCredentials.HostFwdPort
 

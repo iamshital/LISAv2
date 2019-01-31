@@ -112,7 +112,7 @@ function Start-LISAv2 {
 			}
 
 			# Validate test platform, and select test controller of the platform
-			$supportedPlatforms = @("Azure", "HyperV","OL")
+			$supportedPlatforms = @("Azure", "HyperV", "OL")
 			if ($paramTable.ContainsKey("TestPlatform")) {
 				$testPlatform = $paramTable["TestPlatform"]
 			}
