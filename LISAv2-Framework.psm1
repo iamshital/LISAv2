@@ -214,7 +214,7 @@ function Start-LISAv2 {
 			}
 			Write-LogInfo "LISAv2 exit code: $ExitCode"
 
-			Get-Variable -Exclude PWD,*Preference,ExitCode -Scope "Global" | Remove-Variable -Scope "Global" `
+			Get-Variable -Exclude PWD,*Preference,ExitCode -Scope "Global" | Clear-Variable -Scope "Global" `
 				-Force -ErrorAction SilentlyContinue
 
 			if ($ExitCode -ne 0) {

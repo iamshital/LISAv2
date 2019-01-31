@@ -103,7 +103,7 @@ Function Create-AllHyperVGroupDeployments($SetupTypeData, $GlobalConfig, $TestLo
 
                         $DeploymentEndTime = (Get-Date)
                         $DeploymentElapsedTime = $DeploymentEndTime - $DeploymentStartTime
-                        if ( $VMCreationStatus )
+                        if ( $VMCreationStatus[-1] )
                         {
                             foreach ($HyperVHost in $HyperVHostArray){
                                 if($TestCaseData.Tags -and $TestCaseData.Tags.ToString().Contains("nested"))
