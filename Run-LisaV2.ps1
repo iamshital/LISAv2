@@ -40,9 +40,6 @@ Param(
 	[string] $ARMImageName = "",
 	[string] $StorageAccount="",
 
-	# [Required] for OL
-	[string] $OLImageUrl="",
-
 	# [Required] for Two Hosts HyperV
 	[string] $DestinationOsVHDPath="",
 
