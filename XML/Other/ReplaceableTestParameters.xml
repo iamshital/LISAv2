@@ -183,4 +183,8 @@ Scenario 2 : You need to run all the performance tests quickly.
         <ReplaceThis>OL_VERSIONS_CSV</ReplaceThis>
         <ReplaceWith></ReplaceWith>
     </Parameter>
+    <Parameter>
+        <ReplaceThis>MASTER_KERNEL_CONFIG_URL</ReplaceThis>
+	<ReplaceWith></ReplaceWith>
+    </Parameter>
 </ReplaceableTestParameters>
