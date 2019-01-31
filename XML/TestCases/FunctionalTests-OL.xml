@@ -1,0 +1,17 @@
+<TestCases>
+    <test>
+        <testName>OL-PACKAGE-CHECK</testName>
+        <testScript>OL-PackageCheck.ps1</testScript>
+        <files></files>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>CSV_PATH=OL_VERSIONS_CSV</param>
+            <param>SkipVerifyKernelLogs=true</param>
+        </TestParameters>
+        <Platform>OL</Platform>
+        <Category>OL</Category>
+        <Area>ol</Area>
+        <Tags>package</Tags>
+        <Priority>0</Priority>
+    </test>
+</TestCases>
