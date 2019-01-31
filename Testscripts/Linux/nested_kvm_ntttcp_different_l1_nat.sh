@@ -115,7 +115,7 @@ if [ "$role" == "server" ]; then
 fi
 
 touch $logFolder/state.txt
-log_file=$logFolder/`basename "$0"`.log
+log_file=$logFolder/$(basename "$0").log
 touch $log_file
 
 IP_ADDR=$L1_CLIENT_IP_ADDR
@@ -128,9 +128,10 @@ fi
 Setup_Network()
 {
     Log_Msg "Setup network" $log_file
-    ifconfig eth1 $IP_ADDR netmask 255.255.255.0 up
+    ip addr add $IP_ADDR/24 dev eth1
+    ip link set eth1 up
     check_exit_status "Setup network"
-    ./nat_qemu_ifup.sh 
+    ./nat_qemu_ifup.sh
 }
 
 Start_Nested_VM_Nat()

@@ -72,7 +72,7 @@ else
 fi
 
 touch $logFolder/state.txt
-log_file=$logFolder/`basename "$0"`.log
+log_file=$logFolder/$(basename "$0").log
 touch $log_file
 
 IP_ADDR=$SERVER_IP_ADDR
@@ -87,13 +87,14 @@ Start_Test()
     echo "client=$CLIENT_IP_ADDR" >> ${CONSTANTS_FILE}
     echo "nicName=$NIC_NAME" >> ${CONSTANTS_FILE}
 
-    echo $NestedUserPassword | sudo -S ifconfig $NIC_NAME up $IP_ADDR netmask 255.255.255.0 up
+    echo $NestedUserPassword | sudo -S ip addr add $IP_ADDR/24 dev $NIC_NAME
+    echo $NestedUserPassword | sudo -S ip link set $NIC_NAME up
     check_exit_status "Setup static IP address for $NIC_NAME"
     chmod a+x /home/$NestedUser/*.sh
 
     Log_Msg "Enable root for VM $role" $log_file
     echo $NestedUserPassword | sudo -S /home/$NestedUser/enableRoot.sh -password $NestedUserPassword
-    echo $NestedUserPassword | sudo -S cp /home/$NestedUser/*.sh /root 
+    echo $NestedUserPassword | sudo -S cp /home/$NestedUser/*.sh /root
     remote_exec -host localhost -user root -passwd $NestedUserPassword -port 22 "hostname"
 
     if [ "$role" == "server" ]; then

@@ -334,9 +334,9 @@ function Run-TestScript {
     }
     Write-LogInfo "Test script: ${Script} started."
     if ($scriptExtension -eq "sh") {
-        Run-LinuxCmd -Command "echo '${Password}' | sudo -S -s eval `"export HOME=``pwd``;bash ${Script} > ${TestName}_summary.log 2>&1`"" `
+        Run-LinuxCmd -Command "bash ${Script} > ${TestName}_summary.log 2>&1" `
              -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
-             -runMaxAllowedTime $Timeout
+             -runMaxAllowedTime $Timeout -runAsSudo
     } elseif ($scriptExtension -eq "ps1") {
         $scriptDir = Join-Path $workDir "Testscripts\Windows"
         $scriptLoc = Join-Path $scriptDir $Script
@@ -492,7 +492,11 @@ Function Provision-VMsForLisa($allVMData, $installPackagesOnRoleNames)
 				$jobID = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username "root" -password $password -command "/root/$scriptName" -RunInBackground
 				$packageInstallObj = New-Object PSObject
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name ID -Value $jobID
-				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
+				if($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
+					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
+				} else {
+					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $($($vmData.ResourceGroupName) + "-" + $($vmData.RoleName))
+				}
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name PublicIP -Value $vmData.PublicIP
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name SSHPort -Value $vmData.SSHPort
 				$packageInstallJobs += $packageInstallObj
@@ -509,7 +513,11 @@ Function Provision-VMsForLisa($allVMData, $installPackagesOnRoleNames)
 			$jobID = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username "root" -password $password -command "/root/$scriptName" -RunInBackground
 			$packageInstallObj = New-Object PSObject
 			Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name ID -Value $jobID
-			Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
+			if($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
+				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
+			} else {
+				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $($($vmData.ResourceGroupName) + "-" + $($vmData.RoleName))
+			}
 			Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name PublicIP -Value $vmData.PublicIP
 			Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name SSHPort -Value $vmData.SSHPort
 			$packageInstallJobs += $packageInstallObj
@@ -590,7 +598,11 @@ function Install-CustomKernel ($CustomKernel, $allVMData, [switch]$RestartAfterU
 					-RunInBackground -runAsSudo
 				$packageInstallObj = New-Object PSObject
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name ID -Value $jobID
-				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
+				if($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
+					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
+				} else {
+					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $($($vmData.ResourceGroupName) + "-" + $($vmData.RoleName))
+				}
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name PublicIP -Value $vmData.PublicIP
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name SSHPort -Value $vmData.SSHPort
 				$packageInstallJobs += $packageInstallObj
@@ -715,7 +727,11 @@ function Install-CustomLIS ($CustomLIS, $customLISBranch, $allVMData, [switch]$R
 				$jobID = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username "root" -password $password -command "/root/$scriptName -CustomLIS $CustomLIS -LISbranch $customLISBranch" -RunInBackground -runAsSudo
 				$packageInstallObj = New-Object PSObject
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name ID -Value $jobID
-				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
+				if($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
+					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
+				} else {
+					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $($($vmData.ResourceGroupName) + "-" + $($vmData.RoleName))
+				}
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name PublicIP -Value $vmData.PublicIP
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name SSHPort -Value $vmData.SSHPort
 				$packageInstallJobs += $packageInstallObj
@@ -797,6 +813,9 @@ function Verify-MellanoxAdapter($vmData)
 	$mellanoxAdapterDetected = $false
 	while ( !$mellanoxAdapterDetected -and ($retryAttempts -lt $maxRetryAttemps))
 	{
+		Write-LogInfo "Install package pciutils to use lspci command."
+		Copy-RemoteFiles -uploadTo $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -file ".\Testscripts\Linux\utils.sh" -upload
+		Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -command "which lspci || (. ./utils.sh && install_package pciutils)" -runAsSudo
 		$pciDevices = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -command "lspci" -runAsSudo
 		if ( $pciDevices -imatch "Mellanox")
 		{
@@ -861,30 +880,24 @@ function Enable-SRIOVInAllVMs($allVMData, $TestProvider)
 				$vmCount += 1
 				if ($sriovOutput -imatch "DATAPATH_SWITCHED_TO_VF")
 				{
-					$AfterIfConfigStatus = $null
-					$AfterIfConfigStatus = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -command "dmesg" -runMaxAllowedTime 30 -runAsSudo
-					if ($AfterIfConfigStatus -imatch "Data path switched to VF")
+					$AfterInterfaceStatus = $null
+					$AfterInterfaceStatus = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -command "dmesg" -runMaxAllowedTime 30 -runAsSudo
+					if ($AfterInterfaceStatus -imatch "Data path switched to VF")
 					{
 						Write-LogInfo "Data path already switched to VF in $($vmData.RoleName)"
 						$bondSuccess += 1
-					}
-					else
-					{
+					} else {
 						Write-LogErr "Data path not switched to VF in $($vmData.RoleName)"
 						$bondError += 1
 					}
-				}
-				else
-				{
-					$AfterIfConfigStatus = $null
-					$AfterIfConfigStatus = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -command "/sbin/ifconfig -a" -runAsSudo
-					if ($AfterIfConfigStatus -imatch "bond")
+				} else {
+					$AfterInterfaceStatus = $null
+					$AfterInterfaceStatus = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -command "ip addr show" -runAsSudo
+					if ($AfterInterfaceStatus -imatch "bond")
 					{
 						Write-LogInfo "New bond detected in $($vmData.RoleName)"
 						$bondSuccess += 1
-					}
-					else
-					{
+					} else {
 						Write-LogErr "New bond not detected in $($vmData.RoleName)"
 						$bondError += 1
 					}
@@ -1330,7 +1343,7 @@ Function Test-SRIOVInLinuxGuest {
 	while ($retValue -eq $false -and $Attempts -le $MaximumAttempts) {
 		Write-LogInfo "[Attempt $Attempts/$MaximumAttempts] Detecting Mellanox NICs..."
 		$DetectedSRIOVNics = Run-LinuxCmd -username $username -password $password -ip $IpAddress -port $SSHPort -command $VerificationCommand -runAsSudo
-		$DetectedSRIOVNics = [int]$DetectedSRIOVNics
+		$DetectedSRIOVNics = [int]$DetectedSRIOVNics[-1].ToString()
 		if ($ExpectedSriovNics -ge 0) {
 			if ($DetectedSRIOVNics -eq $ExpectedSriovNics) {
 				$retValue = $true
@@ -1940,4 +1953,61 @@ function Enable-RootUser {
     }
 
     return $deploymentResult
+}
+
+function IsGreaterKernelVersion() {
+    param (
+        [string] $actualKernelVersion,
+        [string] $detectedDistro
+    )
+
+    # Supported Distro and kernel version for DPDK on Azure
+    # https://docs.microsoft.com/en-us/azure/virtual-network/setup-dpdk
+    $SUPPORTED_DISTRO_KERNEL = @{
+        "UBUNTU" = "4.15.0-1015-azure";
+        "SLES" = "4.12.14-5.5-azure";
+        "SLES 15" = "4.12.14-5.5-azure";
+        "SUSE" = "4.12.14-5.5-azure";
+        "REDHAT" = "3.10.0-862.9.1.el7";
+        "CENTOS" = "3.10.0-862.3.3.el7";
+    }
+
+    if($SUPPORTED_DISTRO_KERNEL.Keys -contains $detectedDistro) {
+        $supportKernelVersions = $SUPPORTED_DISTRO_KERNEL[$detectedDistro] -split "[\.\-]+"
+        $actualKernelVersions = $actualKernelVersion -split "[\.\-]+"
+        for($i=0; $i -lt $supportKernelVersions.Length;$i++) {
+            try {
+                    $supportKernelVersions[$i] = [int]$supportKernelVersions[$i]
+                } catch {
+                    $supportKernelVersions[$i] = 0
+                    continue
+                }
+        }
+        for($i=0; $i -lt $actualKernelVersions.Length;$i++) {
+            try {
+                    $actualKernelVersions[$i] = [int]$actualKernelVersions[$i]
+                } catch {
+                    $actualKernelVersions[$i] = 0
+                    continue
+                }
+        }
+
+        $array_count = $actualKernelVersions.Length
+        if($supportKernelVersions.Length -gt $actualKernelVersions.Length) {
+            $array_count = $supportKernelVersions.Length
+        }
+
+        for($i=0; $i -lt $array_count;$i++) {
+            if ([int]$actualKernelVersions[$i] -eq [int]$supportKernelVersions[$i]) {
+                continue
+            } elseif ([int]$actualKernelVersions[$i] -lt [int]$supportKernelVersions[$i]) {
+                return $false
+            }
+        }
+        return $true
+    }
+    else {
+            Write-LogErr "Unsupported Distro: $detectedDistro"
+            throw "Unsupported Distro: $detectedDistro"
+    }
 }

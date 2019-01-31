@@ -31,7 +31,9 @@ fi
 HYPERV_MODULES=(hv_vmbus hv_netvsc hv_storvsc hv_utils hv_balloon hid_hyperv hyperv_keyboard hyperv_fb)
 skip_modules=()
 config_path="/boot/config-$(uname -r)"
-
+if [[ $(detect_linux_distribution) == clear-linux-os ]]; then
+    config_path="/usr/lib/kernel/config-$(uname -r)"
+fi
 vmbus_included=$(grep CONFIG_HYPERV=y "$config_path")
 if [ "$vmbus_included" ]; then
     skip_modules+=("hv_vmbus")
@@ -159,8 +161,9 @@ END=$(date +%s)
 DIFF=$(echo "$END - $START" | bc)
 
 LogMsg "Info: Finished testing, bringing up eth0"
-ifdown eth0
-ifup eth0
+ip link set eth0 down
+ip link set eth0 up
+
 if ! dhclient
 then
     msg="Error: dhclient exited with an error"
@@ -169,15 +172,15 @@ then
     exit 0
 fi
 VerifyModules
-ipAddress=$(ifconfig | grep 'inet addr:' | grep -v '127.0.0.1' | cut -d: -f2 | cut -d' ' -f1 | sed -n 1p)
-if [[ ${ipAddress} -eq '' ]]; then
+
+ipAddress=$(ip addr show eth0 | grep "inet\b")
+if [ -z "$ipAddress" ]; then
     LogMsg "Info: Waiting for interface to receive an IP"
     sleep 30
 fi
 
 LogMsg "Info: Test ran for ${DIFF} seconds"
 
-LogMsg "#########################################################"
 LogMsg "Result : Test Completed Successfully"
 LogMsg "Exiting with state: TestCompleted."
 SetTestStateCompleted

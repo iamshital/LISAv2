@@ -285,7 +285,6 @@ function Get-IPv4AndWaitForSSHStart {
 		Write-LogErr "Get-IPv4AndWaitForSSHStart: SSH is not working correctly after boot up"
 		return $False
 	}
-
 	return $new_ip
 }
 

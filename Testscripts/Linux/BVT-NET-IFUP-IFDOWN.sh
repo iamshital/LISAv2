@@ -9,6 +9,7 @@ LoopCount=10
 
 PingCheck()
 {
+    install_package wget
     if ! ping "$REMOTE_SERVER" -c 4; then
         # On azure ping is disabled so we need another test method
         if ! wget google.com; then
@@ -34,7 +35,7 @@ ChangeInterfaceState()
         msg="Interface ${NetInterface} was put ${1}"
         LogMsg "$msg"
     fi
-    sleep 5 
+    sleep 15
 }
 
 ReloadNetvsc()
@@ -61,7 +62,7 @@ ReloadNetvsc()
 # Source constants file and initialize most common variables
 UtilsInit
 
-netvsc_includes=`grep CONFIG_HYPERV_NET=y /boot/config-$(uname -r)`
+netvsc_includes=$(grep CONFIG_HYPERV_NET=y /boot/config-$(uname -r))
 if [ $netvsc_includes ]; then
     LogMsg "Info: Skiping case since hv_netvsc module as it is built-in."
     SetTestStateSkipped

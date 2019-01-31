@@ -4,7 +4,7 @@
 
 #############################################################################
 #
-# Ring_buffer_size.sh
+# ETHTOOL-CHANGE-RINGBUFFER.sh
 # Description:
 #    This script will first check the existence of ethtool on vm and that
 #    the ring settings from ethtool are supported.
@@ -18,7 +18,7 @@ declare -i __iterator=0
 # Source utils.sh
 . utils.sh || {
     echo "Error: unable to source utils.sh!"
-    echo "TestAborted" > state.txtz
+    echo "TestAborted" > state.txt
     exit 0
 }
 

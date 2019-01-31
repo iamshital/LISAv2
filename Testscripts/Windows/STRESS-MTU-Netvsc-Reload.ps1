@@ -15,9 +15,12 @@ do
     modprobe hv_netvsc
     sleep 1
     pass=$((pass+1))
-    echo $pass > reload_netvsc.log
+    echo $pass >> reload_netvsc.log
 done
-ifdown eth0 && ifup eth0
+# this should not be required, consider for removal
+ip link set eth0 up
+echo "Interfaces status after hv_netvsc reload loop" >> reload_netvsc.log
+ip addr show >> reload_netvsc.log
 '@
 
 function Main {
@@ -41,7 +44,7 @@ function Main {
             -command "sleep 5 && ip link set dev eth0 mtu $i" -RunAsSudo
 
         Start-Sleep -s 30
-        Test-Connection -ComputerName $ipv4
+        Test-Connection -ComputerName $Ipv4 | Out-Null
         if (-not $?) {
             Write-LogErr "VM became unresponsive after changing MTU on VM to $i on iteration $iteration "
             return "FAIL"
@@ -63,14 +66,13 @@ function Main {
         -command "dos2unix reload_netvsc.sh && sleep 5 && bash reload_netvsc.sh" -RunInBackGround  -RunAsSudo
 
     Start-Sleep -s 600
-    Get-IPv4AndWaitForSSHStart -VmName $VMName -HvServer $HvServer -Vmport $VMPort `
-        -Password $VMPassword -username $VMUserName -StepTimeout 1000
-
-    if (-not $?) {
+    $NewIP = Get-IPv4AndWaitForSSHStart -VmName $VMName -HvServer $HvServer -Vmport $VMPort `
+        -Password $VMPassword -User $VMUserName -StepTimeout 1000
+        $allVmData.PublicIP = $NewIP
+    if (-not $NewIP) {
         Write-LogErr "VM became unresponsive after reloading hv_netvsc"
         return "FAIL"
-    }
-    else {
+    } else {
         Write-LogInfo "Successfully reloaded hv_netvsc for 25 times"
         return "PASS"
     }

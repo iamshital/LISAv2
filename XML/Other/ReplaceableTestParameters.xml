@@ -183,4 +183,8 @@ Scenario 2 : You need to run all the performance tests quickly.
         <ReplaceThis>LIS_OLD_URL</ReplaceThis>
         <ReplaceWith>http://download.microsoft.com/download/6/8/F/68FE11B8-FAA4-4F8D-8C7D-74DA7F2CFC8C/lis-rpms-4.2.7.tar.gz</ReplaceWith>
     </Parameter>
+    <Parameter>
+        <ReplaceThis>FIO_LOG_PARSE_TIMEOUT</ReplaceThis>
+        <ReplaceWith>600</ReplaceWith>
+    </Parameter>
 </ReplaceableTestParameters>

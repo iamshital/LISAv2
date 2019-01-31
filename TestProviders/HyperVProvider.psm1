@@ -99,11 +99,11 @@ Class HyperVProvider : TestProvider
 		return $allVMData
 	}
 
-	[void] RunSetup($VmData, $CurrentTestData, $TestParameters) {
+	[void] RunSetup($VmData, $CurrentTestData, $TestParameters, $ApplyCheckPoint) {
 		if ($CurrentTestData.AdditionalHWConfig.HyperVApplyCheckpoint -eq "False") {
 			Remove-AllFilesFromHomeDirectory -allDeployedVMs $VmData
 			Write-LogInfo "Removed all files from home directory."
-		} else  {
+		} elseif ($ApplyCheckPoint) {
 			Apply-HyperVCheckpoint -VMData $VmData -CheckpointName "ICAbase"
 			$VmData = Check-IP -VMData $VmData
 			Write-LogInfo "Public IP found for all VMs in deployment after checkpoint restore"
@@ -175,19 +175,21 @@ Class HyperVProvider : TestProvider
 
 	[void] DeleteTestVMs($allVMData, $SetupTypeData, $UseExistingRG) {
 		foreach ($vmData in $AllVMData) {
-			$isCleaned = Delete-HyperVGroup -HyperVGroupName $vmData.HyperVGroupName -HyperVHost $vmData.HyperVHost -SetupTypeData $SetupTypeData -UseExistingRG $UseExistingRG
+			$isCleaned = Delete-HyperVGroup -HyperVGroupName $vmData.HyperVGroupName `
+				-HyperVHost $vmData.HyperVHost -SetupTypeData $SetupTypeData -UseExistingRG $UseExistingRG
 			if (Get-Variable 'DependencyVmHost' -Scope 'Global' -EA 'Ig') {
 				if ($global:DependencyVmHost -ne $vmData.HyperVHost) {
-					Delete-HyperVGroup -HyperVGroupName $vmData.HyperVGroupName -HyperVHost $global:DependencyVmHost -SetupTypeData $SetupTypeData -UseExistingRG $UseExistingRG
+					$isDepCleaned = Delete-HyperVGroup -HyperVGroupName $vmData.HyperVGroupName `
+						-HyperVHost $global:DependencyVmHost -SetupTypeData $SetupTypeData `
+						-UseExistingRG $UseExistingRG
+					$isCleaned = $isCleaned -and $isDepCleaned
 				}
 			}
-			if (!$isCleaned)
-			{
-				Write-LogInfo "Failed to delete HyperV group $($vmData.HyperVGroupName).. Please delete it manually."
-			}
-			elseif (!$UseExistingRG)
-			{
-				Write-LogInfo "Successfully delete HyperV group $($vmData.HyperVGroupName).."
+
+			if (!$isCleaned) {
+				Write-LogInfo "Failed to delete HyperV group $($vmData.HyperVGroupName). Please delete it manually."
+			} elseif (!$UseExistingRG) {
+				Write-LogInfo "Successfully delete HyperV group $($vmData.HyperVGroupName)."
 			}
 		}
 	}

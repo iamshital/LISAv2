@@ -24,12 +24,10 @@
         <Hosts>
             <Host>
                 <ServerName>localhost</ServerName>
-                <SourceOsVHDPath></SourceOsVHDPath>
                 <DestinationOsVHDPath>VHDs_Destination_Path</DestinationOsVHDPath>
             </Host>
             <Host>
                 <ServerName>localhost</ServerName>
-                <SourceOsVHDPath></SourceOsVHDPath>
                 <DestinationOsVHDPath>VHDs_Destination_Path</DestinationOsVHDPath>
             </Host>
         </Hosts>
@@ -46,4 +44,13 @@
             <LinuxPassword>xxxxxxxxxxxxxxxxxxxxxxxxx</LinuxPassword>
         </TestCredentials>
     </HyperV>
+    <OL>
+        <TestCredentials>
+            <OLUserName>YOUR_USERNAME</OLUserName>
+            <OLUserPassword>xxxxxxxxxxxxxxxxxxxxxxxxx</OLUserPassword>
+            <OLImageUrl>IMAGE_URL</OLImageUrl>
+            <OLImageName>IMAGE_URL_NAME</OLImageName>
+            <HostFwdPort>1234</HostFwdPort>
+        </TestCredentials>
+    </OL>
 </Global>
