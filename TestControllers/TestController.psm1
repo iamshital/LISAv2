@@ -298,7 +298,7 @@ Class TestController
 				if(!$this.IsWindows){
 					foreach ($vm in $VmData) {
 						Copy-RemoteFiles -upload -uploadTo $vm.PublicIP -Port $vm.SSHPort `
-							-files $CurrentTestData.files -Username $this.user -password $this.password
+							-files $CurrentTestData.files -Username $global:user -password $global:password
 						Write-LogInfo "Test files uploaded to VM $($vm.RoleName)"
 					}
 				}
