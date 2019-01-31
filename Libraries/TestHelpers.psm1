@@ -67,6 +67,7 @@ function Upload-RemoteFile($uploadTo, $port, $file, $username, $password, $usePr
 	if (!$maxRetry) {
 		$maxRetry = 10
 	}
+
 	while($retry -le $maxRetry)
 	{
 		# TODO: $UsePrivateKey is not enabled yet
@@ -89,7 +90,12 @@ function Upload-RemoteFile($uploadTo, $port, $file, $username, $password, $usePr
 							Set-Content -Value "1" -Path $args[6];
 							$username = $args[4];
 							$uploadTo = $args[5];
-							Write-Output "yes" | .\tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
+							if ($using:testPlatform -eq "OL") {
+								Write-Output "yes" | .\tools\pscp -scp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
+							}
+							else {
+								Write-Output "yes" | .\tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
+							}
 							Set-Content -Value $LASTEXITCODE -Path $args[6];
 						} -ArgumentList $curDir,$password,$port,$file,$username,${uploadTo},$uploadStatusRandomFile
 			Start-Sleep -Milliseconds 100
@@ -148,6 +154,7 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 		$downloadStatusRandomFile = Join-Path $env:TEMP $downloadStatusRandomFileName
 		Set-Content -Value "1" -Path $downloadStatusRandomFile
 		$downloadStartTime = Get-Date
+
 		# TODO: $UsePrivateKey is not enabled yet
 		if ($UsePrivateKey) {
 			$downloadJob = Start-Job -ScriptBlock {
@@ -175,7 +182,12 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 				$downloadTo=$args[6];
 				$downloadStatusRandomFile=$args[7];
 				Set-Location $curDir;
-				Write-Output "yes" | .\tools\pscp.exe  -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+				if ($using:testPlatform -eq "OL") {
+					Write-Output "yes" | .\tools\pscp.exe -scp -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+				}
+				else {
+					Write-Output "yes" | .\tools\pscp.exe  -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+				}
 				Add-Content -Value "DownloadExtiCode_$LASTEXITCODE" -Path $downloadStatusRandomFile;
 			} -ArgumentList $curDir,$password,$port,$file,$username,${downloadFrom},$downloadTo,$downloadStatusRandomFile
 		}
@@ -318,10 +330,7 @@ Function Wrap-CommandsToFile([string] $username,[string] $password,[string] $ip,
 
 Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string] $command, [int] $port, [switch]$runAsSudo, [Boolean]$WriteHostOnly, [Boolean]$NoLogsPlease, [switch]$ignoreLinuxExitCode, [int]$runMaxAllowedTime = 300, [switch]$RunInBackGround, [int]$maxRetryCount = 20)
 {
-	if ($detectedDistro -ne "COREOS" )
-	{
-		Wrap-CommandsToFile $username $password $ip $command $port
-	}
+	Wrap-CommandsToFile $username $password $ip $command $port
 	$randomFileName = [System.IO.Path]::GetRandomFileName()
 	if ( $maxRetryCount -eq 0)
 	{
@@ -335,7 +344,7 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 		$plainTextPassword = $password.Replace('"','');
 		if ( $detectedDistro -eq "COREOS" )
 		{
-			$linuxCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && echo $plainTextPassword | sudo -S env `"PATH=`$PATH`" $command && echo AZURE-LINUX-EXIT-CODE-`$? || echo AZURE-LINUX-EXIT-CODE-`$?`""
+			$linuxCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && echo $plainTextPassword | sudo -S env `"PATH=`$PATH`" bash -c `'bash runtest.sh ; echo AZURE-LINUX-EXIT-CODE-`$?`' `""
 			$logCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && echo $plainTextPassword | sudo -S env `"PATH=`$PATH`" $command`""
 		}
 		else
@@ -348,7 +357,7 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 	{
 		if ( $detectedDistro -eq "COREOS" )
 		{
-			$linuxCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && $command && echo AZURE-LINUX-EXIT-CODE-`$? || echo AZURE-LINUX-EXIT-CODE-`$?`""
+			$linuxCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && bash -c `'bash runtest.sh ; echo AZURE-LINUX-EXIT-CODE-`$?`' `""
 			$logCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && $command`""
 		}
 		else
@@ -561,7 +570,7 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 			$jobOut = Receive-Job $runLinuxCmdJob 2> $LogDir\$randomFileName
 			if($jobOut)
 			{
-				$jobOut = $jobOut.Replace("[sudo] password for $username`: ","")
+				$jobOut = $jobOut.Replace("[sudo] password for $username`: ","").Replace("Password: ","")
 				foreach ($outLine in $jobOut)
 				{
 					if($outLine -imatch "AZURE-LINUX-EXIT-CODE-")

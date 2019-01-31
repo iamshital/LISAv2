@@ -44,7 +44,6 @@ Function Create-AllHyperVGroupDeployments($SetupTypeData, $GlobalConfig, $TestLo
             $HyperVHostArray += $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$index].ServerName
         }
 
-        $SourceOsVHDPath = $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$index].SourceOsVHDPath
         if ($SetupTypeData.ClusteredVM) {
             $ClusterVolume = Get-ClusterSharedVolume
             $DestinationOsVHDPath = $ClusterVolume.SharedVolumeInfo.FriendlyVolumeName
@@ -99,12 +98,12 @@ Function Create-AllHyperVGroupDeployments($SetupTypeData, $GlobalConfig, $TestLo
                         $ExpectedVMs = 0
                         $HyperVGroupXML.VirtualMachine | ForEach-Object {$ExpectedVMs += 1}
                         $VMCreationStatus = Create-HyperVGroupDeployment -HyperVGroupName $HyperVGroupName -HyperVGroupXML $HyperVGroupXML `
-                            -HyperVHost $HyperVHostArray -SourceOsVHDPath $SourceOsVHDPath -DestinationOsVHDPath $DestinationOsVHDPath `
+                            -HyperVHost $HyperVHostArray -DestinationOsVHDPath $DestinationOsVHDPath `
                             -VMGeneration $VMGeneration -GlobalConfig $GlobalConfig -SetupTypeData $SetupTypeData -CurrentTestData $TestCaseData
 
                         $DeploymentEndTime = (Get-Date)
                         $DeploymentElapsedTime = $DeploymentEndTime - $DeploymentStartTime
-                        if ( $VMCreationStatus )
+                        if ( $VMCreationStatus[-1] )
                         {
                             foreach ($HyperVHost in $HyperVHostArray){
                                 if($TestCaseData.Tags -and $TestCaseData.Tags.ToString().Contains("nested"))
@@ -176,35 +175,38 @@ Function Delete-HyperVGroup([string]$HyperVGroupName, [string]$HyperVHost, $Setu
 
     $cleanupDone = 0
     $vmGroup.VMMembers | ForEach-Object {
-        $vm = $_
+        $vm = Get-VM -Name $_.Name -ComputerName $HyperVHost
+
         Write-LogInfo "Stop-VM -Name $($vm.Name) -Force -TurnOff"
         Stop-VM -Name $vm.Name -Force -TurnOff -ComputerName $HyperVHost
-        $snapshots = Get-VMSnapshot -VMName $vm.Name -ComputerName $HyperVHost
-        if ($snapshots.Count -gt 1 -and ($snapshots.Name -join "") -imatch "fail") {
-            Write-LogWarn "VM $($vm.Name) cannot be cleaned up as it has failed test cases snapshots."
-            $cleanupDone--
-            return
+        try {
+            Wait-VMState -VMName $vm.Name -VMState "Off" -RetryInterval 3 `
+                -HvServer $HyperVHost
+            Wait-VMStatus -VMName $vm.Name -VMStatus "Operating Normally" -RetryInterval 3 `
+                -HvServer $HyperVHost
+        } catch {
+            return $false
         }
-        $retriesCleanSnapshots = 0
-        $maxRetriesCleanSnapshots = 3
-        while ($retriesCleanSnapshots -lt $maxRetriesCleanSnapshots) {
-            Remove-VMSnapshot -VMName $vm.Name -ComputerName $HyperVHost `
-                -IncludeAllChildCheckpoints -Confirm:$false -ErrorAction SilentlyContinue
-            if ($?) {
-                Write-LogWarn ("Failed to remove snapshots for VM {0}. Retrying..." -f @($vm.Name))
-                $retriesCleanSnapshots++
-            } else {
-                break
+
+        # Note(v-advlad): Need to remove also the parents of the .avhdx (snapshots)
+        $hardDiskPath = @()
+        $vm.HardDrives | ForEach-Object {
+            $hardDiskPath += $_.Path
+            if ($_.Path -match ".avhdx") {
+                $snapshotParent = Get-VHD $_.Path -ComputerName $HyperVHost
+                if ($snapshotParent -and $snapshotParent.ParentPath) {
+                    $hardDiskPath += $snapshotParent.ParentPath
+                }
             }
         }
-        Wait-VMStatus -VMName $vm.Name -VMStatus "Operating Normally" -RetryInterval 2 `
-            -HvServer $HyperVHost
-        $vm = Get-VM -Name $vm.Name -ComputerName $HyperVHost
-        $vm.HardDrives | ForEach-Object {
-            $vhdPath = $_.Path
+
+        $hardDiskPath | ForEach-Object {
+            $vhdPath = $_
             $invokeCommandParams = @{
                 "ScriptBlock" = {
-                    Remove-Item -Path $args[0] -Force
+                    if ((Test-Path $args[0])) {
+                        Remove-Item -Path $args[0] -Force
+                    }
                 };
                 "ArgumentList" = $vhdPath;
             }
@@ -297,7 +299,7 @@ Function Create-HyperVGroup([string]$HyperVGroupName, [string]$HyperVHost)
     return $retValue
 }
 
-Function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML, $HyperVHost, $SourceOsVHDPath, $DestinationOsVHDPath, $VMGeneration,
+Function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML, $HyperVHost, $DestinationOsVHDPath, $VMGeneration,
     $GlobalConfig, $SetupTypeData, $CurrentTestData)
 {
     $HyperVMappedSizes = [xml](Get-Content .\XML\AzureVMSizeToHyperVMapping.xml)
@@ -313,7 +315,6 @@ Function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
             if ($VirtualMachine.DeployOnDifferentHyperVHost -and ($TestLocation -match ",")) {
                 $hostNumber = $HyperVGroupXML.VirtualMachine.indexOf($VirtualMachine)
                 $HyperVHost = $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$hostNumber].ServerName
-                $SourceOsVHDPath = $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$hostNumber].SourceOsVHDPath
                 if ($SetupTypeData.ClusteredVM) {
                     $ClusterVolume = Get-ClusterSharedVolume
                     $DestinationOsVHDPath = $ClusterVolume.SharedVolumeInfo.FriendlyVolumeName
@@ -337,9 +338,6 @@ Function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
             }
 
             $parentOsVHDPath = $OsVHD
-            if ($SourceOsVHDPath) {
-                $parentOsVHDPath = Join-Path $SourceOsVHDPath $OsVHD
-            }
             $uriParentOsVHDPath = [System.Uri]$parentOsVHDPath
             if ($uriParentOsVHDPath -and $uriParentOsVHDPath.isUnc) {
                 Write-LogInfo "Parent VHD path ${parentOsVHDPath} is on an SMB share."

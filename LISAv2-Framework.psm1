@@ -3,6 +3,7 @@
 
 using Module "TestControllers\AzureController.psm1"
 using Module "TestControllers\HyperVController.psm1"
+using Module "TestControllers\OLController.psm1"
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Get-ChildItem (Join-Path $here "Libraries") -Recurse | Where-Object { $_.FullName.EndsWith(".psm1") } | `
@@ -11,22 +12,16 @@ Get-ChildItem (Join-Path $here "Libraries") -Recurse | Where-Object { $_.FullNam
 function Start-LISAv2 {
 	[CmdletBinding()]
 	Param(
-		# Do not use. Reserved for Jenkins use.
-		$BuildNumber=$env:BUILD_NUMBER,
-
 		[string] $ParametersFile = "",
 
 		# [Required]
-		[ValidateSet('Azure','HyperV', IgnoreCase = $false)]
+		[ValidateSet('Azure','HyperV','OL', IgnoreCase = $false)]
 		[string] $TestPlatform = "",
 
 		# [Required] for Azure.
 		[string] $TestLocation="",
 		[string] $ARMImageName = "",
 		[string] $StorageAccount="",
-
-		# [Required] for HyperV
-		[string] $SourceOsVHDPath="",
 
 		# [Required] for Two Hosts HyperV
 		[string] $DestinationOsVHDPath="",
@@ -117,7 +112,7 @@ function Start-LISAv2 {
 			}
 
 			# Validate test platform, and select test controller of the platform
-			$supportedPlatforms = @("Azure", "HyperV")
+			$supportedPlatforms = @("Azure", "HyperV", "OL")
 			if ($paramTable.ContainsKey("TestPlatform")) {
 				$testPlatform = $paramTable["TestPlatform"]
 			}
@@ -219,7 +214,7 @@ function Start-LISAv2 {
 			}
 			Write-LogInfo "LISAv2 exit code: $ExitCode"
 
-			Get-Variable -Exclude PWD,*Preference,ExitCode -Scope "Global" | Remove-Variable -Scope "Global" `
+			Get-Variable -Exclude PWD,*Preference,ExitCode -Scope "Global" | Clear-Variable -Scope "Global" `
 				-Force -ErrorAction SilentlyContinue
 
 			if ($ExitCode -ne 0) {
@@ -229,6 +224,6 @@ function Start-LISAv2 {
 	}
 }
 
-New-Alias -Name Run-LISAv2 -Value Start-LISAv2
+New-Alias -Name Run-LISAv2 -Value Start-LISAv2 -Force
 
 Export-ModuleMember -Function * -Alias *

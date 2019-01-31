@@ -203,7 +203,8 @@ function Main {
     param(
         $AllVMData,
         $LogDir,
-        $CurrentTestData
+        $CurrentTestData,
+        $TestParams
     )
 
     try {
@@ -249,7 +250,8 @@ function Main {
             $testResult = "ABORTED"
         } elseif ($finalStatus -imatch "TestCompleted") {
             $null = Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort `
-                -username "root" -password $password -command "/root/ParseFioTestLogs.sh"
+                -username "root" -password $password -command "/root/ParseFioTestLogs.sh" `
+                -runMaxAllowedTime $TestParams.parseTimeout
             Copy-RemoteFiles -downloadFrom $allVMData.PublicIP -port $allVMData.SSHPort `
                 -username "root" -password $password -download -downloadTo $LogDir `
                 -files "perf_fio.csv"
@@ -288,5 +290,5 @@ function Main {
     return $testResult
 }
 
-Main -AllVMData $allVMData `
-    -LogDir $LogDir -CurrentTestData $currentTestData
+Main -AllVMData $allVMData -LogDir $LogDir -CurrentTestData $currentTestData `
+    -TestParams (ConvertFrom-StringData $TestParams.Replace(";","`n"))

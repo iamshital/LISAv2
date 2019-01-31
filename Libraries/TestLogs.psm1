@@ -147,7 +147,12 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 		{
 			$vmData = $allVMData
 		}
-		$FilesToDownload = "$($vmData.RoleName)-*.txt"
+		if ($TestPlatform -eq "OL") {
+			$FilesToDownload = "over*.txt"
+		}
+		else{
+			$FilesToDownload = "$($vmData.RoleName)-*.txt"
+		}
 		Copy-RemoteFiles -upload -uploadTo $vmData.PublicIP -port $vmData.SSHPort `
 			-files .\Testscripts\Linux\CollectLogFile.sh `
 			-username $user -password $password -maxRetry 5 | Out-Null
@@ -155,7 +160,14 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 		$Null = Copy-RemoteFiles -downloadFrom $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -files "$FilesToDownload" -downloadTo "$LogDir" -download
 		$KernelVersion = Get-Content "$LogDir\$($vmData.RoleName)-kernelVersion.txt"
 		$GuestDistro = Get-Content "$LogDir\$($vmData.RoleName)-distroVersion.txt"
-		$LISMatch = (Select-String -Path "$LogDir\$($vmData.RoleName)-lis.txt" -Pattern "^version:").Line
+		if ($TestPlatform -eq "OL") {
+			$KernelVersion = Get-Content "$LogDir\over*-kernelVersion.txt"
+			$GuestDistro = Get-Content "$LogDir\over*-distroVersion.txt"
+			$LISMatch = (Select-String -Path "$LogDir\over*-lis.txt" -Pattern "^version:").Line
+		}
+		else{
+			$LISMatch = (Select-String -Path "$LogDir\$($vmData.RoleName)-lis.txt" -Pattern "^version:").Line
+		}
 		if ($LISMatch)
 		{
 			$LISVersion = $LISMatch.Split(":").Trim()[1]
@@ -164,14 +176,16 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 		{
 			$LISVersion = "NA"
 		}
-		#region Host Version checking
-		$FoundLineNumber = (Select-String -Path "$LogDir\$($vmData.RoleName)-dmesg.txt" -Pattern "Hyper-V Host Build").LineNumber
-		$ActualLineNumber = $FoundLineNumber - 1
-		$FinalLine = (Get-Content -Path "$LogDir\$($vmData.RoleName)-dmesg.txt")[$ActualLineNumber]
-		$FinalLine = $FinalLine.Replace('; Vmbus version:4.0','')
-		$FinalLine = $FinalLine.Replace('; Vmbus version:3.0','')
-		$HostVersion = ($FinalLine.Split(":")[$FinalLine.Split(":").Count -1 ]).Trim().TrimEnd(";")
+		#region Host Version checking and skip it for OL platform.
+		if ($TestPlatform -ne "OL") {
+			$FoundLineNumber = (Select-String -Path "$LogDir\$($vmData.RoleName)-dmesg.txt" -Pattern "Hyper-V Host Build").LineNumber
+			$ActualLineNumber = $FoundLineNumber - 1
+			$FinalLine = (Get-Content -Path "$LogDir\$($vmData.RoleName)-dmesg.txt")[$ActualLineNumber]
+			$FinalLine = $FinalLine.Replace('; Vmbus version:4.0','')
+			$FinalLine = $FinalLine.Replace('; Vmbus version:3.0','')
+			$HostVersion = ($FinalLine.Split(":")[$FinalLine.Split(":").Count -1 ]).Trim().TrimEnd(";")
 		#endregion
+		}
 
 		if ($currentTestData.AdditionalHWConfig.Networking -imatch "SRIOV")
 		{

@@ -29,22 +29,16 @@
 
 [CmdletBinding()]
 Param(
-	# Do not use. Reserved for Jenkins use.
-	$BuildNumber=$env:BUILD_NUMBER,
-
 	[string] $ParametersFile = "",
 
 	# [Required]
-	[ValidateSet('Azure','HyperV', IgnoreCase = $false)]
+	[ValidateSet('Azure','HyperV','OL',IgnoreCase = $false)]
 	[string] $TestPlatform = "",
 
 	# [Required] for Azure.
 	[string] $TestLocation="",
 	[string] $ARMImageName = "",
 	[string] $StorageAccount="",
-
-	# [Required] for HyperV
-	[string] $SourceOsVHDPath="",
 
 	# [Required] for Two Hosts HyperV
 	[string] $DestinationOsVHDPath="",
