@@ -31,13 +31,13 @@ Class OLController : AzureController
 {
 	[string] $OLUserName
     [string] $OLUserPassword
-    [string] $OLImageUrl 
+    [string] $OLImageUrl
     [string] $OLImageName
     [string] $HostFwdPort
 
 	OLController() {
 		$this.TestProvider = New-Object -TypeName "OLProvider"
-		$this.TestPlatform = "OL"	
+		$this.TestPlatform = "OL"
 	}
 
 	[void] ParseAndValidateParameters([Hashtable]$ParamTable) {
@@ -52,7 +52,7 @@ Class OLController : AzureController
 			$OLConfig.TestCredentials.OLUserName = $secrets.OLUserName
             $OLConfig.TestCredentials.OLUserPassword = $secrets.OLUserPassword
             $OLConfig.TestCredentials.OLImageUrl = $secrets.OLImageUrl
-            $OLConfig.TestCredentials.OLImageName = $secrets.OLImageName			
+            $OLConfig.TestCredentials.OLImageName = $secrets.OLImageName
 		}
 		$this.OLUserName = $OLConfig.TestCredentials.OLUserName
         $this.OLUserPassword = $OLConfig.TestCredentials.OLUserPassword
@@ -64,7 +64,7 @@ Class OLController : AzureController
 
 		Write-LogInfo "Setting global variables"
 		$this.SetGlobalVariables()
-		Write-Host "controller : -Username $($this.OLUserName) -password $($this.OLUserPassword) -imageurl $($this.OLImageUrl) imagename $($this.OLImageName)"	
+		Write-Host "controller : -Username $($this.OLUserName) -password $($this.OLUserPassword) -imageurl $($this.OLImageUrl) imagename $($this.OLImageName)"
 	}
 
 	[void] SetGlobalVariables() {

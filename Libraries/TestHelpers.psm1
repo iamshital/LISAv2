@@ -76,21 +76,21 @@ function Upload-RemoteFile($uploadTo, $port, $file, $username, $password, $usePr
 			Write-LogInfo "Uploading $file to $username : $uploadTo, port $port using PrivateKey authentication"
 			Write-Output "yes" | .\tools\pscp -i .\ssh\$sshKey -q -P $port $file $username@${uploadTo}:
 			$returnCode = $LASTEXITCODE
-		}			
+		}
 		else
 		{
 			Write-LogInfo "Uploading $file to $username : $uploadTo, port $port using Password authentication"
 			$curDir = $PWD
 			$uploadStatusRandomFileName = "UploadStatusFile" + (Get-Random -Maximum 9999 -Minimum 1111) + ".txt"
 			$uploadStatusRandomFile = Join-Path $env:TEMP $uploadStatusRandomFileName
-			$uploadStartTime = Get-Date			
+			$uploadStartTime = Get-Date
 			$uploadJob = Start-Job -ScriptBlock {
 							Set-Location $args[0];
 							Write-Output $args;
 							Set-Content -Value "1" -Path $args[6];
 							$username = $args[4];
-							$uploadTo = $args[5];															
-							if ($using:testPlatform -eq "OL") {					
+							$uploadTo = $args[5];
+							if ($using:testPlatform -eq "OL") {
 								Write-Output "yes" | .\tools\pscp -scp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
 							}
 							else {

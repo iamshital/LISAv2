@@ -200,7 +200,7 @@ Start_OL_VM()
 
 Log_Msg()
 {
-    echo `date "+%b %d %Y %T"` : "$1" >> $2
+    echo $(date "+%b %d %Y %T") : "$1" >> $2
 }
 
 
