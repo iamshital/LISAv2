@@ -26,9 +26,6 @@ function Start-LISAv2 {
 		# [Required] for Two Hosts HyperV
 		[string] $DestinationOsVHDPath="",
 
-		# [Required] for OL
-		[string] $OLImageUrl="",
-
 		# [Required] Common for HyperV and Azure.
 		[string] $RGIdentifier = "",
 		[string] $OsVHD = "",   #... [Azure: Required only if -ARMImageName is not provided.]
