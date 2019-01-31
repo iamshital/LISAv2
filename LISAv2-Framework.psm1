@@ -3,6 +3,7 @@
 
 using Module "TestControllers\AzureController.psm1"
 using Module "TestControllers\HyperVController.psm1"
+using Module "TestControllers\OLController.psm1"
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Get-ChildItem (Join-Path $here "Libraries") -Recurse | Where-Object { $_.FullName.EndsWith(".psm1") } | `
@@ -14,7 +15,7 @@ function Start-LISAv2 {
 		[string] $ParametersFile = "",
 
 		# [Required]
-		[ValidateSet('Azure','HyperV', IgnoreCase = $false)]
+		[ValidateSet('Azure','HyperV','OL', IgnoreCase = $false)]
 		[string] $TestPlatform = "",
 
 		# [Required] for Azure.
@@ -24,6 +25,9 @@ function Start-LISAv2 {
 
 		# [Required] for Two Hosts HyperV
 		[string] $DestinationOsVHDPath="",
+
+		# [Required] for OL
+		[string] $OLImageUrl="",
 
 		# [Required] Common for HyperV and Azure.
 		[string] $RGIdentifier = "",
@@ -111,7 +115,7 @@ function Start-LISAv2 {
 			}
 
 			# Validate test platform, and select test controller of the platform
-			$supportedPlatforms = @("Azure", "HyperV")
+			$supportedPlatforms = @("Azure", "HyperV","OL")
 			if ($paramTable.ContainsKey("TestPlatform")) {
 				$testPlatform = $paramTable["TestPlatform"]
 			}

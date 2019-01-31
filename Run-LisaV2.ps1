@@ -32,13 +32,16 @@ Param(
 	[string] $ParametersFile = "",
 
 	# [Required]
-	[ValidateSet('Azure','HyperV', IgnoreCase = $false)]
+	[ValidateSet('Azure','HyperV','OL',IgnoreCase = $false)]
 	[string] $TestPlatform = "",
 
 	# [Required] for Azure.
 	[string] $TestLocation="",
 	[string] $ARMImageName = "",
 	[string] $StorageAccount="",
+
+	# [Required] for OL
+	[string] $OLImageUrl="",
 
 	# [Required] for Two Hosts HyperV
 	[string] $DestinationOsVHDPath="",

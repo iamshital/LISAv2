@@ -44,4 +44,12 @@
             <LinuxPassword>xxxxxxxxxxxxxxxxxxxxxxxxx</LinuxPassword>
         </TestCredentials>
     </HyperV>
+    <OL>        
+        <TestCredentials>
+            <OLUserName>YOUR_USERNAME</OLUserName>
+            <OLUserPassword>xxxxxxxxxxxxxxxxxxxxxxxxx</OLUserPassword>
+            <OLImageUrl>YOUR_USERNAME</OLImageUrl>
+            <OLImageName>YOUR_USERNAME</OLImageName>          
+        </TestCredentials>
+    </OL>
 </Global>

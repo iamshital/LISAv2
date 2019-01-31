@@ -67,6 +67,7 @@ function Upload-RemoteFile($uploadTo, $port, $file, $username, $password, $usePr
 	if (!$maxRetry) {
 		$maxRetry = 10
 	}
+
 	while($retry -le $maxRetry)
 	{
 		# TODO: $UsePrivateKey is not enabled yet
@@ -75,21 +76,26 @@ function Upload-RemoteFile($uploadTo, $port, $file, $username, $password, $usePr
 			Write-LogInfo "Uploading $file to $username : $uploadTo, port $port using PrivateKey authentication"
 			Write-Output "yes" | .\tools\pscp -i .\ssh\$sshKey -q -P $port $file $username@${uploadTo}:
 			$returnCode = $LASTEXITCODE
-		}
+		}			
 		else
 		{
 			Write-LogInfo "Uploading $file to $username : $uploadTo, port $port using Password authentication"
 			$curDir = $PWD
 			$uploadStatusRandomFileName = "UploadStatusFile" + (Get-Random -Maximum 9999 -Minimum 1111) + ".txt"
 			$uploadStatusRandomFile = Join-Path $env:TEMP $uploadStatusRandomFileName
-			$uploadStartTime = Get-Date
+			$uploadStartTime = Get-Date			
 			$uploadJob = Start-Job -ScriptBlock {
 							Set-Location $args[0];
 							Write-Output $args;
 							Set-Content -Value "1" -Path $args[6];
 							$username = $args[4];
-							$uploadTo = $args[5];
-							Write-Output "yes" | .\tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
+							$uploadTo = $args[5];															
+							if ($using:testPlatform -eq "OL") {					
+								Write-Output "yes" | .\tools\pscp -scp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
+							}
+							else {
+								Write-Output "yes" | .\tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
+							}
 							Set-Content -Value $LASTEXITCODE -Path $args[6];
 						} -ArgumentList $curDir,$password,$port,$file,$username,${uploadTo},$uploadStatusRandomFile
 			Start-Sleep -Milliseconds 100
@@ -148,6 +154,7 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 		$downloadStatusRandomFile = Join-Path $env:TEMP $downloadStatusRandomFileName
 		Set-Content -Value "1" -Path $downloadStatusRandomFile
 		$downloadStartTime = Get-Date
+
 		# TODO: $UsePrivateKey is not enabled yet
 		if ($UsePrivateKey) {
 			$downloadJob = Start-Job -ScriptBlock {
@@ -175,7 +182,12 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 				$downloadTo=$args[6];
 				$downloadStatusRandomFile=$args[7];
 				Set-Location $curDir;
-				Write-Output "yes" | .\tools\pscp.exe  -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+				if ($using:testPlatform -eq "OL") {
+					Write-Output "yes" | .\tools\pscp.exe -scp -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+				}
+				else {
+					Write-Output "yes" | .\tools\pscp.exe  -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+				}
 				Add-Content -Value "DownloadExtiCode_$LASTEXITCODE" -Path $downloadStatusRandomFile;
 			} -ArgumentList $curDir,$password,$port,$file,$username,${downloadFrom},$downloadTo,$downloadStatusRandomFile
 		}

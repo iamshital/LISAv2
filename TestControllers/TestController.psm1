@@ -298,7 +298,7 @@ Class TestController
 				if(!$this.IsWindows){
 					foreach ($vm in $VmData) {
 						Copy-RemoteFiles -upload -uploadTo $vm.PublicIP -Port $vm.SSHPort `
-							-files $CurrentTestData.files -Username $this.VmUsername -password $this.VmPassword
+							-files $CurrentTestData.files -Username $this.user -password $this.password
 						Write-LogInfo "Test files uploaded to VM $($vm.RoleName)"
 					}
 				}
@@ -308,12 +308,12 @@ Class TestController
 			if ($CurrentTestData.Timeout) {
 				$timeout = $CurrentTestData.Timeout
 			}
-
+			Write-LogInfo "Before run-test script with $($global:user)"
 			# Run test script
 			if ($CurrentTestData.TestScript) {
 				$testResult = Run-TestScript -CurrentTestData $CurrentTestData `
 					-Parameters $testParameters -LogDir $global:LogDir -VMData $VmData `
-					-Username $this.VmUsername -password $this.VmPassword `
+					-Username $global:user -password $global:password `
 					-TestLocation $this.TestLocation -TestProvider $this.TestProvider `
 					-Timeout $timeout -GlobalConfig $this.GlobalConfig
 				# Some cases returns a string, some returns a result object
@@ -338,14 +338,14 @@ Class TestController
 		# Do log collecting and VM clean up
 		if (!$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True") {
 			GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Final" | Out-Null
-			Get-SystemBasicLogs -AllVMData $VmData -User $this.VmUsername -Password $this.VmPassword -CurrentTestData $CurrentTestData `
+			Get-SystemBasicLogs -AllVMData $VmData -User $global:user -Password $global:password -CurrentTestData $CurrentTestData `
 				-CurrentTestResult $currentTestResult -enableTelemetry $this.EnableTelemetry
 		}
 
 		$collectDetailLogs = $currentTestResult.TestResult -ne "PASS" -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
 		$doRemoveFiles = $currentTestResult.TestResult -eq "PASS" -and !$this.DoNotDeleteVMs -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
 		$this.TestProvider.RunTestCaseCleanup($vmData, $CurrentTestData, $currentTestResult, $collectDetailLogs, $doRemoveFiles, `
-				$this.VmUsername, $this.VmPassword, $SetupTypeData, $testParameters)
+			$global:user, $global:password, $SetupTypeData, $testParameters)
 
 		# Update test summary
 		$testRunDuration = $this.junitReport.GetTestCaseElapsedTime("LISAv2Test","$currentTestName","mm")
