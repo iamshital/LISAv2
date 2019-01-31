@@ -180,7 +180,7 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 		if ($TestPlatform -ne "OL") {
 			$FoundLineNumber = (Select-String -Path "$LogDir\$($vmData.RoleName)-dmesg.txt" -Pattern "Hyper-V Host Build").LineNumber
 			$ActualLineNumber = $FoundLineNumber - 1
-			$FinalLine = (Get-Content -Path "$LogDir\$($vmData.RoleName)-dmesg.txt")[$ActualLineNumber]
+			$FinalLine = [string]((Get-Content -Path "$LogDir\$($vmData.RoleName)-dmesg.txt")[$ActualLineNumber])
 			$FinalLine = $FinalLine.Replace('; Vmbus version:4.0','')
 			$FinalLine = $FinalLine.Replace('; Vmbus version:3.0','')
 			$HostVersion = ($FinalLine.Split(":")[$FinalLine.Split(":").Count -1 ]).Trim().TrimEnd(";")

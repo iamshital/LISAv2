@@ -168,7 +168,6 @@ Class WSLController : TestController
 			if ($wslDistro.Trim().StartsWith("http")) {
 				Invoke-Command -ComputerName $serverName -ScriptBlock {
 					param($srcPath, $dstFile)
-		
 					Import-Module BitsTransfer
 					$displayName = "MyBitsTransfer" + (Get-Date)
 					Start-BitsTransfer -Source $srcPath -Destination $dstFile -DisplayName $displayName -Asynchronous

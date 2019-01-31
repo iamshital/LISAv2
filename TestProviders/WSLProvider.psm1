@@ -173,6 +173,7 @@ Class WSLProvider : TestProvider
 					Invoke-Command -Session $this.SessionMap[$vmData.WSLHost] -ScriptBlock {
 						param ($distroName)
 						& wslconfig /u $distroName
+						Remove-Item -Path (Split-Path -Path $launchDistroCommand -Parent) -Recurse -Force
 					} -ArgumentList $vmData.DistroName
 				} else {
 					Write-LogInfo "Skip unregistering WSL distro"
