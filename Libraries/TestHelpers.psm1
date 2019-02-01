@@ -1062,3 +1062,42 @@ Function Remove-InvalidCharactersFromFileName
 	$Regex = "[{0}]" -f [RegEx]::Escape($WindowsInvalidCharacters)
 	return ($FileName -replace $Regex)
 }
+
+Function Extract-ZipFile {
+	param ([string] $FileName, [string] $TargetFolder)
+	Add-Type -AssemblyName System.IO.Compression.FileSystem -PassThru
+	[IO.Compression.ZipFile]::ExtractToDirectory($FileName, $TargetFolder)
+}
+
+Function Get-AndTestHostPublicIp {
+	param ([string] $ComputerName)
+	Write-LogInfo "Getting the public IP of server $ComputerName"
+	$externalVSwitches = Get-VMSwitch -SwitchType External -ComputerName $ComputerName
+	if ($externalVSwitches) {
+		foreach ($vSwitch in $externalVSwitches) {
+			$interfaceName = "vEthernet ($($vSwitch.Name))"
+			$ipAddress = Get-NetIPAddress -AddressFamily IPv4 -AddressState Preferred -CimSession $ComputerName | `
+				Where-Object InterfaceAlias -eq $interfaceName
+			if ($ipAddress) {
+				try {
+					Test-Connection -ComputerName $ipAddress.IPAddress | Out-Null
+					return $ipAddress.IPAddress
+				} catch {
+					Write-LogWarn "Fail to connect to IP $($ipAddress.IPAddress) of host $ComputerName"
+				}
+			}
+		}
+	} else {
+		$ipAddresses = Get-NetIPAddress -AddressFamily IPv4 -AddressState Preferred -CimSession $ComputerName | `
+			Where-Object InterfaceAlias -NotMatch "vEthernet" | Where-Object IPAddress -ne "127.0.0.1"
+		foreach ($ipAddress in $ipAddresses) {
+			try {
+				Test-Connection -ComputerName $ipAddress.IPAddress | Out-Null
+				return $ipAddress.IPAddress
+			} catch {
+				Write-LogWarn "Fail to connect to IP $($ipAddress.IPAddress) of host $ComputerName"
+			}
+		}
+	}
+	return $null
+}

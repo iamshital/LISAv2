@@ -4,6 +4,7 @@
 using Module "TestControllers\AzureController.psm1"
 using Module "TestControllers\HyperVController.psm1"
 using Module "TestControllers\OLController.psm1"
+using Module "TestControllers\WSLController.psm1"
 
 $here = Split-Path -Parent $MyInvocation.MyCommand.Path
 Get-ChildItem (Join-Path $here "Libraries") -Recurse | Where-Object { $_.FullName.EndsWith(".psm1") } | `
@@ -15,7 +16,7 @@ function Start-LISAv2 {
 		[string] $ParametersFile = "",
 
 		# [Required]
-		[ValidateSet('Azure','HyperV','OL', IgnoreCase = $false)]
+		[ValidateSet('Azure','HyperV','OL','WSL',IgnoreCase = $false)]
 		[string] $TestPlatform = "",
 
 		# [Required] for Azure.
@@ -30,6 +31,7 @@ function Start-LISAv2 {
 		[string] $RGIdentifier = "",
 		[string] $OsVHD = "",   #... [Azure: Required only if -ARMImageName is not provided.]
 								#... [HyperV: Mandatory]
+								#... [WSL: Mandatory, which can be the URL of the distro, or the path to the distro file on the local host]
 		[string] $TestCategory = "",
 		[string] $TestArea = "",
 		[string] $TestTag = "",
@@ -112,7 +114,7 @@ function Start-LISAv2 {
 			}
 
 			# Validate test platform, and select test controller of the platform
-			$supportedPlatforms = @("Azure", "HyperV", "OL")
+			$supportedPlatforms = @("Azure", "HyperV", "OL", "WSL")
 			if ($paramTable.ContainsKey("TestPlatform")) {
 				$testPlatform = $paramTable["TestPlatform"]
 			}

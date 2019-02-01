@@ -32,7 +32,7 @@ Param(
 	[string] $ParametersFile = "",
 
 	# [Required]
-	[ValidateSet('Azure','HyperV','OL',IgnoreCase = $false)]
+	[ValidateSet('Azure','HyperV','OL','WSL',IgnoreCase = $false)]
 	[string] $TestPlatform = "",
 
 	# [Required] for Azure.
@@ -47,6 +47,7 @@ Param(
 	[string] $RGIdentifier = "",
 	[string] $OsVHD = "",   #... [Azure: Required only if -ARMImageName is not provided.]
 							#... [HyperV: Mandatory]
+							#... [WSL: Mandatory, which can be the URL of the distro, or the path to the distro file on the local host]
 	[string] $TestCategory = "",
 	[string] $TestArea = "",
 	[string] $TestTag = "",
