@@ -75,7 +75,7 @@ Class HyperVProvider : TestProvider
 				}
 
 				# Create the initial checkpoint
-				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName $this.BaseCheckpoint
+				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName $this.BaseCheckpoint -TurnOff:$false
 				$allVMData = Check-IP -VMData $AllVMData
 			}
 			else
