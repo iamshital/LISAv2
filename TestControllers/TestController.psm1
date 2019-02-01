@@ -196,7 +196,7 @@ Class TestController
 			foreach ( $SetupType in $SetupTypes ) {
 				$CurrentSetupType = ([xml]( Get-Content -Path $file)).TestSetup
 				if ($CurrentSetupType.$SetupType) {
-					$this.SetupTypeTable.Add($SetupType, $CurrentSetupType.$SetupType)
+					$this.SetupTypeTable[$SetupType] = $CurrentSetupType.$SetupType
 				}
 			}
 		}
