@@ -60,13 +60,6 @@ Class HyperVProvider : TestProvider
 
 			$isVmAlive = Is-VmAlive -AllVMDataObject $allVMData
 			if ($isVmAlive -eq "True") {
-				Inject-HostnamesInHyperVVMs -allVMData $allVMData
-				$this.RestartAllDeployments($allVMData)
-
-				if ((Test-Path -Path  .\Extras\UploadDeploymentDataToDB.ps1) -and !$UseExistingRG) {
-					.\Extras\UploadDeploymentDataToDB.ps1 -allVMData $allVMData -DeploymentTime $DeploymentElapsedTime.TotalSeconds
-				}
-
 				$customStatus = Set-CustomConfigInVMs -CustomKernel $this.CustomKernel -CustomLIS $this.CustomLIS `
 					-AllVMData $allVMData -TestProvider $this
 				if (!$customStatus) {
@@ -74,23 +67,25 @@ Class HyperVProvider : TestProvider
 					return $null
 				}
 
-				# Create the initial checkpoint
+				Inject-HostnamesInHyperVVMs -allVMData $allVMData
 				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName $this.BaseCheckpoint -TurnOff:$false
-				$allVMData = Check-IP -VMData $AllVMData
-			}
-			else
-			{
+
+				if ((Test-Path -Path  .\Extras\UploadDeploymentDataToDB.ps1) -and !$UseExistingRG) {
+					.\Extras\UploadDeploymentDataToDB.ps1 -allVMData $allVMData -DeploymentTime $DeploymentElapsedTime.TotalSeconds
+				}
+
+			} else {
 				Write-LogErr "Unable to connect SSH ports.."
 			}
 
+			# Note(v-advlad): clustered vms will not be cleaned up
+			# Todo: clean up clustered vms that do not belong to a Hyper-V group
 			if ($SetupTypeData.ClusteredVM) {
 				foreach ($VM in $allVMData) {
 					Remove-VMGroupMember -Name $VM.HyperVGroupName -VM $(Get-VM -name $VM.RoleName -ComputerName $VM.HyperVHost)
 				}
 			}
-		}
-		catch
-		{
+		} catch {
 			Write-LogErr "Exception detected. Source : DeployVMs()"
 			$line = $_.InvocationInfo.ScriptLineNumber
 			$script_name = ($_.InvocationInfo.ScriptName).Replace($PWD,".")
