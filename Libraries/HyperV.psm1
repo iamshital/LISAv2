@@ -610,12 +610,12 @@ function Create-HyperVCheckpoint {
         [boolean] $ShouldTurnOffVMBeforeCheckpoint = $true,
         [boolean] $ShouldTurnOnVMAfterCheckpoint = $true,
         [string]  $CheckpointType = "Standard",
-        [switch]  $TurnOff = $true
+        [boolean] $TurnOff = $true
     )
 
     foreach ($VM in $VMData) {
         if ($ShouldTurnOffVMBeforeCheckpoint) {
-            Stop-VM -Name $VM.RoleName -ComputerName $VM.HyperVHost -TurnOff:$TurnOff -Force:$TurnOff
+            Stop-VM -Name $VM.RoleName -ComputerName $VM.HyperVHost -TurnOff:$TurnOff -Force
             if ($TurnOff) {
                 Wait-VMState -VMName $VM.RoleName -HvServer $VM.HyperVHost -VMState "Off"
             }
@@ -721,24 +721,24 @@ function Check-IP {
 }
 
 function Wait-VMState {
-    param(
-        $VMName,
-        $VMState,
-        $HvServer,
-        $RetryCount=30,
-        $RetryInterval=5
-    )
+	param(
+		$VMName,
+		$VMState,
+		$HvServer,
+		$RetryCount=30,
+		$RetryInterval=5
+	)
 
-    $currentRetryCount = 0
-    while ($currentRetryCount -lt $RetryCount -and `
-                (Get-VM -ComputerName $HvServer -Name $VMName).State -ne $VMState) {
-        Write-LogInfo "Waiting for VM ${VMName} to enter ${VMState} state"
-        Start-Sleep -Seconds $RetryInterval
-        $currentRetryCount++
-    }
-    if ($currentRetryCount -eq $RetryCount) {
-        throw "VM ${VMName} failed to enter ${VMState} state"
-    }
+	$currentRetryCount = 0
+	while ($currentRetryCount -lt $RetryCount -and `
+			(Get-VM -ComputerName $HvServer -Name $VMName).State -ne $VMState) {
+		Write-LogInfo "Waiting for VM ${VMName} to enter ${VMState} state"
+		Start-Sleep -Seconds $RetryInterval
+		$currentRetryCount++
+	}
+	if ($currentRetryCount -eq $RetryCount) {
+		throw "VM ${VMName} failed to enter ${VMState} state"
+	}
 }
 
 function Wait-VMStatus {

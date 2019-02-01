@@ -68,7 +68,7 @@ Class HyperVProvider : TestProvider
 				}
 
 				Inject-HostnamesInHyperVVMs -allVMData $allVMData
-				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName $this.BaseCheckpoint -TurnOff:$false
+				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName $this.BaseCheckpoint -TurnOff $false
 
 				if ((Test-Path -Path  .\Extras\UploadDeploymentDataToDB.ps1) -and !$UseExistingRG) {
 					.\Extras\UploadDeploymentDataToDB.ps1 -allVMData $allVMData -DeploymentTime $DeploymentElapsedTime.TotalSeconds
@@ -98,6 +98,7 @@ Class HyperVProvider : TestProvider
 
 	[void] RunSetup($VmData, $CurrentTestData, $TestParameters, $ApplyCheckPoint) {
 		if ($CurrentTestData.AdditionalHWConfig.HyperVApplyCheckpoint -eq "False") {
+			$VmData = Check-IP -VMData $VmData
 			Remove-AllFilesFromHomeDirectory -allDeployedVMs $VmData
 			Write-LogInfo "Removed all files from home directory."
 		} elseif ($ApplyCheckPoint) {
