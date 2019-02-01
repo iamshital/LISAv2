@@ -56,13 +56,13 @@
     <WSL>
         <Hosts>
             <Host>
+                <!--The name of the WSL host-->
                 <ServerName>localhost</ServerName>
-                <OsDistro></OsDistro>
+                <!--The destination path to extract the distro package on the WSL host-->
                 <DestinationOsVHDPath></DestinationOsVHDPath>
             </Host>
             <Host>
                 <ServerName>localhost</ServerName>
-                <OsDistro></OsDistro>
                 <DestinationOsVHDPath></DestinationOsVHDPath>
             </Host>
         </Hosts>

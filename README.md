@@ -92,7 +92,7 @@ Please follow the steps mentioned at [here](https://docs.microsoft.com/en-us/azu
 
 ```xml
 
-  <Azure>
+    <Azure>
         <Subscription>
             <SubscriptionID>2cd20493-0000-1111-2222-0123456789ab</SubscriptionID>
             <SubscriptionName>YOUR_SUBSCRIPTION_NAME</SubscriptionName>
@@ -100,8 +100,8 @@ Please follow the steps mentioned at [here](https://docs.microsoft.com/en-us/azu
             <Environment>AzureCloud</Environment>
             <ARMStorageAccount>ExistingStorage_Standard</ARMStorageAccount>
         </Subscription>
-
-  <HyperV>
+    </Azure>
+    <HyperV>
         <Hosts>
             <Host>
                 <!--ServerName can be localhost or Hyper-V host name-->
@@ -115,6 +115,21 @@ Please follow the steps mentioned at [here](https://docs.microsoft.com/en-us/azu
                 <DestinationOsVHDPath>D:\vhd</DestinationOsVHDPath>
             </Host>
         </Hosts>
+    </HyperV>
+    <WSL>
+        <Hosts>
+            <Host>
+                <!--The name of the WSL host, which can be local or remote -->
+                <ServerName>localhost</ServerName>
+                <!--The destination path to extract the distro package on the WSL host-->
+                <DestinationOsVHDPath></DestinationOsVHDPath>
+            </Host>
+            <Host>
+                <ServerName>localhost</ServerName>
+                <DestinationOsVHDPath></DestinationOsVHDPath>
+            </Host>
+        </Hosts>
+    </WSL>
 ```
 
 3. There are two ways to run LISAv2 tests:
@@ -128,6 +143,10 @@ Please follow the steps mentioned at [here](https://docs.microsoft.com/en-us/azu
         .\Run-LisaV2.ps1 -TestPlatform "HyperV" [-TestLocation "ServerName"] -RGIdentifier "<Identifier of the vm group>" -OsVHD "<local or UNC path>" [[-TestCategory "<Test Catogry from Jenkins pipeline>" | -TestArea "<Test Area from Jenkins pipeline>"]* | -TestTag "<A Tag from Jenkins pipeline>" | -TestNames "<Test cases separated by comma>"]
         Example:
         .\Run-LisaV2.ps1 -TestPlatform "HyperV" -RGIdentifier "ntp" -OsVHD 'E:\vhd\ubuntu_18_04.vhd' -TestNames "BVT-CORE-TIMESYNC-NTP"
+
+        .\Run-LisaV2.ps1 -TestPlatform "WSL" [-TestLocation "<WSL host name>"] -RGIdentifier "<Identifier for the test run>" -OsVHD "<local path or public URL>" [-DestinationOsVHDPath "<destination path on WSL host>"] [[-TestCategory "<Test Catogry from Jenkins pipeline>" | -TestArea "<Test Area from Jenkins pipeline>"]* | -TestTag "<A Tag from Jenkins pipeline>" | -TestNames "<Test cases separated by comma>"]
+
+        .\Run-LisaV2.ps1 -TestPlatform WSL -TestLocation "localhost" -RGIdentifier 'ubuntuwsl' -TestNames "BVT-VERIFY-BOOT-ERROR-WARNINGS" -OsVHD 'https://aka.ms/wsl-ubuntu-1804' -DestinationOsVHDPath "D:\test"
 
    b. Provide parameters in .\XML\TestParameters.xml.
 

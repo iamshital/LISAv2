@@ -42,7 +42,7 @@ Class WSLController : TestController
 		$parameterErrors = ([TestController]$this).ParseAndValidateParameters($ParamTable)
 
 		if (!$this.OsVHD ) {
-			$parameterErrors += "-OsVHD <'Path-To-Distro.zip'> is required."
+			$parameterErrors += "-OsVHD <'Path-To-Distro.zip'> is required. It can be the URL of the distro, or the path to the distro file on the local host."
 		}
 		if ($parameterErrors.Count -gt 0) {
 			$parameterErrors | ForEach-Object { Write-LogErr $_ }
@@ -50,8 +50,6 @@ Class WSLController : TestController
 		} else {
 			Write-LogInfo "Test parameters for WSL have been validated successfully. Continue running the test."
 		}
-
-		$this.TestProvider.Initialize($this.TestLocation)
 	}
 
 	[void] PrepareTestEnvironment($XMLSecretFile) {
@@ -72,11 +70,6 @@ Class WSLController : TestController
 		{
 			for( $index=0 ; $index -lt $wslConfig.Hosts.ChildNodes.Count ; $index++ ) {
 				$wslConfig.Hosts.ChildNodes[$index].DestinationOsVHDPath = $this.DestinationOsVHDPath
-			}
-		}
-		if ($this.OsVHD) {
-			for( $index=0 ; $index -lt $wslConfig.Hosts.ChildNodes.Count ; $index++ ) {
-				$wslConfig.Hosts.ChildNodes[$index].OsDistro = $this.OsVHD
 			}
 		}
 		if ($this.TestLocation)
@@ -132,13 +125,14 @@ Class WSLController : TestController
 			}
 
 			Write-LogInfo "WSL Host                 : $($wslConfig.Hosts.ChildNodes[$($index)].ServerName)"
-			Write-LogInfo "Source Distro            : $($wslConfig.Hosts.ChildNodes[$($index)].OsDistro)"
+			Write-LogInfo "Source Distro            : $($this.OsVHD)"
 			Write-LogInfo "Destination Distro Path  : $($wslConfig.Hosts.ChildNodes[$($index)].DestinationOsVHDPath)"
 		}
 		Write-LogInfo "------------------------------------------------------------------"
 
 		Write-LogInfo "Setting global variables"
 		$this.SetGlobalVariables()
+		$this.TestProvider.Initialize($this.TestLocation)
 	}
 
 	[void] SetGlobalVariables() {
@@ -153,11 +147,12 @@ Class WSLController : TestController
 		for ($index=0; $index -lt $serverCount; $index++){
 			$serverName = $this.GlobalConfig.Global.WSL.Hosts.ChildNodes[$index].ServerName
 			$dstPath = $this.GlobalConfig.Global.WSL.Hosts.ChildNodes[$index].DestinationOsVHDPath
-			$wslDistro = $this.GlobalConfig.Global.WSL.Hosts.ChildNodes[$index].OsDistro
+			$wslDistro = $this.OsVHD
 			$dstFile = Join-Path $dstPath "$($this.RGIdentifier)-$($global:TestID).zip"
 
 			Write-LogInfo "Start to copy $wslDistro to $dstPath on $serverName ..."
-			Invoke-Command -ComputerName $serverName -ScriptBlock {
+			$session = New-PSSession -ComputerName $serverName
+			Invoke-Command -Session $session -ScriptBlock {
 				param($dstPath)
 				$target = ( [io.fileinfo] $dstPath ).DirectoryName
 				if( -not (Test-Path $target) ) {
@@ -166,7 +161,7 @@ Class WSLController : TestController
 			} -ArgumentList $dstPath
 
 			if ($wslDistro.Trim().StartsWith("http")) {
-				Invoke-Command -ComputerName $serverName -ScriptBlock {
+				Invoke-Command -Session $session -ScriptBlock {
 					param($srcPath, $dstFile)
 					Import-Module BitsTransfer
 					$displayName = "MyBitsTransfer" + (Get-Date)
@@ -183,7 +178,7 @@ Class WSLController : TestController
 				} -ArgumentList $wslDistro, $dstFile
 			}
 			else {
-				Copy-Item -Path $wslDistro -Destination $dstFile -ComputerName $serverName
+				Copy-Item -Path $wslDistro -Destination $dstFile -ToSession $session
 			}
 			Write-LogInfo "Copy $wslDistro to $dstPath on $serverName done."
 			$this.TestProvider.DistroFilePath += $dstFile
