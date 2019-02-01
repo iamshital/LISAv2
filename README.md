@@ -40,6 +40,14 @@ LISAv2 includes below test suite categories:
 - At least 8 GB of memory on the Host - Most of lisav2 tests will create and start Virtual Machines (Guests) with 3.5 GB of memory assigned
 - 1 External vSwitch in Hyper-V Manager/Virtual Switch Manager. This vSwitch will be named 'External' and must have an internet connection. For Hyper-V NETWORK tests you need 2 more vSwitch types created: Internal and Private. These 2 vSwitches will have the naming also 'Internal' and 'Private'.
 
+6. For running WSL tests, you must enable WSL on the test server
+
+    a. Open Powershell as Administrator and run:
+    ```
+    Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Windows-Subsystem-Linux
+    ```
+    b. Restart your computer when prompted.
+
 ### Download Latest Azure PowerShell
 
 1. Download Web Platform Installer from [here](http://go.microsoft.com/fwlink/p/?linkid=320376&clcid=0x409)
