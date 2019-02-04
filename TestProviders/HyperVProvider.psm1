@@ -29,6 +29,8 @@ using Module ".\TestProvider.psm1"
 Class HyperVProvider : TestProvider
 {
 	[string] $VMGeneration
+	[string] $BaseCheckpoint = "ICAbase"
+	[bool]   $ReuseVmOnFailure = $true
 
 	[object] DeployVMs([xml] $GlobalConfig, [object] $SetupTypeData, [object] $TestCaseData, [string] $TestLocation, [string] $RGIdentifier, [bool] $UseExistingRG) {
 		$allVMData = @()
@@ -58,13 +60,6 @@ Class HyperVProvider : TestProvider
 
 			$isVmAlive = Is-VmAlive -AllVMDataObject $allVMData
 			if ($isVmAlive -eq "True") {
-				Inject-HostnamesInHyperVVMs -allVMData $allVMData
-				$this.RestartAllDeployments($allVMData)
-
-				if ((Test-Path -Path  .\Extras\UploadDeploymentDataToDB.ps1) -and !$UseExistingRG) {
-					.\Extras\UploadDeploymentDataToDB.ps1 -allVMData $allVMData -DeploymentTime $DeploymentElapsedTime.TotalSeconds
-				}
-
 				$customStatus = Set-CustomConfigInVMs -CustomKernel $this.CustomKernel -CustomLIS $this.CustomLIS `
 					-AllVMData $allVMData -TestProvider $this
 				if (!$customStatus) {
@@ -72,23 +67,25 @@ Class HyperVProvider : TestProvider
 					return $null
 				}
 
-				# Create the initial checkpoint
-				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName "ICAbase"
-				$allVMData = Check-IP -VMData $AllVMData
-			}
-			else
-			{
+				Inject-HostnamesInHyperVVMs -allVMData $allVMData
+				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName $this.BaseCheckpoint -TurnOff $false
+
+				if ((Test-Path -Path  .\Extras\UploadDeploymentDataToDB.ps1) -and !$UseExistingRG) {
+					.\Extras\UploadDeploymentDataToDB.ps1 -allVMData $allVMData -DeploymentTime $DeploymentElapsedTime.TotalSeconds
+				}
+
+			} else {
 				Write-LogErr "Unable to connect SSH ports.."
 			}
 
+			# Note(v-advlad): clustered vms will not be cleaned up
+			# Todo: clean up clustered vms that do not belong to a Hyper-V group
 			if ($SetupTypeData.ClusteredVM) {
 				foreach ($VM in $allVMData) {
 					Remove-VMGroupMember -Name $VM.HyperVGroupName -VM $(Get-VM -name $VM.RoleName -ComputerName $VM.HyperVHost)
 				}
 			}
-		}
-		catch
-		{
+		} catch {
 			Write-LogErr "Exception detected. Source : DeployVMs()"
 			$line = $_.InvocationInfo.ScriptLineNumber
 			$script_name = ($_.InvocationInfo.ScriptName).Replace($PWD,".")
@@ -101,10 +98,11 @@ Class HyperVProvider : TestProvider
 
 	[void] RunSetup($VmData, $CurrentTestData, $TestParameters, $ApplyCheckPoint) {
 		if ($CurrentTestData.AdditionalHWConfig.HyperVApplyCheckpoint -eq "False") {
+			$VmData = Check-IP -VMData $VmData
 			Remove-AllFilesFromHomeDirectory -allDeployedVMs $VmData
 			Write-LogInfo "Removed all files from home directory."
 		} elseif ($ApplyCheckPoint) {
-			Apply-HyperVCheckpoint -VMData $VmData -CheckpointName "ICAbase"
+			Apply-HyperVCheckpoint -VMData $VmData -CheckpointName $this.BaseCheckpoint
 			$VmData = Check-IP -VMData $VmData
 			Write-LogInfo "Public IP found for all VMs in deployment after checkpoint restore"
 		}
@@ -159,8 +157,7 @@ Class HyperVProvider : TestProvider
 				}
 			}
 
-			([TestProvider]$this).RunTestCaseCleanup($AllVMData, $CurrentTestData, $CurrentTestResult, $CollectVMLogs, $RemoveFiles, $User, $Password, $SetupTypeData)
-
+			([TestProvider]$this).RunTestCaseCleanup($AllVMData, $CurrentTestData, $CurrentTestResult, $CollectVMLogs, $RemoveFiles, $User, $Password, $SetupTypeData, $TestParameters)
 			if ($CurrentTestResult.TestResult -ne "PASS") {
 				Create-HyperVCheckpoint -VMData $AllVMData -CheckpointName "$($CurrentTestData.TestName)-$($CurrentTestResult.TestResult)" `
 					-ShouldTurnOffVMBeforeCheckpoint $false -ShouldTurnOnVMAfterCheckpoint $false

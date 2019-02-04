@@ -286,12 +286,12 @@ Class TestController
 					-GlobalConfig $this.GlobalConfig -AllVMData $VmData
 			}
 
+			# Run setup script if any
+			$this.TestProvider.RunSetup($VmData, $CurrentTestData, $testParameters, $ApplyCheckpoint)
+
 			if (!$this.IsWindows) {
 				GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Initial" | Out-Null
 			}
-
-			# Run setup script if any
-			$this.TestProvider.RunSetup($VmData, $CurrentTestData, $testParameters, $ApplyCheckpoint)
 
 			# Upload test files to VMs
 			if ($CurrentTestData.files) {
@@ -376,8 +376,9 @@ Class TestController
 					if ( $this.TestIterations -ne 1 ) {
 						$case.testName = "$($originalTestName)-$testIterationCount"
 					}
+					Write-LogInfo "$($case.testName) started running."
 					$executionCount += 1
-					if (!$vmData -or $this.DeployVMPerEachTest) {
+					if (!$vmData -or $this.DeployVMPerEachTest -or $this.ForceDeleteResources) {
 						# Deploy the VM for the setup
 						$vmData = $this.TestProvider.DeployVMs($this.GlobalConfig, $this.SetupTypeTable[$setupType], $this.SetupTypeToTestCases[$key][0], `
 							$this.TestLocation, $this.RGIdentifier, $this.UseExistingRG)
@@ -390,20 +391,22 @@ Class TestController
 						}
 					}
 					# Run test case
-					$lastResult = $this.RunTestCase($vmData, $case, $executionCount, $this.SetupTypeTable[$setupType], ($tests -eq 0))
+					$lastResult = $this.RunTestCase($vmData, $case, $executionCount, $this.SetupTypeTable[$setupType], ($tests -ne 0))
 					$tests++
 					# If the case doesn't pass, keep the VM for failed case except when ForceDeleteResources is set
 					# and deploy a new VM for the next test
 					if ($lastResult.TestResult -ne "PASS") {
 						if ($this.ForceDeleteResources) {
 							$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
+						} elseif (!$this.TestProvider.ReuseVmOnFailure) {
+							$vmData = $null
 						}
-						$vmData = $null
 					} elseif ($this.DeployVMPerEachTest -and !$this.DoNotDeleteVMs) {
 						# Delete the VM if DeployVMPerEachTest is set
 						# Do not delete the VMs if testing against existing resource group, or DoNotDeleteVMs is set
 						$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
 					}
+					Write-LogInfo "$($case.testName) ended running with status: $($lastResult.TestResult)."
 				}
 			}
 
