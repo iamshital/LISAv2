@@ -89,4 +89,81 @@
         <Tags>nvme</Tags>
         <Priority>0</Priority>
     </test>
+    <test>
+        <TestName>NVME-FILE-SYSTEM-VERIFICATION-GENERIC</TestName>
+        <TestScript>FILE-SYSTEM-VERIFICATION-TESTS.ps1</TestScript>
+        <files>.\Testscripts\Linux\xfstesting.sh</files>
+        <setupType>OneVM</setupType>
+        <OverrideVMSize>Standard_L8s_v2</OverrideVMSize>
+        <TestParameters>
+            <param>FSTYP=xfs</param>
+            <param>TEST_DEV=/dev/nvme0n1p1</param>
+            <param>TEST_DIR=/root/test</param>
+            <param>TEST_FS_MOUNT_OPTS='-o nobarrier'</param>
+            <param>NVME=yes</param>
+            <param>GENERIC=yes</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Functional</Category>
+        <Area>NVME</Area>
+        <Tags>nvme,filesystem</Tags>
+        <Priority>0</Priority>
+    </test>
+    <test>
+        <TestName>NVME-FILE-SYSTEM-VERIFICATION-XFS</TestName>
+        <TestScript>FILE-SYSTEM-VERIFICATION-TESTS.ps1</TestScript>
+        <files>.\Testscripts\Linux\xfstesting.sh</files>
+        <setupType>OneVM</setupType>
+        <OverrideVMSize>Standard_L8s_v2</OverrideVMSize>
+        <TestParameters>
+            <param>FSTYP=xfs</param>
+            <param>TEST_DEV=/dev/nvme0n1p1</param>
+            <param>TEST_DIR=/root/test</param>
+            <param>TEST_FS_MOUNT_OPTS='-o nobarrier'</param>
+            <param>NVME=yes</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Functional</Category>
+        <Area>NVME</Area>
+        <Tags>nvme,filesystem</Tags>
+        <Priority>0</Priority>
+    </test>
+    <test>
+        <TestName>NVME-FILE-SYSTEM-VERIFICATION-EXT4</TestName>
+        <TestScript>FILE-SYSTEM-VERIFICATION-TESTS.ps1</TestScript>
+        <files>.\Testscripts\Linux\xfstesting.sh</files>
+        <setupType>OneVM</setupType>
+        <OverrideVMSize>Standard_L8s_v2</OverrideVMSize>
+        <TestParameters>
+            <param>FSTYP=ext4</param>
+            <param>TEST_DEV=/dev/nvme0n1p1</param>
+            <param>TEST_DIR=/root/test</param>
+            <param>TEST_FS_MOUNT_OPTS='-o nobarrier'</param>
+            <param>NVME=yes</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Functional</Category>
+        <Area>NVME</Area>
+        <Tags>nvme,filesystem</Tags>
+        <Priority>0</Priority>
+    </test>
+    <test>
+        <TestName>NVME-FILE-SYSTEM-VERIFICATION-BTRFS</TestName>
+        <TestScript>FILE-SYSTEM-VERIFICATION-TESTS.ps1</TestScript>
+        <files>.\Testscripts\Linux\xfstesting.sh</files>
+        <setupType>OneVM</setupType>
+        <OverrideVMSize>Standard_L8s_v2</OverrideVMSize>
+        <TestParameters>
+            <param>FSTYP=btrfs</param>
+            <param>TEST_DEV=/dev/nvme0n1p1</param>
+            <param>TEST_DIR=/root/test</param>
+            <param>TEST_FS_MOUNT_OPTS='-o nobarrier'</param>
+            <param>NVME=yes</param>
+        </TestParameters>
+        <Platform>Azure</Platform>
+        <Category>Functional</Category>
+        <Area>NVME</Area>
+        <Tags>nvme,filesystem</Tags>
+       <Priority>0</Priority>
+    </test>
 </TestCases>
