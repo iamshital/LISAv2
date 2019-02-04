@@ -2009,3 +2009,47 @@ function IsGreaterKernelVersion() {
             throw "Unsupported Distro: $detectedDistro"
     }
 }
+
+Function Download-File () {
+	param (
+        [string] $URL,
+        [string] $FilePath
+    )
+    try {
+		if ($FilePath) {
+			$FileName = $FilePath | Split-Path -Leaf
+			$ParentFolder = $FilePath | Split-Path -Parent
+		} else {
+			$FileName = $URL | Split-Path -Leaf
+			$ParentFolder = ".\DownloadedFiles"
+			$FilePath = Join-Path $ParentFolder $FileName
+		}
+		if (!(Test-Path $ParentFolder)) { 
+			[void](New-Item -Path $ParentFolder -Type Directory)
+		}
+		Write-LogInfo "Downloading '$URL' to '$FilePath'"
+		$DownloadJob = Start-BitsTransfer -Source "$URL" -Asynchronous -Destination "$FilePath" -TransferPolicy Unrestricted -TransferType Download -Priority Foreground
+		$DownloadJobStatus = Get-BitsTransfer -JobId $DownloadJob.JobId
+		Start-Sleep -Seconds 1
+		Write-LogInfo "JobID: $($DownloadJob.JobId)"
+		while ($DownloadJobStatus.JobState -eq "Connecting" -or $DownloadJobStatus.JobState -eq "Transferring" -or `
+		$DownloadJobStatus.JobState -eq "Queued" -or $DownloadJobStatus.JobState -eq "TransientError" ) {
+			$DownloadProgress = 100 - ((($DownloadJobStatus.BytesTotal - $DownloadJobStatus.BytesTransferred) / $DownloadJobStatus.BytesTotal) * 100)
+			$DownloadProgress = [math]::Round($DownloadProgress,2)
+			Write-LogInfo "Download '$($DownloadJobStatus.JobState)': $DownloadProgress%"
+			Start-Sleep -Seconds 2
+		}
+		if ($DownloadJobStatus.JobState -eq "Transferred") {
+			Write-LogInfo "Finalizing downloaded file..."
+			Complete-BitsTransfer -BitsJob $DownloadJob
+		} else {
+			Write-Output "Download status : $($DownloadJobStatus.JobState)"
+		}
+	} catch {
+		$line = $_.InvocationInfo.ScriptLineNumber
+		$script_name = ($_.InvocationInfo.ScriptName).Replace($PWD,".")
+		$ErrorMessage =  $_.Exception.Message
+		Write-LogErr "EXCEPTION : $ErrorMessage"
+		Write-LogErr "Source : Download-File() Line $line in script $script_name."
+	}
+}
