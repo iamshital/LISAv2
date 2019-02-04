@@ -313,40 +313,38 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
                     $ErrorCount += 1
                     return $false
                 }
-                Write-LogInfo "Checking if we have a local VHD with the same disk identifier on the host"
-                $hypervVHDLocalPath = (Get-VMHost -ComputerName $HyperVHost).VirtualHardDiskPath
                 $vhdName = [System.IO.Path]::GetFileNameWithoutExtension($(Split-Path -Leaf $parentOsVHDPath))
-                $newVhdName = "{0}-{1}{2}" -f @($vhdName, $infoParentOsVHD.DiskIdentifier.Replace("-", ""),$vhdSuffix)
-                $localVHDPath = Join-Path $hypervVHDLocalPath $newVhdName
-                $localVHDUncPath = $localVHDPath -replace '^(.):', "\\${HyperVHost}\`$1$"
-                if ((Test-Path $localVHDUncPath)) {
-                    Write-LogInfo "${parentOsVHDPath} is already found at path ${localVHDPath}"
-                } else {
-                    Write-LogInfo "${parentOsVHDPath} will be copied at path ${localVHDPath}"
-                    Copy-Item -Force $parentOsVHDPath $localVHDUncPath
-                }
-                $parentOsVHDPath = $localVHDPath
+                $DiskOperation = "copied"
             } elseif ($uriParentOsVHDPath.Scheme -imatch "http") {
                 Write-LogInfo "Parent VHD path $($uriParentOsVHDPath.AbsoluteUri) is web URL."
                 $FileName = Split-Path $uriParentOsVHDPath -Leaf
-                $DownloadFile = Join-Path ".\VHDs_Destination_Path" $FileName
+                $DownloadFile = Join-Path "$($pwd.Path)\VHDs_Destination_Path" $FileName
                 Download-File -URL $uriParentOsVHDPath.AbsoluteUri -FilePath $DownloadFile
                 $infoParentOsVHD = Get-VHD $DownloadFile
-                Write-LogInfo "Checking if we have a local VHD with the same disk identifier on the host"
-                $hypervVHDLocalPath = (Get-VMHost -ComputerName $HyperVHost).VirtualHardDiskPath                
                 $vhdName = [System.IO.Path]::GetFileNameWithoutExtension($(Split-Path -Leaf $DownloadFile))
-                $newVhdName = "{0}-{1}{2}" -f @($vhdName, $infoParentOsVHD.DiskIdentifier.Replace("-", ""),$vhdSuffix)
-                $localVHDPath = Join-Path $hypervVHDLocalPath $newVhdName
-                $localVHDUncPath = $localVHDPath -replace '^(.):', "\\${HyperVHost}\`$1$"
-                if ((Test-Path $localVHDUncPath)) {
-                    Write-LogInfo "${DownloadFile} is already found at path ${localVHDPath}"
-                    Remove-Item -Path $DownloadFile -Force
-                } else {
-                    Write-LogInfo "${DownloadFile} will be moved at path ${localVHDPath}"
-                    Move-Item -Force $DownloadFile $localVHDUncPath
-                }
-                $parentOsVHDPath = $localVHDPath                
+                $parentOsVHDPath = $DownloadFile
+                $DiskOperation = "moved"
             }
+            Write-LogInfo "Checking if we have a local VHD with the same disk identifier on the host"
+            $hypervVHDLocalPath = (Get-VMHost -ComputerName $HyperVHost).VirtualHardDiskPath
+            $newVhdName = "{0}-{1}{2}" -f @($vhdName, $infoParentOsVHD.DiskIdentifier.Replace("-", ""),$vhdSuffix)
+            $localVHDPath = Join-Path $hypervVHDLocalPath $newVhdName
+            $localVHDUncPath = $localVHDPath -replace '^(.):', "\\${HyperVHost}\`$1$"
+            if ((Test-Path $localVHDUncPath)) {
+                Write-LogInfo "${parentOsVHDPath} is already found at path ${localVHDUncPath}"
+                if ($DiskOperation -eq "moved") {
+                    Write-LogInfo "Removing $DownloadFile"
+                    Remove-Item -Path $DownloadFile -Force
+                }
+            } else {
+                Write-LogInfo "${parentOsVHDPath} will be $DiskOperation at path ${localVHDUncPath}"
+                if ($DiskOperation -eq "moved") {
+                    Move-Item -Force $parentOsVHDPath $localVHDUncPath
+                } else {
+                    Copy-Item -Force $parentOsVHDPath $localVHDUncPath
+                }
+            }
+            $parentOsVHDPath = $localVHDPath
 
             $Out = New-VHD -ParentPath $parentOsVHDPath -Path $CurrentVMOsVHDPath -ComputerName $HyperVHost
             if ($Out) {
