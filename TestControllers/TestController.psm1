@@ -276,7 +276,7 @@ Class TestController
 		New-Item -Type Directory -Path $CurrentTestLogDir -ErrorAction SilentlyContinue | Out-Null
 		Set-Variable -Name "LogDir" -Value $CurrentTestLogDir -Scope Global
 
-		$this.JunitReport.StartLogTestCase("LISAv2Test","$currentTestName","$global:TestID")
+		$this.JunitReport.StartLogTestCase("LISAv2Test-$($this.TestPlatform)","$currentTestName","$($CurrentTestData.Category)-$($CurrentTestData.Area)")
 
 		try {
 			# Get test case parameters
@@ -348,12 +348,12 @@ Class TestController
 			$global:user, $global:password, $SetupTypeData, $testParameters)
 
 		# Update test summary
-		$testRunDuration = $this.junitReport.GetTestCaseElapsedTime("LISAv2Test","$currentTestName","mm")
+		$testRunDuration = $this.JunitReport.GetTestCaseElapsedTime("LISAv2Test-$($this.TestPlatform)","$currentTestName","mm")
 		$this.TestSummary.UpdateTestSummaryForCase($currentTestName, $ExecutionCount, $currentTestResult.TestResult, $testRunDuration, $currentTestResult.testSummary, $VmData)
 
 		# Update junit report for current test case
 		$caseLog = Get-Content -Raw "$CurrentTestLogDir\$global:LogFileName"
-		$this.JunitReport.CompleteLogTestCase("LISAv2Test","$currentTestName",$currentTestResult.TestResult,$caseLog)
+		$this.JunitReport.CompleteLogTestCase("LISAv2Test-$($this.TestPlatform)","$currentTestName",$currentTestResult.TestResult,$caseLog)
 
 		# Set back the LogDir to the parent folder
 		Set-Variable -Name "LogDir" -Value $oldLogDir -Scope Global
@@ -384,8 +384,8 @@ Class TestController
 							$this.TestLocation, $this.RGIdentifier, $this.UseExistingRG)
 						if (!$vmData) {
 							# Failed to deploy the VMs, Set the case to abort
-							$this.JunitReport.StartLogTestCase("LISAv2Test","$($case.testName)","$global:TestID")
-							$this.JunitReport.CompleteLogTestCase("LISAv2Test","$($case.testName)","Aborted","")
+							$this.JunitReport.StartLogTestCase("LISAv2Test-$($this.TestPlatform)","$($case.testName)","$($case.Category)-$($case.Area)")
+							$this.JunitReport.CompleteLogTestCase("LISAv2Test-$($this.TestPlatform)","$($case.testName)","Aborted","")
 							$this.TestSummary.UpdateTestSummaryForCase($case.testName, $executionCount, "Aborted", "0", "", $null)
 							continue
 						}
@@ -425,7 +425,7 @@ Class TestController
 
 		# Start JUnit XML report logger.
 		$this.JunitReport = [JUnitReportGenerator]::New($TestReportXmlPath)
-		$this.JunitReport.StartLogTestSuite("LISAv2Test")
+		$this.JunitReport.StartLogTestSuite("LISAv2Test-$($this.TestPlatform)")
 		$this.TestSummary = [TestSummary]::New($this.TestCategory, $this.TestArea, $this.TestName, $this.TestTag, $this.TestPriority, $this.TotalCaseNum)
 
 		if (!$RunInParallel) {
@@ -434,7 +434,7 @@ Class TestController
 			throw "Running test in parallel is not supported yet."
 		}
 
-		$this.JunitReport.CompleteLogTestSuite("LISAv2Test")
+		$this.JunitReport.CompleteLogTestSuite("LISAv2Test-$($this.TestPlatform)")
 		$this.JunitReport.SaveLogReport()
 		$this.TestSummary.SaveHtmlTestSummary(".\Report\TestSummary-$global:TestID.html")
 	}
