@@ -93,6 +93,9 @@ Class HyperVProvider : TestProvider
 			Write-LogErr "EXCEPTION : $ErrorMessage"
 			Write-LogErr "Source : Line $line in script $script_name."
 		}
+
+		# Note(v-advlad): Dependency VMs need to be removed
+		$allVMData = Check-IP -VMData $allVMData
 		return $allVMData
 	}
 

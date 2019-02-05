@@ -333,9 +333,10 @@ function Run-TestScript {
         }
     }
     Write-LogInfo "Test script: ${Script} started."
+    $testVMData = $VMData | Where-Object { !($_.RoleName -like "*dependency-vm*") } | Select-Object -First 1
     if ($scriptExtension -eq "sh") {
         Run-LinuxCmd -Command "bash ${Script} > ${TestName}_summary.log 2>&1" `
-             -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
+             -Username $Username -password $Password -ip $testVMData.PublicIP -Port $testVMData.SSHPort `
              -runMaxAllowedTime $Timeout -runAsSudo
     } elseif ($scriptExtension -eq "ps1") {
         $scriptDir = Join-Path $workDir "Testscripts\Windows"
@@ -346,15 +347,15 @@ function Run-TestScript {
         Write-LogInfo "${scriptLoc} -TestParams $scriptParameters -AllVmData $VmData -TestProvider $TestProvider -CurrentTestData $CurrentTestData"
         $testResult = & "${scriptLoc}" -TestParams $scriptParameters -AllVmData $VmData -TestProvider $TestProvider -CurrentTestData $CurrentTestData
     } elseif ($scriptExtension -eq "py") {
-        Run-LinuxCmd -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
+        Run-LinuxCmd -Username $Username -password $Password -ip $testVMData.PublicIP -Port $testVMData.SSHPort `
              -Command "python ${Script}" -runMaxAllowedTime $Timeout -runAsSudo
-        Run-LinuxCmd -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
+        Run-LinuxCmd -Username $Username -password $Password -ip $testVMData.PublicIP -Port $testVMData.SSHPort `
              -Command "mv Runtime.log ${TestName}_summary.log" -runAsSudo
     }
 
     if (-not $testResult) {
         $testResult = Collect-TestLogs -LogsDestination $LogDir -ScriptName $scriptName -TestType $scriptExtension `
-             -PublicIP $VMData.PublicIP -SSHPort $VMData.SSHPort -Username $Username -password $Password `
+             -PublicIP $testVMData.PublicIP -SSHPort $testVMData.SSHPort -Username $Username -password $Password `
              -TestName $TestName
     }
     return $testResult
