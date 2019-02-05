@@ -62,8 +62,7 @@ Class TestController
 	[bool] $EnableAcceleratedNetworking
 	[bool] $UseManagedDisks
 	[string] $OverrideVMSize
-	[bool] $ForceDeleteResources
-	[bool] $DoNotDeleteVMs
+	[string] $ResourceCleanup
 	[bool] $DeployVMPerEachTest
 	[string] $ResultDBTable
 	[string] $ResultDBTestTag
@@ -78,8 +77,7 @@ Class TestController
 		$this.TestArea = $ParamTable["TestArea"]
 		$this.TestTag = $ParamTable["TestTag"]
 		$this.TestPriority = $ParamTable["TestPriority"]
-		$this.DoNotDeleteVMs = $ParamTable["DoNotDeleteVMs"]
-		$this.ForceDeleteResources = $ParamTable["ForceDeleteResources"]
+		$this.ResourceCleanup = $ParamTable["ResourceCleanup"]
 		$this.EnableTelemetry = $ParamTable["EnableTelemetry"]
 		$this.TestIterations = $ParamTable["TestIterations"]
 		$this.OverrideVMSize = $ParamTable["OverrideVMSize"]
@@ -97,9 +95,6 @@ Class TestController
 		# Validate general parameters
 		if (!$this.RGIdentifier) {
 			$parameterErrors += "-RGIdentifier is not set"
-		}
-		if ($this.DoNotDeleteVMs -and $this.ForceDeleteResources) {
-			$parameterErrors += "Conflict: both -DoNotDeleteVMs and -ForceDeleteResources are set."
 		}
 		return $parameterErrors
 	}
@@ -343,7 +338,7 @@ Class TestController
 		}
 
 		$collectDetailLogs = $currentTestResult.TestResult -ne "PASS" -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
-		$doRemoveFiles = $currentTestResult.TestResult -eq "PASS" -and !$this.DoNotDeleteVMs -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
+		$doRemoveFiles = $currentTestResult.TestResult -eq "PASS" -and !($this.ResourceCleanup -imatch "Keep") -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
 		$this.TestProvider.RunTestCaseCleanup($vmData, $CurrentTestData, $currentTestResult, $collectDetailLogs, $doRemoveFiles, `
 			$global:user, $global:password, $SetupTypeData, $testParameters)
 
@@ -378,7 +373,7 @@ Class TestController
 					}
 					Write-LogInfo "$($case.testName) started running."
 					$executionCount += 1
-					if (!$vmData -or $this.DeployVMPerEachTest -or $this.ForceDeleteResources) {
+					if (!$vmData -or $this.DeployVMPerEachTest -or ($this.ResourceCleanup -imatch "Delete")) {
 						# Deploy the VM for the setup
 						$vmData = $this.TestProvider.DeployVMs($this.GlobalConfig, $this.SetupTypeTable[$setupType], $this.SetupTypeToTestCases[$key][0], `
 							$this.TestLocation, $this.RGIdentifier, $this.UseExistingRG)
@@ -393,17 +388,17 @@ Class TestController
 					# Run test case
 					$lastResult = $this.RunTestCase($vmData, $case, $executionCount, $this.SetupTypeTable[$setupType], ($tests -ne 0))
 					$tests++
-					# If the case doesn't pass, keep the VM for failed case except when ForceDeleteResources is set
+					# If the case doesn't pass, keep the VM for failed case except when ResourceCleanup = "Delete" is set
 					# and deploy a new VM for the next test
 					if ($lastResult.TestResult -ne "PASS") {
-						if ($this.ForceDeleteResources) {
+						if ($this.ResourceCleanup -imatch "Delete") {
 							$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
 						} elseif (!$this.TestProvider.ReuseVmOnFailure) {
 							$vmData = $null
 						}
-					} elseif ($this.DeployVMPerEachTest -and !$this.DoNotDeleteVMs) {
+					} elseif ($this.DeployVMPerEachTest -and !($this.ResourceCleanup -imatch "Keep")) {
 						# Delete the VM if DeployVMPerEachTest is set
-						# Do not delete the VMs if testing against existing resource group, or DoNotDeleteVMs is set
+						# Do not delete the VMs if testing against existing resource group, or -ResourceCleanup = Keep is set
 						$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
 					}
 					Write-LogInfo "$($case.testName) ended running with status: $($lastResult.TestResult)."
@@ -411,7 +406,7 @@ Class TestController
 			}
 
 			# Delete the VM after all the cases of same setup are run, if DeployVMPerEachTest is not set
-			if ($lastResult.TestResult -eq "PASS" -and !$this.DoNotDeleteVMs -and !$this.DeployVMPerEachTest) {
+			if ($lastResult.TestResult -eq "PASS" -and !($this.ResourceCleanup -imatch "Keep") -and !$this.DeployVMPerEachTest) {
 				$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
 			}
 		}

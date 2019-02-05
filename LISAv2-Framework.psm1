@@ -54,9 +54,9 @@ function Start-LISAv2 {
 		[string] $CustomParameters = "",
 		[string] $OverrideVMSize = "",
 		[switch] $EnableAcceleratedNetworking,
-		[switch] $ForceDeleteResources,
+		[ValidateSet('Default','Keep','Delete',IgnoreCase = $true)]
+		[string] $ResourceCleanup,
 		[switch] $UseManagedDisks,
-		[switch] $DoNotDeleteVMs,
 		[switch] $DeployVMPerEachTest,
 		[string] $VMGeneration = "",
 
