@@ -221,6 +221,8 @@ Class JUnitReportGenerator
 
 			[int]$testSuiteNode.Attributes["errors"].Value += 1
 		} elseif ($result -imatch "SKIPPED") {
+			$newChildElement = $this.JunitReport.CreateElement("skipped")
+			$testCaseNode.AppendChild($newChildElement)
 			[int]$testSuiteNode.Attributes["skipped"].Value += 1
 		}
 
@@ -367,7 +369,12 @@ Class TestSummary
 		$strHtml += "</table><BR/>"
 		$strHtml += "<table>"
 		$strHtml += "<TR><TD class=`"bg3`" colspan=`"2`">Total Executed TestCases - $($this.TotalTc)</TD></TR>"
-		$strHtml += "<TR><TD class=`"bg3`" colspan=`"2`">[&nbsp;<span><span style=`"color:#008000;`"><strong>$($this.TotalPassTc)</strong></span></span> - PASS, <span ><span style=`"color:#ff0000;`"><strong>$($this.TotalFailTc)</strong></span></span> - FAIL, <span><span style=`"color:#ff0000;`"><strong><span style=`"background-color:#ffff00;`">$($this.TotalAbortedTc)</span></strong></span></span> - ABORTED ]</TD></TR>"
+		$strHtml += "<TR><TD class=`"bg3`" colspan=`"2`">[&nbsp;" + `
+			"<span> <span style=`"color:#008000;`"><strong>$($this.TotalPassTc)</strong></span></span> - $($global:ResultPassed), " + `
+			"<span> <span style=`"color:#cccccc;`"><strong>$($this.TotalSkippedTc)</strong></span></span> - $($global:ResultSkipped), " + `
+			"<span> <span style=`"color:#ff0000;`"><strong>$($this.TotalFailTc)</strong></span></span> - $($global:ResultFailed), " + `
+			"<span> <span style=`"color:#ff0000;`"><strong><span style=`"background-color:#ffff00;`">$($this.TotalAbortedTc)</span></strong></span></span> - $($global:ResultAborted) " + `
+			"]</TD></TR>"
 		$strHtml += "<TR><TD class=`"bg3`" colspan=`"2`">Total Execution Time(dd:hh:mm) $durationStr</TD></TR>"
 		$strHtml += "</table>"
 		$strHtml += "<BR/>"
@@ -397,8 +404,8 @@ Class TestSummary
 			$this.TextSummary += "$TestSummary"
 		}
 
-		$testSummaryLinePassSkip = "<tr><td>$ExecutionCount</td><td>$TestName</td><td>$Duration min</td><td>" + '${0}' + "</td></tr>"
-		$testSummaryLineFailAbort = "<tr><td>$ExecutionCount</td><td>$TestName$($this.GetReproVMDetails($AllVMData))</td><td>$Duration min</td><td>" + '${0}' + "</td></tr>"
+		$testSummaryLinePassSkip = "<tr><td>$ExecutionCount</td><td>$TestName</td><td>$Duration min</td><td>" + '{0}' + "</td></tr>"
+		$testSummaryLineFailAbort = "<tr><td>$ExecutionCount</td><td>$TestName$($this.GetReproVMDetails($AllVMData))</td><td>$Duration min</td><td>" + '{0}' + "</td></tr>"
 		if ($TestResult -imatch $global:ResultPassed) {
 			$this.TotalPassTc += 1
 			$testResultRow = "<span style='color:green;font-weight:bolder'>$($global:ResultPassed)</span>"
