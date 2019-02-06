@@ -68,6 +68,7 @@ Class TestController
 	[string] $ResultDBTable
 	[string] $ResultDBTestTag
 	[bool] $UseExistingRG
+	[array] $TestCasePassStatus
 
 	[string[]] ParseAndValidateParameters([Hashtable]$ParamTable) {
 		$this.TestLocation = $ParamTable["TestLocation"]
@@ -168,9 +169,13 @@ Class TestController
 		# XML secrets, used in Upload-TestResultToDatabase
 		Set-Variable -Name XmlSecrets -Value $this.XmlSecrets -Scope Global -Force
 		# Test results
-		Set-Variable -Name resultPass -Value "PASS" -Scope Global
-		Set-Variable -Name resultFail -Value "FAIL" -Scope Global
-		Set-Variable -Name resultAborted -Value "ABORTED" -Scope Global
+		$passResult = "PASS"
+		$skippedResult = "SKIPPED"
+		Set-Variable -Name ResultPassed  -Value $passResult -Scope Global
+		Set-Variable -Name ResultSkipped -Value $skippedResult -Scope Global
+		Set-Variable -Name ResultFailed  -Value "FAIL" -Scope Global
+		Set-Variable -Name ResultAborted -Value "ABORTED" -Scope Global
+		$this.TestCasePassStatus = @($passResult, $skippedResult)
 	}
 
 	[void] LoadTestCases($WorkingDirectory, $CustomParameters) {
@@ -317,8 +322,8 @@ Class TestController
 					-TestLocation $this.TestLocation -TestProvider $this.TestProvider `
 					-Timeout $timeout -GlobalConfig $this.GlobalConfig
 				# Some cases returns a string, some returns a result object
-				if ($testResult.TestResult) {
-					$currentTestResult = $testResult
+				if ($testResult) {
+					$currentTestResult.TestResult = $testResult
 				} else {
 					$currentTestResult.TestResult = Get-FinalResultHeader -resultArr $testResult
 				}
@@ -342,8 +347,8 @@ Class TestController
 				-CurrentTestResult $currentTestResult -enableTelemetry $this.EnableTelemetry
 		}
 
-		$collectDetailLogs = $currentTestResult.TestResult -ne "PASS" -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
-		$doRemoveFiles = $currentTestResult.TestResult -eq "PASS" -and !$this.DoNotDeleteVMs -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
+		$collectDetailLogs = !$this.TestCasePassStatus.contains($currentTestResult.TestResult) -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
+		$doRemoveFiles = $this.TestCasePassStatus.contains($currentTestResult.TestResult) -and !$this.DoNotDeleteVMs -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
 		$this.TestProvider.RunTestCaseCleanup($vmData, $CurrentTestData, $currentTestResult, $collectDetailLogs, $doRemoveFiles, `
 			$global:user, $global:password, $SetupTypeData, $testParameters)
 
@@ -395,7 +400,7 @@ Class TestController
 					$tests++
 					# If the case doesn't pass, keep the VM for failed case except when ForceDeleteResources is set
 					# and deploy a new VM for the next test
-					if ($lastResult.TestResult -ne "PASS") {
+					if (!$this.TestCasePassStatus.contains($lastResult.TestResult)) {
 						if ($this.ForceDeleteResources) {
 							$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
 						} elseif (!$this.TestProvider.ReuseVmOnFailure) {
@@ -411,7 +416,7 @@ Class TestController
 			}
 
 			# Delete the VM after all the cases of same setup are run, if DeployVMPerEachTest is not set
-			if ($lastResult.TestResult -eq "PASS" -and !$this.DoNotDeleteVMs -and !$this.DeployVMPerEachTest) {
+			if ($this.TestCasePassStatus.contains($lastResult.TestResult) -and !$this.DoNotDeleteVMs -and !$this.DeployVMPerEachTest) {
 				$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
 			}
 		}

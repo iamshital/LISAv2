@@ -104,10 +104,11 @@ function Collect-TestLogs {
 	)
 	# Note: This is a temporary solution until a standard is decided
 	# for what string py/sh scripts return
-	$resultTranslation = @{ "TestAborted" = "Aborted";
+	$resultTranslation = @{"TestCompleted" = "PASS";
+							"TestSkipped" = "SKIPPED";
 							"TestFailed" = "FAIL";
-							"TestCompleted" = "PASS"
-						  }
+							"TestAborted" = "ABORTED";
+						}
 
 	if ($TestType -eq "sh") {
 		$filesTocopy = "{0}/state.txt, {0}/summary.log, {0}/TestExecution.log, {0}/TestExecutionError.log" `
