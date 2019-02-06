@@ -34,15 +34,20 @@ ConfigureXFSTestTools() {
         redhat*|centos*|fedora*)
             pack_list="btrfs-progs-devel libacl-devel libaio-devel libattr-devel libuuid-devel llvm-ocaml-devel sqlite uuid-devel xfsdump xfsprogs-devel xfsprogs-qa-devel zlib-devel"
         ;;
+
+        suse*|sles*)
+            pack_list="btrfsprogs libacl-devel libaio-devel libattr-devel libuuid-devel sqlite xfsdump xfsprogs-devel zlib-devel"
+        ;;
         *)
             LogErr "OS Version not supported in InstallDependencies!"
             SetTestStateFailed
-            exit 1
+            exit 0
         ;;
     esac
     # Install common & specific dependencies
     update_repos
-    install_package "acl attr automake bc dos2unix dump e2fsprogs fio gawk gcc git indent libtool lvm2 make nvme-cli parted python quota sed xfsdump xfsprogs"
+    install_fio
+    install_package "acl attr automake bc dos2unix dump e2fsprogs gawk gcc git indent libtool lvm2 make nvme-cli parted python quota sed xfsdump xfsprogs"
     install_package $pack_list
     LogMsg "Packages installation complete."
     # Install dbench
@@ -62,7 +67,7 @@ ConfigureXFSTestTools() {
     if [ 0 -ne $? ]; then
         LogErr "Failed to install xfstests. Check if 'make' runs successfully"
         SetTestStateFailed
-        exit 1
+        exit 0
     fi
     popd
     LogMsg "Successfully installed xfstests"
@@ -151,7 +156,7 @@ Main() {
     if [ $? -ne 0 ]; then
         LogErr "xfstests run did not finish"
         SetTestStateFailed
-        exit 1
+        exit 0
     fi
     UpdateSummary "xfstests run finished successfully!"
     SetTestStateCompleted
