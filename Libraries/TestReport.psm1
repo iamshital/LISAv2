@@ -429,9 +429,9 @@ Class TestSummary
 			$this.HtmlSummary += $testSummaryLineFailAbort -f @($testResultRow)
 		}
 
-		Write-LogInfo "CURRENT - $($global:ResultPassed)  - $($this.TotalPassTc)"
+		Write-LogInfo "CURRENT - $($global:ResultPassed)    - $($this.TotalPassTc)"
 		Write-LogInfo "CURRENT - $($global:ResultSkipped) - $($this.TotalSkippedTc)"
-		Write-LogInfo "CURRENT - $($global:ResultFailed)  - $($this.TotalFailTc)"
+		Write-LogInfo "CURRENT - $($global:ResultFailed)    - $($this.TotalFailTc)"
 		Write-LogInfo "CURRENT - $($global:ResultAborted) - $($this.TotalAbortedTc)"
 	}
 
