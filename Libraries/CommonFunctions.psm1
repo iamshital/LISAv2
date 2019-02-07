@@ -540,7 +540,8 @@ Function Provision-VMsForLisa($allVMData, $installPackagesOnRoleNames)
 			}
 			else
 			{
-				Copy-RemoteFiles -download -downloadFrom $job.PublicIP -port $job.SSHPort -files "/root/provisionLinux.log" -username "root" -password $password -downloadTo $LogDir
+				Copy-RemoteFiles -download -downloadFrom $job.PublicIP -port $job.SSHPort -files "/root/provisionLinux.log" `
+					-username "root" -password $password -downloadTo $LogDir
 				Rename-Item -Path "$LogDir\provisionLinux.log" -NewName "$($job.RoleName)-provisionLinux.log" -Force | Out-Null
 			}
 		}
@@ -551,32 +552,26 @@ Function Provision-VMsForLisa($allVMData, $installPackagesOnRoleNames)
 	}
 }
 
-function Install-CustomKernel ($CustomKernel, $allVMData, [switch]$RestartAfterUpgrade, $TestProvider)
-{
-	try
-	{
+function Install-CustomKernel ($CustomKernel, $allVMData, [switch]$RestartAfterUpgrade, $TestProvider) {
+	try {
 		$currentKernelVersion = ""
 		$upgradedKernelVersion = ""
 		$CustomKernel = $CustomKernel.Trim()
-		if ( ($CustomKernel -ne "ppa") -and ($CustomKernel -ne "linuxnext") -and `
-		($CustomKernel -ne "netnext") -and ($CustomKernel -ne "proposed") -and `
-		($CustomKernel -ne "proposed-azure") -and ($CustomKernel -ne "proposed-edge") -and `
-		($CustomKernel -ne "latest") -and !($CustomKernel.EndsWith(".deb"))  -and `
-		!($CustomKernel.EndsWith(".rpm")) )
-		{
-			Write-LogErr "Only linuxnext, netnext, proposed, proposed-azure, proposed-edge, `
-			latest are supported. E.g. -CustomKernel linuxnext/netnext/proposed. `
+		# when adding new kernels here, also update script customKernelInstall.sh
+		$SupportedKernels = "ppa", "proposed", "proposed-azure", "proposed-edge",
+			"latest", "linuxnext", "netnext", "upstream-stable"
+
+		if ( ($CustomKernel -notin $SupportedKernels) -and !($CustomKernel.EndsWith(".deb")) -and `
+		!($CustomKernel.EndsWith(".rpm")) ) {
+			Write-LogErr "Only following kernel types are supported: $SupportedKernels.`
 			Or use -CustomKernel <link to deb file>, -CustomKernel <link to rpm file>"
-		}
-		else
-		{
+		} else {
 			$scriptName = "customKernelInstall.sh"
 			$jobCount = 0
 			$kernelSuccess = 0
 			$packageInstallJobs = @()
 			$CustomKernelLabel = $CustomKernel
-			foreach ( $vmData in $allVMData )
-			{
+			foreach ( $vmData in $allVMData ) {
 				Copy-RemoteFiles -uploadTo $vmData.PublicIP -port $vmData.SSHPort -files ".\Testscripts\Linux\$scriptName,.\Testscripts\Linux\utils.sh" -username $user -password $password -upload
 				if ( $CustomKernel.StartsWith("localfile:")) {
 					$customKernelFilePath = $CustomKernel.Replace('localfile:','')
@@ -612,92 +607,69 @@ function Install-CustomKernel ($CustomKernel, $allVMData, [switch]$RestartAfterU
 			}
 			$packageInstallJobsRunning = $true
 			$kernelMatchSuccess = "CUSTOM_KERNEL_SUCCESS"
-			while ($packageInstallJobsRunning)
-			{
+			while ($packageInstallJobsRunning) {
 				$packageInstallJobsRunning = $false
-				foreach ( $job in $packageInstallJobs )
-				{
-					if ( (Get-Job -Id $($job.ID)).State -eq "Running" )
-					{
+				foreach ( $job in $packageInstallJobs ) {
+					if ( (Get-Job -Id $($job.ID)).State -eq "Running" ) {
 						$currentStatus = Run-LinuxCmd -ip $job.PublicIP -port $job.SSHPort -username $user -password $password -command "tail -n 1 build-CustomKernel.txt"
 						Write-LogInfo "Package Installation Status for $($job.RoleName) : $currentStatus"
 						$packageInstallJobsRunning = $true
 						if ($currentStatus -imatch $kernelMatchSuccess) {
 							Stop-Job -Id $job.ID -Confirm:$false -ErrorAction SilentlyContinue
 						}
-					}
-					else
-					{
-						if ( !(Test-Path -Path "$LogDir\$($job.RoleName)-build-CustomKernel.txt" ) )
-						{
-							Copy-RemoteFiles -download -downloadFrom $job.PublicIP -port $job.SSHPort -files "build-CustomKernel.txt" -username $user -password $password -downloadTo $LogDir
-							if ( ( Get-Content "$LogDir\build-CustomKernel.txt" ) -imatch $kernelMatchSuccess )
-							{
+					} else {
+						if ( !(Test-Path -Path "$LogDir\$($job.RoleName)-build-CustomKernel.txt" ) ) {
+							Copy-RemoteFiles -download -downloadFrom $job.PublicIP -port $job.SSHPort -files "build-CustomKernel.txt" `
+								-username $user -password $password -downloadTo $LogDir
+							if ( ( Get-Content "$LogDir\build-CustomKernel.txt" ) -imatch $kernelMatchSuccess ) {
 								$kernelSuccess += 1
 							}
 							Rename-Item -Path "$LogDir\build-CustomKernel.txt" -NewName "$($job.RoleName)-build-CustomKernel.txt" -Force | Out-Null
 						}
 					}
 				}
-				if ( $packageInstallJobsRunning )
-				{
+				if ( $packageInstallJobsRunning ) {
 					Wait-Time -seconds 5
 				}
 			}
-			if ( $kernelSuccess -eq $jobCount )
-			{
+			if ( $kernelSuccess -eq $jobCount ) {
 				Write-LogInfo "Kernel upgraded to `"$CustomKernel`" successfully in $($allVMData.Count) VM(s)."
-				if ( $RestartAfterUpgrade )
-				{
+				if ( $RestartAfterUpgrade ) {
 					Write-LogInfo "Now restarting VMs..."
-					if ( $TestProvider.RestartAllDeployments($allVMData) )
-					{
+					if ( $TestProvider.RestartAllDeployments($allVMData) ) {
 						$retryAttempts = 5
 						$isKernelUpgraded = $false
-						while ( !$isKernelUpgraded -and ($retryAttempts -gt 0) )
-						{
+						while ( !$isKernelUpgraded -and ($retryAttempts -gt 0) ) {
 							$retryAttempts -= 1
 							$upgradedKernelVersion = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -command "uname -r"
 							Write-LogInfo "Old kernel: $currentKernelVersion"
 							Write-LogInfo "New kernel: $upgradedKernelVersion"
-							if ($currentKernelVersion -eq $upgradedKernelVersion)
-							{
+							if ($currentKernelVersion -eq $upgradedKernelVersion) {
 								Write-LogErr "Kernel version is same after restarting VMs."
-								if ( ($CustomKernel -eq "latest") -or ($CustomKernel -eq "ppa") -or ($CustomKernel -eq "proposed") )
-								{
+								if ( ($CustomKernel -eq "latest") -or ($CustomKernel -eq "ppa") -or ($CustomKernel -eq "proposed") ) {
 									Write-LogInfo "Continuing the tests as default kernel is same as $CustomKernel."
 									$isKernelUpgraded = $true
-								}
-								else
-								{
+								} else {
 									$isKernelUpgraded = $false
 								}
-							}
-							else
-							{
+							} else {
 								$isKernelUpgraded = $true
 							}
 							Add-Content -Value "Old kernel: $currentKernelVersion" -Path ".\Report\AdditionalInfo-$TestID.html" -Force
 							Add-Content -Value "New kernel: $upgradedKernelVersion" -Path ".\Report\AdditionalInfo-$TestID.html" -Force
 							return $isKernelUpgraded
 						}
-					}
-					else
-					{
+					} else {
 						return $false
 					}
 				}
 				return $true
-			}
-			else
-			{
+			} else {
 				Write-LogErr "Kernel upgrade failed in $($jobCount-$kernelSuccess) VMs."
 				return $false
 			}
 		}
-	}
-	catch
-	{
+	} catch {
 		Write-LogErr "Exception in Install-CustomKernel."
 		return $false
 	}
