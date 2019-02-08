@@ -75,6 +75,7 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
             }
             return $overFlowErrors
         }
+
         #Get the region
         $AllowedUsagePercentage = 100
         $currentStatus = Get-AzureRmVMUsage -Location $Location
@@ -255,9 +256,22 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
 
     #endregion
 
+    #region Resource Groups
+    #Source for current limit : https://docs.microsoft.com/en-us/azure/azure-subscription-service-limits#subscription-limits---azure-resource-manager
+    $RGLimit = 980
+    $currentRGCount = (Get-AzureRmResourceGroup).Count
+    $requiredRGCount = 1
+    $allowedRGCount = [int]($RGLimit * ($AllowedUsagePercentage / 100))
+    $Message = "Current Resource Groups usage:$currentRGCount. Requested:$requiredRGCount. Estimated usage:$($currentRGCount + $requiredRGCount). Maximum allowed:$allowedRGCount/$RGLimit."
+    if (($currentRGCount + $requiredRGCount) -le $allowedRGCount) {
+        Write-LogInfo $Message
+    } else {
+        Write-LogErr $Message
+        $overFlowErrors += 1
+    }
+    #endregion
 
     #region Storage Accounts
-    Write-LogInfo "Estimating storage account usage..."
     $currentStorageStatus = Get-AzureRmStorageUsage -Location $Location
     if ( ($premiumVMs -gt 0 ) -and ($StorageAccount -imatch "NewStorage_")) {
         $requiredStorageAccounts = 1
@@ -268,15 +282,13 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
     elseif ( !($premiumVMs -gt 0 ) -and !($StorageAccount -imatch "NewStorage_")) {
         $requiredStorageAccounts = 0
     }
-
     $allowedStorageCount = [int]($currentStorageStatus.Limit * ($AllowedUsagePercentage / 100))
-
-
+    $Message = "Current Storage Accounts usage:$($currentStorageStatus.CurrentValue). Requested:$requiredStorageAccounts. Estimated usage:$($currentStorageStatus.CurrentValue + $requiredStorageAccounts). Maximum allowed:$allowedStorageCount/$(($currentStorageStatus.Limit))."
     if (($currentStorageStatus.CurrentValue + $requiredStorageAccounts) -le $allowedStorageCount) {
-        Write-LogInfo "Current Storage Accounts usage:$($currentStorageStatus.CurrentValue). Requested:$requiredStorageAccounts. Estimated usage:$($currentStorageStatus.CurrentValue + $requiredStorageAccounts). Maximum allowed:$allowedStorageCount/$(($currentStorageStatus.Limit))."
+        Write-LogInfo $Message
     }
     else {
-        Write-LogErr "Current Storage Accounts usage:$($currentStorageStatus.CurrentValue). Requested:$requiredStorageAccounts. Estimated usage:$($currentStorageStatus.CurrentValue + $requiredStorageAccounts). Maximum allowed:$allowedStorageCount/$(($currentStorageStatus.Limit))."
+        Write-LogErr $Message
         $overFlowErrors += 1
     }
     #endregion
@@ -284,33 +296,48 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
     $GetAzureRmNetworkUsage = Get-AzureRmNetworkUsage -Location $Location
     #region Public IP Addresses
     $PublicIPs = $GetAzureRmNetworkUsage | Where-Object { $_.Name.Value -eq "PublicIPAddresses" }
-    Write-LogInfo "Current Public IPs usage:$($PublicIPs.CurrentValue). Requested: 1. Estimated usage:$($PublicIPs.CurrentValue + 1). Maximum allowed: $($PublicIPs.Limit)."
-    if (($PublicIPs.CurrentValue + 1) -gt $PublicIPs.Limit) {
+    $Message = "Current Public IPs usage:$($PublicIPs.CurrentValue). Requested: 1. Estimated usage:$($PublicIPs.CurrentValue + 1). Maximum allowed: $($PublicIPs.Limit)."
+    if (($PublicIPs.CurrentValue + 1) -le $PublicIPs.Limit) {
+        Write-LogInfo $Message
+    }
+    else {
+        Write-LogErr $Message
         $overFlowErrors += 1
     }
     #endregion
     #region Virtual networks
     $VNETs = $GetAzureRmNetworkUsage | Where-Object { $_.Name.Value -eq "VirtualNetworks" }
-    Write-LogInfo "Current VNET usage:$($VNETs.CurrentValue). Requested: 1. Estimated usage:$($VNETs.CurrentValue + 1). Maximum allowed: $($VNETs.Limit)."
-    if (($VNETs.CurrentValue + 1) -gt $VNETs.Limit) {
+    $Message = "Current VNET usage:$($VNETs.CurrentValue). Requested: 1. Estimated usage:$($VNETs.CurrentValue + 1). Maximum allowed: $($VNETs.Limit)."
+    if (($VNETs.CurrentValue + 1) -le $VNETs.Limit) {
+        Write-LogInfo $Message
+    }
+    else {
+        Write-LogErr $Message
         $overFlowErrors += 1
     }
     #endregion
     #region Network Security Groups
     $SGs = $GetAzureRmNetworkUsage | Where-Object { $_.Name.Value -eq "NetworkSecurityGroups" }
-    Write-LogInfo "Current Security Group usage:$($SGs.CurrentValue). Requested: 1. Estimated usage:$($SGs.CurrentValue + 1). Maximum allowed: $($SGs.Limit)."
-    if (($SGs.CurrentValue + 1) -gt $SGs.Limit) {
+    $Message = "Current Security Group usage:$($SGs.CurrentValue). Requested: 1. Estimated usage:$($SGs.CurrentValue + 1). Maximum allowed: $($SGs.Limit)."
+    if (($SGs.CurrentValue + 1) -le $SGs.Limit) {
+        Write-LogInfo $Message
+    }
+    else {
+        Write-LogErr $Message
         $overFlowErrors += 1
     }
     #endregion
     #region Load Balancers
     $LBs = $GetAzureRmNetworkUsage | Where-Object { $_.Name.Value -eq "LoadBalancers" }
-    Write-LogInfo "Current Load Balancer usage:$($LBs.CurrentValue). Requested: 1. Estimated usage:$($LBs.CurrentValue + 1). Maximum allowed: $($LBs.Limit)."
-    if (($LBs.CurrentValue + 1) -gt $LBs.Limit) {
+    $Message = "Current Load Balancer usage:$($LBs.CurrentValue). Requested: 1. Estimated usage:$($LBs.CurrentValue + 1). Maximum allowed: $($LBs.Limit)."
+    if (($LBs.CurrentValue + 1) -le $LBs.Limit) {
+        Write-LogInfo $Message
+    }
+    else {
+        Write-LogErr $Message
         $overFlowErrors += 1
     }
     #endregion
-
 
     if ($overFlowErrors -eq 0) {
         Write-LogInfo "Estimated subscription usage is under allowed limits."
