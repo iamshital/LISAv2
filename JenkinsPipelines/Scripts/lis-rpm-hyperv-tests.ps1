@@ -36,36 +36,41 @@ function Main {
     $imageFolder = Join-Path $imageFolder $DistroVersion
     $parentVhd = $(Get-ChildItem $imageFolder | Where-Object { $_.Extension -eq ".vhd" -or $_.Extension -eq ".vhdx"} | Sort LastWriteTime | Select -Last 1).Name
     $VHD_Path = Join-Path $imageFolder $parentVhd
-    $VHDName = $VHD_Path | Split-Path -Leaf
-    $VHD_Path = "https://shitalfileshare.blob.core.windows.net/vhds/$($VHDName)"
+    #$VHDName = $VHD_Path | Split-Path -Leaf
+    #$VHD_Path = "https://shitalfileshare.blob.core.windows.net/vhds/$($VHDName)"
     $VMgeneration = "1"
     if ($DistroVersion -like "*gen2vm*") {
         $VMgeneration = "2"
     }
-    Write-Host "Starting LISAv2"
+    Write-Output "Starting LISAv2"
     try {
-        dism /online /enable-feature /featurename:bits
-        Start-Service -Name BITS -Verbose
-        whoami.exe
-        Get-Service -Name SENS
-        Start-Service -Name SENS -Verbose
         $SourceVHDPath = $VHD_Path | Split-Path -Parent
         $OsVHD = $VHD_Path | Split-Path -Leaf        
         if ((Test-Path $VHD_Path) -or ($VHD_Path.StartsWith("http"))) {
             Write-Host "ComputerName: $env:computername"
             Write-Host "VHD : $VHD_Path"
             #$VHD_Path = "\\redmond\wsscfs\OSTC\LIS\VHD\Cloudbase\CentOS\CentOS_7.2_x64\CentOS72x64.vhdx"
-            .\Run-LisaV2.ps1 -TestPlatform HyperV `
-                -XMLSecretFile '$env:Azure_Secrets_File' `
-                -TestLocation localhost `
-                -RGIdentifier DELETEME `
-                -OsVHD $VHD_Path `
-                -TestCategory $TestCategory `
-                -TestArea $TestArea `
-                -TestNames $TestNames `
-                -VMGeneration $VMgeneration `
-                -ForceDeleteResources `
-                -ExitWithZero
+            $command = ".\Run-LisaV2.ps1 -TestPlatform HyperV"
+            $command += " -XMLSecretFile '$env:Azure_Secrets_File'"
+            $command += " -TestLocation 'localhost'"
+            $command += " -RGIdentifier '$JobId'"
+            $command += " -OsVHD '$VHD_Path'"
+            $command += " -TestCategory '$TestCategory'"
+            $command += " -TestArea '$TestArea'"
+            $command += " -VMGeneration '$VMgeneration'"
+            $command += " -ForceDeleteResources"
+            $command += " -ExitWithZero"
+            if ($TestNames) {
+                $command += " -TestNames '$TestNames'"
+            }
+            if ($TestArea -imatch "LIS_DEPLOY") {
+                $command += " -CustomParameters 'LIS_OLD_URL=$LisOldUrl;LIS_CURRENT_URL=$LisUrl'"
+            } else {
+                $command += " -CustomLIS '$LisUrl'"
+            }
+            Write-Output $PsCmd
+            powershell.exe -NonInteractive -ExecutionPolicy Bypass `
+                -Command "[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;$command;EXIT $global:LastExitCode"
         }
         else {
             Write-Output "Unable to locate VHD : $VHD_Path."

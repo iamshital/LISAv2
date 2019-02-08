@@ -358,4 +358,25 @@
         <Tags>memory</Tags>
         <Priority>2</Priority>
     </test>
+    <test>
+        <testName>DYNAMIC-MEMORY-TOP-LOAD-AVERAGE</testName>
+        <setupScript>.\Testscripts\Windows\DM-CONFIGURE-MEMORY.ps1</setupScript>
+        <testScript>DM_Top_Load_Average.sh</testScript>
+        <files>.\Testscripts\Linux\DM_Top_Load_Average.sh,.\Testscripts\Linux\utils.sh</files>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>enableDM=yes</param>
+            <param>minMem=1024MB</param>
+            <param>maxMem=2GB</param>
+            <param>startupMem=1024MB</param>
+            <param>memWeight=0</param>
+            <param>staticMem=1024MB</param>
+        </TestParameters>
+        <timeout>1200</timeout>
+        <Platform>HyperV</Platform>
+        <Category>Functional</Category>
+        <Area>Dynamic_Memory</Area>
+        <Tags>memory</Tags>
+        <Priority>2</Priority>
+    </test>
 </TestCases>

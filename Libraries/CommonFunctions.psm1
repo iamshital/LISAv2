@@ -7,7 +7,7 @@
 <#
 .SYNOPSIS
 	PS modules for LISAv2 test automation.
-	Common functions for running LISAv2 test
+	Common functions for running LISAv2 tests.
 
 .PARAMETER
 	<Parameters>
@@ -55,11 +55,11 @@ Function Import-TestParameters($ParametersFile)
 
 Function Match-TestPriority($currentTest, $TestPriority)
 {
-    if( -not $TestPriority ) {
+    if ( -not $TestPriority ) {
         return $True
     }
 
-    if( $TestPriority -eq "*") {
+    if ( $TestPriority -eq "*") {
         return $True
     }
 
@@ -78,11 +78,11 @@ Function Match-TestPriority($currentTest, $TestPriority)
 
 Function Match-TestTag($currentTest, $TestTag)
 {
-    if( -not $TestTag ) {
+    if ( -not $TestTag ) {
         return $True
     }
 
-    if( $TestTag -eq "*") {
+    if ( $TestTag -eq "*") {
         return $True
     }
 
@@ -132,7 +132,7 @@ Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $Tes
     # Filter test cases based on the criteria
     foreach ($file in $TestXMLs.FullName) {
         $currentTests = ([xml]( Get-Content -Path $file)).TestCases
-        foreach ($test in $currentTests.test){
+        foreach ($test in $currentTests.test) {
             if (!($test.Platform.Split(",").Contains($TestPlatform))) {
                 continue
             }
@@ -202,7 +202,7 @@ function Get-SecretParams {
                 $testParams["PASSWORD"] = $value
             }
             "RoleName" {
-                $value = $AllVMData.RoleName | ?{$_ -notMatch "dependency"}
+                $value = $AllVMData.RoleName | Where-Object {$_ -notMatch "dependency"}
                 $testParams["ROLENAME"] = $value
             }
             "Distro" {
@@ -259,7 +259,7 @@ function Parse-TestParameters {
 function Run-SetupScript {
     <#
     .DESCRIPTION
-    Executes a powershell script specified in the <setupscript> tag
+    Executes a PowerShell script specified in the <setupscript> tag
     Used to further prepare environment/VM
     #>
 
@@ -280,84 +280,6 @@ function Run-SetupScript {
     Write-LogInfo $msg
     $result = & "${scriptLocation}" -TestParams $scriptParameters -AllVMData $VMData -CurrentTestData $CurrentTestData
     return $result
-}
-
-function Run-TestScript {
-    <#
-    .DESCRIPTION
-    Executes test scripts specified in the <testScript> tag.
-    Supports python, shell and powershell scripts.
-    Python and shell scripts will be executed remotely.
-    Powershell scripts will be executed host side.
-    After the test completion, the method will collect logs
-    (for shell and python) and return the relevant test result.
-    #>
-
-    param(
-        [object]$CurrentTestData,
-        [hashtable]$Parameters,
-        [string]$LogDir,
-        [object]$VMData,
-        [string]$Username,
-        [string]$Password,
-        [string]$TestLocation,
-        [int]$Timeout,
-        [xml]$GlobalConfig,
-        [object]$TestProvider
-    )
-
-    $workDir = Get-Location
-    $script = $CurrentTestData.TestScript
-    $scriptName = $Script.split(".")[0]
-    $scriptExtension = $Script.split(".")[1]
-    $constantsPath = Join-Path $workDir "constants.sh"
-    $testName = $currentTestData.TestName
-    $testResult = ""
-
-    Create-ConstantsFile -FilePath $constantsPath -Parameters $Parameters
-    if(!$IsWindows){
-        foreach ($VM in $VMData) {
-            Copy-RemoteFiles -upload -uploadTo $VM.PublicIP -Port $VM.SSHPort `
-                -files $constantsPath -Username $Username -password $Password
-            Write-LogInfo "Constants file uploaded to: $($VM.RoleName)"
-        }
-    }
-    if($CurrentTestData.files -imatch ".py") {
-        $pythonPath = Run-LinuxCmd -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
-            -Command "which python || which python2 || which python3" -runAsSudo
-        if (($pythonPath -imatch "python2") -or ($pythonPath -imatch "python3")) {
-            $pythonPathSymlink  = $pythonPath.Substring(0, $pythonPath.LastIndexOf("/") + 1)
-            $pythonPathSymlink  += "python"
-            Run-LinuxCmd -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
-                 -Command "ln -s $pythonPath $pythonPathSymlink" -runAsSudo
-        }
-    }
-    Write-LogInfo "Test script: ${Script} started."
-    if ($scriptExtension -eq "sh") {
-        Run-LinuxCmd -Command "bash ${Script} > ${TestName}_summary.log 2>&1" `
-             -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
-             -runMaxAllowedTime $Timeout -runAsSudo
-    } elseif ($scriptExtension -eq "ps1") {
-        $scriptDir = Join-Path $workDir "Testscripts\Windows"
-        $scriptLoc = Join-Path $scriptDir $Script
-        foreach ($param in $Parameters.Keys) {
-            $scriptParameters += (";{0}={1}" -f ($param,$($Parameters[$param])))
-        }
-        Write-LogInfo "${scriptLoc} -TestParams $scriptParameters -AllVmData $VmData -TestProvider $TestProvider -CurrentTestData $CurrentTestData"
-        $testResult = & "${scriptLoc}" -TestParams $scriptParameters -AllVmData $VmData -TestProvider $TestProvider -CurrentTestData $CurrentTestData
-    } elseif ($scriptExtension -eq "py") {
-        Run-LinuxCmd -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
-             -Command "python ${Script}" -runMaxAllowedTime $Timeout -runAsSudo
-        Run-LinuxCmd -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
-             -Command "mv Runtime.log ${TestName}_summary.log" -runAsSudo
-    }
-
-    if (-not $testResult) {
-        $testResult = Collect-TestLogs -LogsDestination $LogDir -ScriptName $scriptName -TestType $scriptExtension `
-             -PublicIP $VMData.PublicIP -SSHPort $VMData.SSHPort -Username $Username -password $Password `
-             -TestName $TestName
-    }
-    return $testResult
 }
 
 function Is-VmAlive {
@@ -492,7 +414,7 @@ Function Provision-VMsForLisa($allVMData, $installPackagesOnRoleNames)
 				$jobID = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username "root" -password $password -command "/root/$scriptName" -RunInBackground
 				$packageInstallObj = New-Object PSObject
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name ID -Value $jobID
-				if($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
+				if ($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
 					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
 				} else {
 					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $($($vmData.ResourceGroupName) + "-" + $($vmData.RoleName))
@@ -513,7 +435,7 @@ Function Provision-VMsForLisa($allVMData, $installPackagesOnRoleNames)
 			$jobID = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username "root" -password $password -command "/root/$scriptName" -RunInBackground
 			$packageInstallObj = New-Object PSObject
 			Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name ID -Value $jobID
-			if($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
+			if ($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
 			} else {
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $($($vmData.ResourceGroupName) + "-" + $($vmData.RoleName))
@@ -557,7 +479,7 @@ function Install-CustomKernel ($CustomKernel, $allVMData, [switch]$RestartAfterU
 		$currentKernelVersion = ""
 		$upgradedKernelVersion = ""
 		$CustomKernel = $CustomKernel.Trim()
-		if( ($CustomKernel -ne "ppa") -and ($CustomKernel -ne "linuxnext") -and `
+		if ( ($CustomKernel -ne "ppa") -and ($CustomKernel -ne "linuxnext") -and `
 		($CustomKernel -ne "netnext") -and ($CustomKernel -ne "proposed") -and `
 		($CustomKernel -ne "proposed-azure") -and ($CustomKernel -ne "proposed-edge") -and `
 		($CustomKernel -ne "latest") -and !($CustomKernel.EndsWith(".deb"))  -and `
@@ -598,7 +520,7 @@ function Install-CustomKernel ($CustomKernel, $allVMData, [switch]$RestartAfterU
 					-RunInBackground -runAsSudo
 				$packageInstallObj = New-Object PSObject
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name ID -Value $jobID
-				if($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
+				if ($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
 					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
 				} else {
 					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $($($vmData.ResourceGroupName) + "-" + $($vmData.RoleName))
@@ -707,7 +629,7 @@ function Install-CustomLIS ($CustomLIS, $customLISBranch, $allVMData, [switch]$R
 	try
 	{
 		$CustomLIS = $CustomLIS.Trim()
-		if( ($CustomLIS -ne "lisnext") -and !($CustomLIS.EndsWith("tar.gz")))
+		if ( ($CustomLIS -ne "lisnext") -and !($CustomLIS.EndsWith("tar.gz")))
 		{
 			Write-LogErr "Only lisnext and *.tar.gz links are supported. Use -CustomLIS lisnext -LISbranch <branch name>. Or use -CustomLIS <link to tar.gz file>"
 		}
@@ -727,7 +649,7 @@ function Install-CustomLIS ($CustomLIS, $customLISBranch, $allVMData, [switch]$R
 				$jobID = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username "root" -password $password -command "/root/$scriptName -CustomLIS $CustomLIS -LISbranch $customLISBranch" -RunInBackground -runAsSudo
 				$packageInstallObj = New-Object PSObject
 				Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name ID -Value $jobID
-				if($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
+				if ($vmData.RoleName.Contains($vmData.ResourceGroupName)) {
 					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $vmData.RoleName
 				} else {
 					Add-member -InputObject $packageInstallObj -MemberType NoteProperty -Name RoleName -Value $($($vmData.ResourceGroupName) + "-" + $($vmData.RoleName))
@@ -772,17 +694,17 @@ function Install-CustomLIS ($CustomLIS, $customLISBranch, $allVMData, [switch]$R
 
 			if ( $lisSuccess -eq $jobCount )
 			{
-				Write-LogInfo "lis upgraded to `"$CustomLIS`" successfully in all VMs."
+				Write-LogInfo "LIS upgraded to `"$CustomLIS`" successfully in all VMs."
 				if ( $RestartAfterUpgrade )
 				{
 					Write-LogInfo "Now restarting VMs..."
 					if ( $TestProvider.RestartAllDeployments($allVMData) )
 					{
 						$upgradedlisVersion = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username "root" -password $password -command "modinfo hv_vmbus"
-						Write-LogInfo "Old lis: $currentlisVersion"
-						Write-LogInfo "New lis: $upgradedlisVersion"
-						Add-Content -Value "Old lis: $currentlisVersion" -Path ".\Report\AdditionalInfo-$TestID.html" -Force
-						Add-Content -Value "New lis: $upgradedlisVersion" -Path ".\Report\AdditionalInfo-$TestID.html" -Force
+						Write-LogInfo "Old LIS: $currentlisVersion"
+						Write-LogInfo "New LIS: $upgradedlisVersion"
+						Add-Content -Value "Old LIS: $currentlisVersion" -Path ".\Report\AdditionalInfo-$TestID.html" -Force
+						Add-Content -Value "New LIS: $upgradedlisVersion" -Path ".\Report\AdditionalInfo-$TestID.html" -Force
 						return $true
 					}
 					else
@@ -794,7 +716,7 @@ function Install-CustomLIS ($CustomLIS, $customLISBranch, $allVMData, [switch]$R
 			}
 			else
 			{
-				Write-LogErr "lis upgrade failed in $($jobCount-$lisSuccess) VMs."
+				Write-LogErr "LIS upgrade failed in $($jobCount-$lisSuccess) VMs."
 				return $false
 			}
 		}
@@ -975,7 +897,7 @@ Function Detect-LinuxDistro() {
 
 	$DistroName = Run-LinuxCmd -username $testVMUser -password $testVMPassword -ip $VIP -port $SSHport -command "/home/$user/DetectLinuxDistro.sh" -runAsSudo
 
-	if(($DistroName -imatch "Unknown") -or (!$DistroName)) {
+	if (($DistroName -imatch "Unknown") -or (!$DistroName)) {
 		Write-LogErr "Linux distro detected : $DistroName"
 		# Instead of throw, it sets 'Unknown' if it does not exist
 		$CleanedDistroName = "Unknown"
@@ -1045,7 +967,7 @@ function Get-VMFeatureSupportStatus {
 
 	Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4 'exit 0'
 	$currentKernel = Write-Output "yes" | .\Tools\plink.exe -C -pw $Password -P $SSHPort $Username@$Ipv4  "uname -r"
-	if( $LASTEXITCODE -eq $false){
+	if ( $LASTEXITCODE -eq $false) {
 		Write-LogInfo "Warning: Could not get kernel version".
 	}
 	$sKernel = $SupportKernel.split(".-")
@@ -1099,7 +1021,7 @@ function Get-SelinuxAVCLog() {
 	$file = Get-Content $FILE_NAME
 	Remove-Item $FILE_NAME
 	foreach ($line in $file) {
-		if ($line -match $TEXT_HV -and $line -match $TEXT_AVC){
+		if ($line -match $TEXT_HV -and $line -match $TEXT_AVC) {
 			Write-LogErr "ERROR: get the avc denied log: $line"
 			return $True
 		}
@@ -1186,13 +1108,13 @@ function Mount-Disk{
 		Copy-RemoteFiles -uploadTo $ipv4 -port $vmPort -files $filename -username $vmUsername -password $vmPassword -upload
 		$MountDisk = Run-LinuxCmd -username $vmUsername -password $vmPassword -ip $ipv4 -port $vmPort -command  `
 		"chmod u+x ${filename} && ./${filename}" -runAsSudo
-	if ($MountDisk){
+	if ($MountDisk) {
 		Write-LogInfo "Mounted /dev/sdc1 to /mnt/test"
 		return $True
 	}
 }
 
-function Remove-TestFile{
+function Remove-TestFile {
 	param(
 		[String] $pathToFile,
 		[String] $testfile
@@ -1212,7 +1134,7 @@ function Remove-TestFile{
 	}
 }
 
-function Get-RemoteFileInfo{
+function Get-RemoteFileInfo {
 	param (
 		[String] $filename,
 		[String] $server
@@ -1347,19 +1269,19 @@ Function Test-SRIOVInLinuxGuest {
 		if ($ExpectedSriovNics -ge 0) {
 			if ($DetectedSRIOVNics -eq $ExpectedSriovNics) {
 				$retValue = $true
-				Write-LogInfo "$DetectedSRIOVNics Mellanox NIC(s) deteted in VM. Expected: $ExpectedSriovNics."
+				Write-LogInfo "$DetectedSRIOVNics Mellanox NIC(s) detected in VM. Expected: $ExpectedSriovNics."
 			} else {
 				$retValue = $false
-				Write-LogErr "$DetectedSRIOVNics Mellanox NIC(s) deteted in VM. Expected: $ExpectedSriovNics."
+				Write-LogErr "$DetectedSRIOVNics Mellanox NIC(s) detected in VM. Expected: $ExpectedSriovNics."
 				Start-Sleep -Seconds 20
 			}
 		} else {
 			if ($DetectedSRIOVNics -gt 0) {
 				$retValue = $true
-				Write-LogInfo "$DetectedSRIOVNics Mellanox NIC(s) deteted in VM."
+				Write-LogInfo "$DetectedSRIOVNics Mellanox NIC(s) detected in VM."
 			} else {
 				$retValue = $false
-				Write-LogErr "$DetectedSRIOVNics Mellanox NIC(s) deteted in VM."
+				Write-LogErr "$DetectedSRIOVNics Mellanox NIC(s) detected in VM."
 				Start-Sleep -Seconds 20
 			}
 		}
@@ -1428,7 +1350,6 @@ Function Set-SRIOVInVMs {
     }
     return $retValue
 }
-
 
 
 # Returns an unused random MAC capable
@@ -1543,7 +1464,7 @@ function Generate-IPv4{
     )
     [int]$check = $null
 
-    if ($OldIpv4 -eq $null){
+    if ($OldIpv4 -eq $null) {
         [int]$octet = 102
     } else {
         $oldIpPart = $OldIpv4.Split(".")
@@ -1572,7 +1493,7 @@ function Convert-CIDRtoNetmask{
     $mask = ""
 
     for ($i=0; $i -lt 32; $i+=1) {
-        if($i -lt $CIDR){
+        if ($i -lt $CIDR) {
             $ip+="1"
         }else{
             $ip+= "0"
@@ -1865,7 +1786,7 @@ Function Publish-App([string]$appName, [string]$customIP, [string]$appGitURL, [s
 {
     # check whether app is already installed
     if ($null -eq $appGitURL) {
-        Write-LogInfo "ERROR: $appGitURL is not set"
+        Write-LogErr "$appGitURL is not set"
         return $False
     }
     $retVal = Run-LinuxCmd -username $user -password $password -ip $customIP -port $VMSSHPort `
@@ -1884,7 +1805,7 @@ Function Publish-App([string]$appName, [string]$customIP, [string]$appGitURL, [s
     $retVal = Run-LinuxCmd -username $user -password $password -ip $customIP -port $VMSSHPort `
         -command $appInstall
     }
-    Write-LogInfo "App $appName Installation is completed"
+    Write-LogInfo "App $appName installation is completed"
     return $retVal
 }
 
@@ -1916,7 +1837,7 @@ function Restore-LatestVMSnapshot($vmName, $hvServer)
     }
     # If there are no snapshots, create one.
     ElseIf (0 -eq $snapnumber) {
-        Write-LogInfo "There are no snapshots for $vmName. Creating one ..."
+        Write-LogInfo "There are no snapshots for $vmName. Creating one..."
         $sts = Checkpoint-VM -VMName $vmName -ComputerName $hvServer
         if (-not $?) {
            Write-LogErr "Unable to create snapshot of ${vmName}: `n${sts}"
@@ -1972,7 +1893,7 @@ function IsGreaterKernelVersion() {
         "CENTOS" = "3.10.0-862.3.3.el7";
     }
 
-    if($SUPPORTED_DISTRO_KERNEL.Keys -contains $detectedDistro) {
+    if ($SUPPORTED_DISTRO_KERNEL.Keys -contains $detectedDistro) {
         $supportKernelVersions = $SUPPORTED_DISTRO_KERNEL[$detectedDistro] -split "[\.\-]+"
         $actualKernelVersions = $actualKernelVersion -split "[\.\-]+"
         for($i=0; $i -lt $supportKernelVersions.Length;$i++) {
@@ -1993,7 +1914,7 @@ function IsGreaterKernelVersion() {
         }
 
         $array_count = $actualKernelVersions.Length
-        if($supportKernelVersions.Length -gt $actualKernelVersions.Length) {
+        if ($supportKernelVersions.Length -gt $actualKernelVersions.Length) {
             $array_count = $supportKernelVersions.Length
         }
 
@@ -2005,8 +1926,7 @@ function IsGreaterKernelVersion() {
             }
         }
         return $true
-    }
-    else {
+    } else {
             Write-LogErr "Unsupported Distro: $detectedDistro"
             throw "Unsupported Distro: $detectedDistro"
     }

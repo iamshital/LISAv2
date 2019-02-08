@@ -104,10 +104,13 @@ function Collect-TestLogs {
 	)
 	# Note: This is a temporary solution until a standard is decided
 	# for what string py/sh scripts return
-	$resultTranslation = @{ "TestAborted" = "Aborted";
-							"TestFailed" = "FAIL";
-							"TestCompleted" = "PASS"
-						  }
+	$resultTranslation = @{"TestCompleted" = $global:ResultPassed;
+							"TestSkipped" = $global:ResultSkipped;
+							"TestFailed" = $global:ResultFailed;
+							"TestAborted" = $global:ResultAborted;
+						}
+
+	$currentTestResult = Create-TestResultObject
 
 	if ($TestType -eq "sh") {
 		$filesTocopy = "{0}/state.txt, {0}/summary.log, {0}/TestExecution.log, {0}/TestExecutionError.log" `
@@ -117,7 +120,7 @@ function Collect-TestLogs {
 			 -files $filesTocopy
 		$summary = Get-Content (Join-Path $LogDir "summary.log")
 		$testState = Get-Content (Join-Path $LogDir "state.txt")
-		$testResult = $resultTranslation[$testState]
+		$currentTestResult.TestResult = $resultTranslation[$testState]
 	} elseif ($TestType -eq "py") {
 		$filesTocopy = "{0}/state.txt, {0}/Summary.log, {0}/${TestName}_summary.log" `
 			-f @("/home/${Username}")
@@ -125,7 +128,7 @@ function Collect-TestLogs {
 			 -Port $SSHPort -Username $Username -password $Password `
 			 -files $filesTocopy
 		$summary = Get-Content (Join-Path $LogDir "Summary.log")
-		$testResult = $summary
+		$currentTestResult.TestResult = $summary
 	}
 
 	Write-LogInfo "TEST SCRIPT SUMMARY ~~~~~~~~~~~~~~~"
@@ -133,7 +136,7 @@ function Collect-TestLogs {
 		Write-Host $_ -ForegroundColor Gray -BackgroundColor White
 	}
 	Write-LogInfo "END OF TEST SCRIPT SUMMARY ~~~~~~~~~~~~~~~"
-	return $TestResult
+	return $currentTestResult
 }
 
 Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $CurrentTestResult, $enableTelemetry) {
@@ -180,7 +183,7 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 		if ($TestPlatform -ne "OL") {
 			$FoundLineNumber = (Select-String -Path "$LogDir\$($vmData.RoleName)-dmesg.txt" -Pattern "Hyper-V Host Build").LineNumber
 			$ActualLineNumber = $FoundLineNumber - 1
-			$FinalLine = (Get-Content -Path "$LogDir\$($vmData.RoleName)-dmesg.txt")[$ActualLineNumber]
+			$FinalLine = [string]((Get-Content -Path "$LogDir\$($vmData.RoleName)-dmesg.txt")[$ActualLineNumber])
 			$FinalLine = $FinalLine.Replace('; Vmbus version:4.0','')
 			$FinalLine = $FinalLine.Replace('; Vmbus version:3.0','')
 			$HostVersion = ($FinalLine.Split(":")[$FinalLine.Split(":").Count -1 ]).Trim().TrimEnd(";")
