@@ -184,9 +184,6 @@ function Start-LISAv2 {
 					throw "Could not parse test report results"
 				}
 				$testSuiteresults = $results.testsuites.testsuite
-				Write-LogInfo "PASS  : $($testSuiteresults.tests - $testSuiteresults.errors - $testSuiteresults.failures)"
-				Write-LogInfo "FAIL  : $($testSuiteresults.failures)"
-				Write-LogInfo "ABORT : $($testSuiteresults.errors)"
 				if (($testSuiteresults.failures -eq 0) `
 							-and ($testSuiteresults.errors -eq 0) `
 							-and ($testSuiteresults.tests -gt 0)) {
