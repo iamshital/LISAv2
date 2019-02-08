@@ -1931,3 +1931,44 @@ function IsGreaterKernelVersion() {
             throw "Unsupported Distro: $detectedDistro"
     }
 }
+
+function Collect-GcovData {
+    param (
+        [String] $ip,
+        [String] $port,
+        [String] $username,
+        [String] $password,
+        [String] $logDir
+    )
+    $status = $false
+    $fileName = "gcov-data.tar.gz"
+
+    Copy-RemoteFiles -upload -uploadTo $ip -username $username -port $port -password $password `
+        -files '.\Testscripts\Linux\collect_gcov_data.sh' | Out-Null
+
+    $Null = Run-LinuxCmd -ip $ip -port $port -username $username -password $password `
+        -command "bash ./collect_gcov_data.sh --dest ./$fileName --result ./result.txt" -runAsSudo
+
+    $result = Run-LinuxCmd -ip $ip -port $port -username $username -password $password `
+        -command "cat ./result.txt"
+
+    Write-LogInfo "GCOV collect result: $result"
+
+    if ($result -match "GCOV_COLLECTED") {
+        $logDirName = Split-Path -Path $logDir -Leaf
+        if (Test-Path ".\CodeCoverage\logs\${logDirName}") {
+            Remove-Item -Path ".\CodeCoverage\logs\${logDirName}" -Recurse -Force
+        }
+        New-Item -Type directory -Path ".\CodeCoverage\logs\${logDirName}"
+        $logDest = Resolve-Path ".\CodeCoverage\logs\${logDirName}"
+
+        Copy-RemoteFiles -download -downloadFrom $ip -port $port -files "/home/$username/$fileName" `
+            -downloadTo $logDest -username $username -password $password | Out-Null
+
+        if (Test-Path "${logDir}\${fileName}") {
+            $status = $true
+        }
+    }
+
+    return $status
+}

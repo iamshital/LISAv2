@@ -228,7 +228,7 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 	}
 }
 
-Function GetAndCheck-KernelLogs($allDeployedVMs, $status, $vmUser, $vmPassword) {
+Function GetAndCheck-KernelLogs($allDeployedVMs, $status, $vmUser, $vmPassword, $EnableCodeCoverage) {
 	try	{
 		if (!($status -imatch "Initial" -or $status -imatch "Final")) {
 			Write-LogInfo "Status value should be either final or initial"
@@ -269,6 +269,18 @@ Function GetAndCheck-KernelLogs($allDeployedVMs, $status, $vmUser, $vmPassword) 
 				Remove-Item -Path $checkConnectivityFile -Force
 			}
 
+			if ($EnableCodeCoverage -and ($status -imatch "Final")) {
+				Write-LogInfo "Collecting coverage debug files from VM $($VM.RoleName)"
+
+				$gcovCollected = Collect-GcovData -ip $VM.PublicIP -port $VM.SSHPort `
+					-username $vmUser -password $vmPassword -logDir $LogDir
+
+				if ($gcovCollected) {
+					Write-LogInfo "GCOV data collected successfully"
+				} else {
+					Write-LogErr "Failed to collect GCOV data from VM: $($VM.RoleName)"
+				}
+			}
 			Run-LinuxCmd -ip $VM.PublicIP -port $VM.SSHPort -runAsSudo `
 				-username $vmUser -password $vmPassword `
 				-command "dmesg > /home/$vmUser/${currenBootLogFile}" | Out-Null
