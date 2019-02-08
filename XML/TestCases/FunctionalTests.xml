@@ -398,7 +398,7 @@
         <files>.\Testscripts\Linux\verify_vmbus_interrupts.sh,.\Testscripts\Linux\utils.sh</files>
         <setupType>OneVM</setupType>
         <OverrideVMSize>Standard_A3</OverrideVMSize>
-        <Platform>HyperV</Platform>
+        <Platform>Azure,HyperV</Platform>
         <Category>Functional</Category>
         <Area>LIS</Area>
         <Tags>vmbus</Tags>
