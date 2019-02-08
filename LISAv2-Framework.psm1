@@ -38,6 +38,9 @@ function Start-LISAv2 {
 		[string] $TestNames="",
 		[string] $TestPriority="",
 
+		# [Optional] Enable kernel code coverage
+		[switch] $EnableCodeCoverage,
+
 		# [Optional] Parameters for Image preparation before running tests.
 		[string] $CustomKernel = "",
 		[string] $CustomLIS,
