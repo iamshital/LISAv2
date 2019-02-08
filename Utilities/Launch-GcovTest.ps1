@@ -4,6 +4,7 @@ param (
     [String] $LogPath,
     [String] $TestCategory,
     [String] $TestArea,
+    [String] $TestNames,
     [Switch] $OverallReport,
 
     # LISAv2 Params
@@ -38,6 +39,9 @@ function Main {
     }
     if ($TestCategory) {
         $tests += @{"TestCategory" = $TestCategory}
+    }
+    if ($TestNames) {
+        $tests = @{"TestNames" = $TestNames}
     }
 
     Push-Location $WORK_DIR
@@ -77,7 +81,7 @@ function Main {
             if (-not (Test-Path "${LogPath}\logs")) {
                 New-Item -Path "${LogPath}\logs" -Type Directory
             }
-           
+
             Copy-Item -Recurse -Path ".\CodeCoverage\logs\*" -Destination "${LogPath}\logs\" -Force
             Copy-Item -Recurse -Path ".\CodeCoverage\artifacts" -Destination "${LogPath}\" -Force
         }
