@@ -11,7 +11,7 @@
 #
 # Description:
 #  This script is used to deploy Linux kernel.
-#  Various installation sources are supported - web, git, packages.
+#  Various installation sources are supported - web, git, rpm/deb packages.
 #
 #######################################################################
 
@@ -32,10 +32,14 @@ while echo $1 | grep ^- > /dev/null; do
     shift
 done
 
-if [[ -z "$CustomKernel" ]] || [[ ! " ${supported_kernels[*]} " =~ $CustomKernel ]]; then
-    echo "Please mention a supported kernel type with -CustomKernel, accepted values are:
-        ${supported_kernels[@]}"
-    exit 1
+# check for either if the custom kernel is a set of rpm/deb packages
+# or a support kernel from the above list
+if [[ -z "$CustomKernel" ]] || [[ "$CustomKernel" != @(*.rpm|*.deb) ]]; then
+    if [[ ! " ${supported_kernels[*]} " =~ $CustomKernel ]]; then
+        echo "Please mention a set of rpm/deb kernel packages, or a supported kernel type with -CustomKernel,
+        accepted values are: ${supported_kernels[@]}"
+        exit 1
+    fi
 fi
 
 if [ -z "$logFolder" ]; then
