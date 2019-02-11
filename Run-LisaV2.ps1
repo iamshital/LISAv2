@@ -32,7 +32,7 @@ Param(
 	[string] $ParametersFile = "",
 
 	# [Required]
-	[ValidateSet('Azure','HyperV','OL','WSL',IgnoreCase = $false)]
+	[ValidateSet('Azure','HyperV','OLQ','WSL',IgnoreCase = $false)]
 	[string] $TestPlatform = "",
 
 	# [Required] for Azure.

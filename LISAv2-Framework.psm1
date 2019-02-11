@@ -16,7 +16,7 @@ function Start-LISAv2 {
 		[string] $ParametersFile = "",
 
 		# [Required]
-		[ValidateSet('Azure','HyperV','OL','WSL',IgnoreCase = $false)]
+		[ValidateSet('Azure','HyperV','OLQ','WSL',IgnoreCase = $false)]
 		[string] $TestPlatform = "",
 
 		# [Required] for Azure.
@@ -134,13 +134,18 @@ function Start-LISAv2 {
 			}
 
 			# Validate test platform, and select test controller of the platform
-			$supportedPlatforms = @("Azure", "HyperV", "OL", "WSL")
+			$supportedPlatforms = @("Azure", "HyperV", "OLQ", "WSL")
 			if ($paramTable.ContainsKey("TestPlatform")) {
 				$testPlatform = $paramTable["TestPlatform"]
 			}
 			if ($testPlatform) {
 				if ($supportedPlatforms.contains($testPlatform)) {
-					$testController = New-Object -TypeName $testPlatform"Controller"
+					if ($testPlatform.StartsWith('OL')) {
+						$testController = New-Object -TypeName "OLController" -ArgumentList $testPlatform
+					}
+					else {
+						$testController = New-Object -TypeName $testPlatform"Controller"
+					}
 				} else {
 					throw "$testPlatform is not yet supported."
 				}

@@ -150,7 +150,7 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 		{
 			$vmData = $allVMData
 		}
-		if ($TestPlatform -eq "OL") {
+		if ($TestPlatform.StartsWith('OL')) {
 			$FilesToDownload = "over*.txt"
 		}
 		else{
@@ -163,7 +163,7 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 		$Null = Copy-RemoteFiles -downloadFrom $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -files "$FilesToDownload" -downloadTo "$LogDir" -download
 		$KernelVersion = Get-Content "$LogDir\$($vmData.RoleName)-kernelVersion.txt"
 		$GuestDistro = Get-Content "$LogDir\$($vmData.RoleName)-distroVersion.txt"
-		if ($TestPlatform -eq "OL") {
+		if ($TestPlatform.StartsWith('OL')) {
 			$KernelVersion = Get-Content "$LogDir\over*-kernelVersion.txt"
 			$GuestDistro = Get-Content "$LogDir\over*-distroVersion.txt"
 			$LISMatch = (Select-String -Path "$LogDir\over*-lis.txt" -Pattern "^version:").Line
@@ -180,7 +180,7 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 			$LISVersion = "NA"
 		}
 		#region Host Version checking and skip it for OL platform.
-		if ($TestPlatform -ne "OL") {
+		if (!$TestPlatform.StartsWith('OL')) {
 			$FoundLineNumber = (Select-String -Path "$LogDir\$($vmData.RoleName)-dmesg.txt" -Pattern "Hyper-V Host Build").LineNumber
 			$ActualLineNumber = $FoundLineNumber - 1
 			$FinalLine = [string]((Get-Content -Path "$LogDir\$($vmData.RoleName)-dmesg.txt")[$ActualLineNumber])
