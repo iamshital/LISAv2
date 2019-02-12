@@ -102,10 +102,9 @@ function Create-HardDrive( [string] $vmName, [string] $server, [System.Boolean] 
     #
     $clusterVm = Invoke-Command -ComputerName $server -ScriptBlock {
         (Get-WindowsOptionalFeature -Online -FeatureName "FailoverCluster-PowerShell").State -eq "Enabled"
-        }
-    if ($clusterVm) {
-        $clusterDir = Get-ClusterSharedVolume
-        $defaultVhdPath = $clusterDir.SharedVolumeInfo.FriendlyVolumeName
+    }
+    if ($clusterVm -and (Get-ClusterSharedVolume -ErrorAction SilentlyContinue)) {
+        $defaultVhdPath = (Get-ClusterSharedVolume).SharedVolumeInfo.FriendlyVolumeName
     } else {
         $hostInfo = Get-VMHost -ComputerName $server
         if (-not $hostInfo) {
