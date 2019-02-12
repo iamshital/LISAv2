@@ -308,7 +308,7 @@
         <testScript>BVT-VERIFY-DEPLOYMENT-PROVISION.ps1</testScript>
         <files></files>
         <setupType>OneVM</setupType>
-        <Platform>Azure,HyperV,OL</Platform>
+        <Platform>Azure,HyperV,OLQ</Platform>
         <Category>BVT</Category>
         <Area>BVT</Area>
         <Tags>provision</Tags>

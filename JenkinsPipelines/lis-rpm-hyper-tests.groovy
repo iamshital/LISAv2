@@ -52,20 +52,20 @@ def supportedDistros = nodesMap["ws2012"] + nodesMap["ws2012r2"] + nodesMap["ws2
 //def supportedDistros = nodesMap["ws2016"]
 
 def RunPowershellCommand(psCmd) {
-    bat "powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;$psCmd;EXIT \$global:LastExitCode\""
+    //bat "powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;$psCmd;EXIT \$global:LastExitCode\""
     //powershell (psCmd)
-    //println(psCmd)
+    println(psCmd)
 }
 
 def getDistros (distros, supportedDistros) {
     def validatedDistros = []
     suppList = supportedDistros.split(",")
     distros = distros.split(",")
-    
+
     for (distro in distros) {
         distroType = distro.split("_")[0]
         distroVersion = distro.split("_")[1]
-        
+
         if (distroVersion.toLowerCase() == "all") {
             for (suppDistro in suppList){
                 if (distroType.toLowerCase() == suppDistro.split("_")[0]) {
@@ -85,22 +85,40 @@ DISTROS = getDistros (DISTRO_VERSIONS, supportedDistros)
 
 def ErrorCount = 0
 
-def TestMap = ["Functional" : "LIS_DEPLOY,LIS,DYNAMIC_MEMORY,KVP,MIGRATION,NETWORK,SRIOV,STORAGE,BACKUP,CORE,FCOPY,KDUMP,PROD_CHECKPOINT,RUNTIME_MEMORY",\
+def CategoryAreaMap = ["Functional" : "LIS_DEPLOY,LIS,DYNAMIC_MEMORY,KVP,MIGRATION,NETWORK,SRIOV,STORAGE,BACKUP,CORE,FCOPY,KDUMP,PROD_CHECKPOINT,RUNTIME_MEMORY",\
                 "BVT":"BVT,CORE,NETWORK",\
                 "Stress":"stress" ]
 
-TestMapKeySet=TestMap.keySet()
-//println(TestMapKeySet)
+def TestAndDistroMap = ["Functional-LIS_DEPLOY" : "${supportedDistros}",\
+                "Functional-LIS" : "${supportedDistros}",\
+                "Functional-DYNAMIC_MEMORY": "${supportedDistros}",\
+                "Functional-KVP": "${supportedDistros}",\
+                "Functional-MIGRATION": "${supportedDistros}",\
+                "Functional-NETWORK": "${supportedDistros}",\
+                "Functional-SRIOV": "${supportedDistros}",\
+                "Functional-STORAGE": "${supportedDistros}",\
+                "Functional-BACKUP": "${supportedDistros}",\
+                "Functional-CORE": "${supportedDistros}",\
+                "Functional-FCOPY": "${supportedDistros}",\
+                "Functional-KDUMP": "${supportedDistros}",\
+                "BVT-BVT": "${supportedDistros}",\
+                "BVT-CORE": "${supportedDistros}",\
+                "BVT-NETWORK": "${supportedDistros}",\
+                "Stress-stress": "${supportedDistros}"
+                ]
 
-TestMapSize=TestMap.size()
-//println(TestMapSize)
+CategoryAreaMapKeySet=CategoryAreaMap.keySet()
+//println(CategoryAreaMapKeySet)
 
-for (i=0;i<TestMapSize; i++)
+CategoryAreaMapSize=CategoryAreaMap.size()
+//println(CategoryAreaMapSize)
+
+for (i=0;i<CategoryAreaMapSize; i++)
 {
-  def TestMapKeySetCounter = i
-  def CurrentTestCategory= TestMapKeySet[TestMapKeySetCounter]
+  def CategoryAreaMapKeySetCounter = i
+  def CurrentTestCategory= CategoryAreaMapKeySet[CategoryAreaMapKeySetCounter]
   //println (CurrentTestCategory)
-  CurrentTestAreas=TestMap[CurrentTestCategory]
+  CurrentTestAreas=CategoryAreaMap[CurrentTestCategory]
   //println(CurrentTestAreas)
 
   for (j=0;j< CurrentTestAreas.split(",").length; j++)
@@ -108,36 +126,46 @@ for (i=0;i<TestMapSize; i++)
     def AreaCounter = j
     def CurrentArea = CurrentTestAreas.split(",")[AreaCounter]
     try {
-        stage ("${CurrentTestCategory}-${CurrentArea}") {
-            if ((env.ENABLED_TEST_CATEGORIES.split(",").contains(CurrentTestCategory)) && (env.ENABLED_TEST_AREAS.split(",").contains(CurrentArea))) {
-                def globalSleepTime = 0;
-                def runs = [:]
-                def nodesMapLenght = nodesMap.size()
-                def nodesMapKeySet=nodesMap.keySet()
-                for (k=0; k < nodesMapLenght; k++) {
-                    def CurrentNodeCounter = k
-                    def testNode = nodesMapKeySet[CurrentNodeCounter]
-                    def mappedDistros = nodesMap[testNode]
-                    if (testNode != 'sriov') {
-                        testNode = 'ws2016'
-                    }
-                    def DISTROS_lenght = DISTROS.size()
-                    for (l=0; l < DISTROS_lenght; l++) {
-                        def CurrentDistroCounter = l
-                        def CurrentDistro = DISTROS[CurrentDistroCounter]
-                        if (mappedDistros.contains("${CurrentDistro},")) {
-                            if ((CurrentArea == "SRIOV" && testNode != 'sriov'))
-                            {
-                                //Execute SRIOV tests on "sriov" nodes only.
-                            }
-                            else {
-                                runs ["${CurrentDistro}-${testNode}"] = {
-                                    node ("${testNode}") {
-                                        try {
-                                            stage ("${CurrentDistro}-${testNode}") {
-                                            println ("stage ${CurrentDistro}-${testNode}")
-                                                if (PassingDistros.contains(CurrentDistro)) {
-                                                    withCredentials([string(credentialsId: 'REDMOND_VHD_SHARE', variable: 'LISAImagesShareUrl'), 
+        if ((env.ENABLED_TEST_CATEGORIES.split(",").contains(CurrentTestCategory)) && (env.ENABLED_TEST_AREAS.split(",").contains(CurrentArea))) {
+            def CurrentLogs = currentBuild.rawBuild.getLog(10000)
+            if (CurrentLogs == null) {
+                CurrentLogs = "Unable_To_Get_Logs"
+            }
+            stage ("${CurrentTestCategory}-${CurrentArea}") {
+                if ((!(CurrentLogs.contains("Aborted by")) && (!(CurrentLogs.contains("FlowInterruptedException"))))) {
+                    def globalSleepTime = 0;
+                    def branches = 0
+                    def runs = [:]
+                    def nodesMapLenght = nodesMap.size()
+                    def nodesMapKeySet=nodesMap.keySet()
+                    for (k=0; k < nodesMapLenght; k++) {
+                        def CurrentNodeCounter = k
+                        def testNode = nodesMapKeySet[CurrentNodeCounter]
+                        def mappedDistros = nodesMap[testNode]
+                        if (testNode != 'sriov') {
+                            testNode = 'ws2016'
+                        }
+                        def DISTROS_lenght = DISTROS.size()
+                        for (l=0; l < DISTROS_lenght; l++) {
+                            def CurrentDistroCounter = l
+                            def CurrentDistro = DISTROS[CurrentDistroCounter]
+                            def CurrentStageDistros = TestAndDistroMap["${CurrentTestCategory}-${CurrentArea}"]
+                            if (mappedDistros.contains("${CurrentDistro},") && CurrentStageDistros != null) {
+                                if ((CurrentArea == "SRIOV" && testNode != 'sriov')) {
+                                    //Skip the SRIOV Tests if testnode is not sriov.
+                                } else if (!(CurrentStageDistros.split(",").contains(CurrentDistro))) {
+                                    println("${CurrentTestCategory}-${CurrentArea} is not enabled for ${CurrentDistro}")
+                                } else if (!(PassingDistros.contains(CurrentDistro))) {
+                                    println(" ${CurrentDistro} is not in PassingDistros.")
+                                }
+                                else {
+                                    branches = branches + 1
+                                    runs ["${CurrentDistro}-${testNode}"] = {
+                                        node ("${testNode}") {
+                                            try {
+                                                stage ("${CurrentDistro}-${testNode}") {
+                                                println ("stage ${CurrentDistro}-${testNode}")
+                                                    withCredentials([string(credentialsId: 'REDMOND_VHD_SHARE', variable: 'LISAImagesShareUrl'),
                                                         file(credentialsId: 'Azure_Secrets_File', variable: 'Azure_Secrets_File')]) {
                                                         def sleepTime = globalSleepTime
                                                         globalSleepTime = globalSleepTime + 30
@@ -158,34 +186,38 @@ for (i=0;i<TestMapSize; i++)
                                                             archiveArtifacts '*-TestLogs.zip'
                                                         }
                                                     }
-                                                } else {
-                                                    println ("SKIPPED. stage ${CurrentDistro}-${testNode}")
-                                                    println (PassingDistros)
                                                 }
+                                            } catch (exc) {
+                                                currentBuild.result = 'SUCCESS'
+                                                ErrorCount = ErrorCount + 1
+                                            } finally {
+                                                cleanWs()
                                             }
-                                        } catch (exc) {
-                                            currentBuild.result = 'SUCCESS'
-                                            ErrorCount = ErrorCount + 1
-                                        } finally {
-                                            cleanWs()
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
-                try {
-                    parallel runs
-                } catch (exc) {
-                    currentBuild.result = 'SUCCESS'
-                    ErrorCount = ErrorCount + 1
+                    try {
+                        if ( branches != 0) {
+                            parallel runs
+                        } else {
+                            println ("No tests in this stage.")
+                        }
+                    } catch (exc) {
+                        currentBuild.result = 'SUCCESS'
+                        ErrorCount = ErrorCount + 1
+                    }                    
+                } else {
+                    println("Aborting Stage : ${CurrentTestCategory}-${CurrentArea}")
                 }
             }
         }
     } catch (exc) {
         currentBuild.result = 'SUCCESS'
         println("EXCEPTION")
+        println(exc.toString());
         ErrorCount = ErrorCount + 1
     }
   }

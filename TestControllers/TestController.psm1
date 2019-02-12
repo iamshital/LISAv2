@@ -70,6 +70,7 @@ Class TestController
 	[bool] $UseExistingRG
 	[array] $TestCaseStatus
 	[array] $TestCasePassStatus
+	[bool] $EnableCodeCoverage
 
 	[string[]] ParseAndValidateParameters([Hashtable]$ParamTable) {
 		$this.TestLocation = $ParamTable["TestLocation"]
@@ -91,6 +92,7 @@ Class TestController
 		$this.ResultDBTable = $ParamTable["ResultDBTable"]
 		$this.ResultDBTestTag = $ParamTable["ResultDBTestTag"]
 		$this.UseExistingRG = $ParamTable["UseExistingRG"]
+		$this.EnableCodeCoverage = $ParamTable["EnableCodeCoverage"]
 
 		$this.TestProvider.CustomKernel = $ParamTable["CustomKernel"]
 		$this.TestProvider.CustomLIS = $ParamTable["CustomLIS"]
@@ -192,6 +194,7 @@ Class TestController
 
 		$allTests = Collect-TestCases -TestXMLs $TestXMLs -TestCategory $this.TestCategory -TestArea $this.TestArea `
 			-TestNames $this.TestNames -TestTag $this.TestTag -TestPriority $this.TestPriority
+
 		if( !$allTests ) {
 			Throw "Not able to collect any test cases from XML files"
 		} else {
@@ -433,7 +436,7 @@ Class TestController
 
 		# Do log collecting and VM clean up
 		if (!$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True") {
-			GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Final" | Out-Null
+			GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Final" -EnableCodeCoverage $this.EnableCodeCoverage | Out-Null
 			Get-SystemBasicLogs -AllVMData $VmData -User $global:user -Password $global:password -CurrentTestData $CurrentTestData `
 				-CurrentTestResult $currentTestResult -enableTelemetry $this.EnableTelemetry
 		}

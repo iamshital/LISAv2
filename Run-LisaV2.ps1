@@ -32,7 +32,7 @@ Param(
 	[string] $ParametersFile = "",
 
 	# [Required]
-	[ValidateSet('Azure','HyperV','OL','WSL',IgnoreCase = $false)]
+	[ValidateSet('Azure','HyperV','OLQ','WSL',IgnoreCase = $false)]
 	[string] $TestPlatform = "",
 
 	# [Required] for Azure.
@@ -53,6 +53,9 @@ Param(
 	[string] $TestTag = "",
 	[string] $TestNames="",
 	[string] $TestPriority="",
+
+	# [Optional] Enable kernel code coverage
+	[switch] $EnableCodeCoverage,
 
 	# [Optional] Parameters for Image preparation before running tests.
 	[string] $CustomKernel = "",

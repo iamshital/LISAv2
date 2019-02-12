@@ -27,7 +27,7 @@ function Main {
     if (!$TestNames)    { $TestNames = "All" }
     if (!$TestTag)      { $TestTag = "All" }
     if (!$TestPriority) { $TestPriority = "All" }
-    git checkout downloadfile
+    git checkout lisav2hyperv
     Write-Output "Sleeping $Delay seconds..."
     Start-Sleep $Delay
     

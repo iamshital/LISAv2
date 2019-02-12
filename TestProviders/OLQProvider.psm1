@@ -28,7 +28,7 @@ using Module ".\TestProvider.psm1"
 using Module ".\AzureProvider.psm1"
 using Module "..\Libraries\CommonFunctions.psm1"
 
-Class OLProvider : AzureProvider
+Class OLQProvider : AzureProvider
 {
     [String] $HostFwdPort
     [string] $OLUserName
