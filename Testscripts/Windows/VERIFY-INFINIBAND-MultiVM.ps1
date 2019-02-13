@@ -315,8 +315,8 @@ function Main {
                 $TotalSuccessCount += 1
             }
             elseif ( $FinalStatus -imatch "TestRunning") {
-                Write-LogInfo "Powershell backgroud job for test is completed but VM is reporting that test is still running. Please check $LogDir\mdConsoleLogs.txt"
-                Write-LogInfo "Contests of state.txt : $FinalStatus"
+                Write-LogInfo "Powershell background job for test is completed but VM is reporting that test is still running. Please check $LogDir\mdConsoleLogs.txt"
+                Write-LogInfo "Content of state.txt : $FinalStatus"
                 $testResult = "FAIL"
             }
             Write-LogInfo "**********************************************"

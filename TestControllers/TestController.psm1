@@ -67,6 +67,9 @@ Class TestController
 	[string] $ResultDBTable
 	[string] $ResultDBTestTag
 	[bool] $UseExistingRG
+	[array] $TestCaseStatus
+	[array] $TestCasePassStatus
+	[bool] $EnableCodeCoverage
 
 	[string[]] ParseAndValidateParameters([Hashtable]$ParamTable) {
 		$this.TestLocation = $ParamTable["TestLocation"]
@@ -87,6 +90,7 @@ Class TestController
 		$this.ResultDBTable = $ParamTable["ResultDBTable"]
 		$this.ResultDBTestTag = $ParamTable["ResultDBTestTag"]
 		$this.UseExistingRG = $ParamTable["UseExistingRG"]
+		$this.EnableCodeCoverage = $ParamTable["EnableCodeCoverage"]
 
 		$this.TestProvider.CustomKernel = $ParamTable["CustomKernel"]
 		$this.TestProvider.CustomLIS = $ParamTable["CustomLIS"]
@@ -163,9 +167,16 @@ Class TestController
 		# XML secrets, used in Upload-TestResultToDatabase
 		Set-Variable -Name XmlSecrets -Value $this.XmlSecrets -Scope Global -Force
 		# Test results
-		Set-Variable -Name resultPass -Value "PASS" -Scope Global
-		Set-Variable -Name resultFail -Value "FAIL" -Scope Global
-		Set-Variable -Name resultAborted -Value "ABORTED" -Scope Global
+		$passResult = "PASS"
+		$skippedResult = "SKIPPED"
+		$failResult = "FAIL"
+		$abortedResult = "ABORTED"
+		Set-Variable -Name ResultPassed  -Value $passResult -Scope Global
+		Set-Variable -Name ResultSkipped -Value $skippedResult -Scope Global
+		Set-Variable -Name ResultFailed  -Value $failResult -Scope Global
+		Set-Variable -Name ResultAborted -Value $abortedResult -Scope Global
+		$this.TestCaseStatus = @($passResult, $skippedResult, $failResult, $abortedResult)
+		$this.TestCasePassStatus = @($passResult, $skippedResult)
 	}
 
 	[void] LoadTestCases($WorkingDirectory, $CustomParameters) {
@@ -178,6 +189,7 @@ Class TestController
 
 		$allTests = Collect-TestCases -TestXMLs $TestXMLs -TestCategory $this.TestCategory -TestArea $this.TestArea `
 			-TestNames $this.TestNames -TestTag $this.TestTag -TestPriority $this.TestPriority
+
 		if( !$allTests ) {
 			Throw "Not able to collect any test cases from XML files"
 		} else {
@@ -261,6 +273,94 @@ Class TestController
 
 	[void] PrepareTestImage() {}
 
+	[object] RunTestScript (
+		[object]$CurrentTestData,
+		[hashtable]$Parameters,
+		[string]$LogDir,
+		[object]$VMData,
+		[string]$Username,
+		[string]$Password,
+		[string]$TestLocation,
+		[int]$Timeout,
+		[xml]$GlobalConfig,
+		[object]$TestProvider) {
+
+		$workDir = Get-Location
+		$script = $CurrentTestData.TestScript
+		$scriptName = $Script.split(".")[0]
+		$scriptExtension = $Script.split(".")[1]
+		$constantsPath = Join-Path $workDir "constants.sh"
+		$testName = $currentTestData.TestName
+		$currentTestResult = Create-TestResultObject
+
+		Create-ConstantsFile -FilePath $constantsPath -Parameters $Parameters
+		if (!$global:IsWindows) {
+			foreach ($VM in $VMData) {
+				Copy-RemoteFiles -upload -uploadTo $VM.PublicIP -Port $VM.SSHPort `
+					-files $constantsPath -Username $Username -password $Password
+				Write-LogInfo "Constants file uploaded to: $($VM.RoleName)"
+			}
+		}
+		if ($CurrentTestData.files -imatch ".py") {
+			$pythonPath = Run-LinuxCmd -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
+				-Command "which python || which python2 || which python3" -runAsSudo
+			if (($pythonPath -imatch "python2") -or ($pythonPath -imatch "python3")) {
+				$pythonPathSymlink  = $pythonPath.Substring(0, $pythonPath.LastIndexOf("/") + 1)
+				$pythonPathSymlink  += "python"
+				Run-LinuxCmd -Username $Username -password $Password -ip $VMData.PublicIP -Port $VMData.SSHPort `
+					 -Command "ln -s $pythonPath $pythonPathSymlink" -runAsSudo
+			}
+		}
+		Write-LogInfo "Test script: ${Script} started."
+		$testVMData = $VMData | Where-Object { !($_.RoleName -like "*dependency-vm*") } | Select-Object -First 1
+		# Note(v-advlad): PowerShell scripts can have a side effect of changing the
+		# $CurrentTestData global variable.
+		# Bash and Python scripts write a string in the state.txt log file with the test result,
+		# which is parsed and returned by the Collect-TestLogs method.
+		$psScriptTestResult = $null
+		if ($scriptExtension -eq "sh") {
+			Run-LinuxCmd -Command "bash ${Script} > ${TestName}_summary.log 2>&1" `
+				 -Username $Username -password $Password -ip $testVMData.PublicIP -Port $testVMData.SSHPort `
+				 -runMaxAllowedTime $Timeout -runAsSudo
+		} elseif ($scriptExtension -eq "py") {
+			Run-LinuxCmd -Username $Username -password $Password -ip $testVMData.PublicIP -Port $testVMData.SSHPort `
+				 -Command "python ${Script}" -runMaxAllowedTime $Timeout -runAsSudo
+			Run-LinuxCmd -Username $Username -password $Password -ip $testVMData.PublicIP -Port $testVMData.SSHPort `
+				 -Command "mv Runtime.log ${TestName}_summary.log" -runAsSudo
+		} elseif ($scriptExtension -eq "ps1") {
+			$scriptDir = Join-Path $workDir "Testscripts\Windows"
+			$scriptLoc = Join-Path $scriptDir $Script
+			$scriptParameters = ""
+			foreach ($param in $Parameters.Keys) {
+				$scriptParameters += (";{0}={1}" -f ($param,$($Parameters[$param])))
+			}
+			Write-LogInfo "${scriptLoc} -TestParams $scriptParameters -AllVmData $VmData -TestProvider $TestProvider -CurrentTestData $CurrentTestData"
+			$psScriptTestResult = & "${scriptLoc}" -TestParams $scriptParameters -AllVmData `
+				$VmData -TestProvider $TestProvider -CurrentTestData $CurrentTestData
+		}
+
+		if ($scriptExtension -ne "ps1") {
+			$currentTestResult = Collect-TestLogs -LogsDestination $LogDir -ScriptName $scriptName `
+				-TestType $scriptExtension -PublicIP $testVMData.PublicIP -SSHPort $testVMData.SSHPort `
+				-Username $Username -password $Password -TestName $TestName
+		} else {
+			if ($psScriptTestResult.TestResult) {
+				$currentTestResult = $psScriptTestResult
+			} else {
+				$currentTestResult.TestResult = $psScriptTestResult
+			}
+		}
+		if (!$this.TestCaseStatus.contains($currentTestResult.TestResult)) {
+			Write-LogInfo "Test case script result does not match known ones: $($currentTestResult.TestResult)"
+			$currentTestResult.TestResult = Get-FinalResultHeader -resultArr $psScriptTestResult
+			if (!$this.TestCaseStatus.contains($currentTestResult.TestResult)) {
+				Write-LogErr "Failed to retrieve a known test result: $($currentTestResult.TestResult)"
+				$currentTestResult.TestResult = $global:ResultAborted
+			}
+		}
+		return $currentTestResult
+	}
+
 	[object] RunTestCase($VmData, $CurrentTestData, $ExecutionCount, $SetupTypeData, $ApplyCheckpoint) {
 		# Prepare test case log folder
 		$currentTestName = $($CurrentTestData.testName)
@@ -271,7 +371,7 @@ Class TestController
 		New-Item -Type Directory -Path $CurrentTestLogDir -ErrorAction SilentlyContinue | Out-Null
 		Set-Variable -Name "LogDir" -Value $CurrentTestLogDir -Scope Global
 
-		$this.JunitReport.StartLogTestCase("LISAv2Test","$currentTestName","$global:TestID")
+		$this.JunitReport.StartLogTestCase("LISAv2Test-$($this.TestPlatform)","$currentTestName","$($CurrentTestData.Category)-$($CurrentTestData.Area)")
 
 		try {
 			# Get test case parameters
@@ -306,49 +406,48 @@ Class TestController
 			Write-LogInfo "Before run-test script with $($global:user)"
 			# Run test script
 			if ($CurrentTestData.TestScript) {
-				$testResult = Run-TestScript -CurrentTestData $CurrentTestData `
-					-Parameters $testParameters -LogDir $global:LogDir -VMData $VmData `
-					-Username $global:user -password $global:password `
-					-TestLocation $this.TestLocation -TestProvider $this.TestProvider `
-					-Timeout $timeout -GlobalConfig $this.GlobalConfig
-				# Some cases returns a string, some returns a result object
-				if ($testResult.TestResult) {
-					$currentTestResult = $testResult
-				} else {
-					$currentTestResult.TestResult = Get-FinalResultHeader -resultArr $testResult
-				}
+				$currentTestResult = $this.RunTestScript(
+					$CurrentTestData,
+					$testParameters,
+					$global:LogDir,
+					$VmData,
+					$global:user,
+					$global:password,
+					$this.TestLocation,
+					$timeout,
+					$this.GlobalConfig,
+					$this.TestProvider)
 			} else {
 				throw "Missing TestScript in case $currentTestName."
 			}
-		}
-		catch {
+		} catch {
 			$errorMessage = $_.Exception.Message
 			$line = $_.InvocationInfo.ScriptLineNumber
 			$scriptName = ($_.InvocationInfo.ScriptName).Replace($PWD,".")
-			Write-LogErr "EXCEPTION : $errorMessage"
-			Write-LogErr "Source : Line $line in script $scriptName."
-			$currentTestResult.TestResult = "Aborted"
+			Write-LogErr "EXCEPTION: $errorMessage"
+			Write-LogErr "Source: Line $line in script $scriptName."
+			$currentTestResult.TestResult = $global:ResultFailed
 		}
 
 		# Do log collecting and VM clean up
 		if (!$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True") {
-			GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Final" | Out-Null
+			GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Final" -EnableCodeCoverage $this.EnableCodeCoverage | Out-Null
 			Get-SystemBasicLogs -AllVMData $VmData -User $global:user -Password $global:password -CurrentTestData $CurrentTestData `
 				-CurrentTestResult $currentTestResult -enableTelemetry $this.EnableTelemetry
 		}
 
-		$collectDetailLogs = $currentTestResult.TestResult -ne "PASS" -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
-		$doRemoveFiles = $currentTestResult.TestResult -eq "PASS" -and !($this.ResourceCleanup -imatch "Keep") -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
+		$collectDetailLogs = !$this.TestCasePassStatus.contains($currentTestResult.TestResult) -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
+		$doRemoveFiles = $this.TestCasePassStatus.contains($currentTestResult.TestResult) -and !($this.ResourceCleanup -imatch "Keep") -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
 		$this.TestProvider.RunTestCaseCleanup($vmData, $CurrentTestData, $currentTestResult, $collectDetailLogs, $doRemoveFiles, `
 			$global:user, $global:password, $SetupTypeData, $testParameters)
 
 		# Update test summary
-		$testRunDuration = $this.junitReport.GetTestCaseElapsedTime("LISAv2Test","$currentTestName","mm")
+		$testRunDuration = $this.JunitReport.GetTestCaseElapsedTime("LISAv2Test-$($this.TestPlatform)","$currentTestName","mm")
 		$this.TestSummary.UpdateTestSummaryForCase($currentTestName, $ExecutionCount, $currentTestResult.TestResult, $testRunDuration, $currentTestResult.testSummary, $VmData)
 
 		# Update junit report for current test case
 		$caseLog = Get-Content -Raw "$CurrentTestLogDir\$global:LogFileName"
-		$this.JunitReport.CompleteLogTestCase("LISAv2Test","$currentTestName",$currentTestResult.TestResult,$caseLog)
+		$this.JunitReport.CompleteLogTestCase("LISAv2Test-$($this.TestPlatform)","$currentTestName",$currentTestResult.TestResult,$caseLog)
 
 		# Set back the LogDir to the parent folder
 		Set-Variable -Name "LogDir" -Value $oldLogDir -Scope Global
@@ -379,8 +478,8 @@ Class TestController
 							$this.TestLocation, $this.RGIdentifier, $this.UseExistingRG)
 						if (!$vmData) {
 							# Failed to deploy the VMs, Set the case to abort
-							$this.JunitReport.StartLogTestCase("LISAv2Test","$($case.testName)","$global:TestID")
-							$this.JunitReport.CompleteLogTestCase("LISAv2Test","$($case.testName)","Aborted","")
+							$this.JunitReport.StartLogTestCase("LISAv2Test-$($this.TestPlatform)","$($case.testName)","$($case.Category)-$($case.Area)")
+							$this.JunitReport.CompleteLogTestCase("LISAv2Test-$($this.TestPlatform)","$($case.testName)","Aborted","")
 							$this.TestSummary.UpdateTestSummaryForCase($case.testName, $executionCount, "Aborted", "0", "", $null)
 							continue
 						}
@@ -390,7 +489,7 @@ Class TestController
 					$tests++
 					# If the case doesn't pass, keep the VM for failed case except when ResourceCleanup = "Delete" is set
 					# and deploy a new VM for the next test
-					if ($lastResult.TestResult -ne "PASS") {
+					if (!$this.TestCasePassStatus.contains($lastResult.TestResult)) {
 						if ($this.ResourceCleanup -imatch "Delete") {
 							$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
 						} elseif (!$this.TestProvider.ReuseVmOnFailure) {
@@ -406,7 +505,7 @@ Class TestController
 			}
 
 			# Delete the VM after all the cases of same setup are run, if DeployVMPerEachTest is not set
-			if ($lastResult.TestResult -eq "PASS" -and !($this.ResourceCleanup -imatch "Keep") -and !$this.DeployVMPerEachTest) {
+			if ($this.TestCasePassStatus.contains($lastResult.TestResult) -and !($this.ResourceCleanup -imatch "Keep") -and !$this.DeployVMPerEachTest) {
 				$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
 			}
 		}
@@ -420,7 +519,7 @@ Class TestController
 
 		# Start JUnit XML report logger.
 		$this.JunitReport = [JUnitReportGenerator]::New($TestReportXmlPath)
-		$this.JunitReport.StartLogTestSuite("LISAv2Test")
+		$this.JunitReport.StartLogTestSuite("LISAv2Test-$($this.TestPlatform)")
 		$this.TestSummary = [TestSummary]::New($this.TestCategory, $this.TestArea, $this.TestName, $this.TestTag, $this.TestPriority, $this.TotalCaseNum)
 
 		if (!$RunInParallel) {
@@ -429,7 +528,7 @@ Class TestController
 			throw "Running test in parallel is not supported yet."
 		}
 
-		$this.JunitReport.CompleteLogTestSuite("LISAv2Test")
+		$this.JunitReport.CompleteLogTestSuite("LISAv2Test-$($this.TestPlatform)")
 		$this.JunitReport.SaveLogReport()
 		$this.TestSummary.SaveHtmlTestSummary(".\Report\TestSummary-$global:TestID.html")
 	}

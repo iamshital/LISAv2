@@ -163,7 +163,7 @@ Start_OL_VM()
                 -kernel $KERNEL \
                 -machine virt -cpu cortex-a57 -m "1024" -smp "1" \
                 -display none -daemonize \
-                -append "root=/dev/vda rw highres=off console=ttyAMA0,38400 ip=dhcp" \
+                -append "root=/dev/vda rw highres=off console=ttyAMA0,38400 ip=dhcp selinux=0" \
                 -monitor null -serial null -show-cursor
     exit_status=$?
     if [ $exit_status -ne 0 ]; then

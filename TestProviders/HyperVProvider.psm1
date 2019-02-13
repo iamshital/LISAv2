@@ -93,15 +93,14 @@ Class HyperVProvider : TestProvider
 			Write-LogErr "EXCEPTION : $ErrorMessage"
 			Write-LogErr "Source : Line $line in script $script_name."
 		}
+
+		# Note(v-advlad): Dependency VMs need to be removed
+		$allVMData = Check-IP -VMData $allVMData
 		return $allVMData
 	}
 
 	[void] RunSetup($VmData, $CurrentTestData, $TestParameters, $ApplyCheckPoint) {
-		if ($CurrentTestData.AdditionalHWConfig.HyperVApplyCheckpoint -eq "False") {
-			$VmData = Check-IP -VMData $VmData
-			Remove-AllFilesFromHomeDirectory -allDeployedVMs $VmData
-			Write-LogInfo "Removed all files from home directory."
-		} elseif ($ApplyCheckPoint) {
+		if ($ApplyCheckPoint) {
 			Apply-HyperVCheckpoint -VMData $VmData -CheckpointName $this.BaseCheckpoint
 			$VmData = Check-IP -VMData $VmData
 			Write-LogInfo "Public IP found for all VMs in deployment after checkpoint restore"

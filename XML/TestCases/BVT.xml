@@ -1,16 +1,5 @@
 <TestCases>
     <test>
-        <testName>BVT-LIS-DRIVER-VERSION-CHECK</testName>
-        <testScript>LIS-VERSION-CHECK.sh</testScript>
-        <files>.\TestScripts\Linux\LIS-VERSION-CHECK.sh,.\TestScripts\Linux\utils.sh</files>
-        <setupType>OneVM</setupType>
-        <Platform>Azure</Platform>
-        <Category>BVT</Category>
-        <Area>BVT</Area>
-        <Tags>lis_provision</Tags>
-        <Priority>0</Priority>
-    </test>
-    <test>
         <testName>BVT-IS-ROOT-PASSWORD-DELETED</testName>
         <testScript>BVT-IS-ROOT-PASSWORD-DELETED.py</testScript>
         <files>.\Testscripts\Linux\BVT-IS-ROOT-PASSWORD-DELETED.py,.\Testscripts\Linux\azuremodules.py</files>
@@ -319,7 +308,7 @@
         <testScript>BVT-VERIFY-DEPLOYMENT-PROVISION.ps1</testScript>
         <files></files>
         <setupType>OneVM</setupType>
-        <Platform>Azure,HyperV,OL</Platform>
+        <Platform>Azure,HyperV,OLQ</Platform>
         <Category>BVT</Category>
         <Area>BVT</Area>
         <Tags>provision</Tags>

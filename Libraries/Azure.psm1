@@ -515,6 +515,8 @@ Function Create-ResourceGroup([string]$RGName, $location, $CurrentTestData) {
             }
             else {
                 Write-LogErr "Failed to create Resource Group: $RGName."
+                Write-LogInfo "[$FailCounter / 5] Retrying after 10 seconds..."
+                Start-Sleep -Seconds 10
                 $retValue = $false
             }
         }
