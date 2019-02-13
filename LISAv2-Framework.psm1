@@ -50,19 +50,18 @@ function Start-LISAv2 {
 
 		# [Optional] Parameters for changing framework behavior.
 		[int]    $TestIterations = 1,
-		[string] $TiPSessionId,
-		[string] $TiPCluster,
 		[string] $XMLSecretFile = "",
 		[switch] $EnableTelemetry,
 		[switch] $UseExistingRG,
 
-		# [Optional] Parameters for Overriding VM Configuration.
+		# [Optional] Parameters for setting TiPCluster=ClusterId;TipSessionId=SessionId;DiskType=Managed/Unmanaged;Networking=SRIOV/Synthetic.
 		[string] $CustomParameters = "",
+
+		# [Optional] Parameters for Overriding VM Configuration.
+		[string] $CustomTestParameters = "",
 		[string] $OverrideVMSize = "",
-		[switch] $EnableAcceleratedNetworking,
 		[ValidateSet('Default','Keep','Delete',IgnoreCase = $true)]
 		[string] $ResourceCleanup,
-		[switch] $UseManagedDisks,
 		[switch] $DeployVMPerEachTest,
 		[string] $VMGeneration = "",
 
@@ -169,7 +168,7 @@ function Start-LISAv2 {
 			# Validate all the XML files and then import test cases from them for test
 			Validate-XmlFiles -ParentFolder $workingDirectory
 
-			$testController.LoadTestCases($workingDirectory, $CustomParameters)
+			$testController.LoadTestCases($workingDirectory, $CustomTestParameters)
 
 			# Create report folder
 			$reportFolder = Join-Path $workingDirectory "Report"

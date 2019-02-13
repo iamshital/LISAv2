@@ -59,8 +59,6 @@ Class TestController
 	[string] $TestPriority
 	[int] $TestIterations
 	[bool] $EnableTelemetry
-	[bool] $EnableAcceleratedNetworking
-	[bool] $UseManagedDisks
 	[string] $OverrideVMSize
 	[string] $ResourceCleanup
 	[bool] $DeployVMPerEachTest
@@ -70,6 +68,7 @@ Class TestController
 	[array] $TestCaseStatus
 	[array] $TestCasePassStatus
 	[bool] $EnableCodeCoverage
+	[Hashtable] $CustomParams
 
 	[string[]] ParseAndValidateParameters([Hashtable]$ParamTable) {
 		$this.TestLocation = $ParamTable["TestLocation"]
@@ -84,8 +83,6 @@ Class TestController
 		$this.EnableTelemetry = $ParamTable["EnableTelemetry"]
 		$this.TestIterations = $ParamTable["TestIterations"]
 		$this.OverrideVMSize = $ParamTable["OverrideVMSize"]
-		$this.EnableAcceleratedNetworking = $ParamTable["EnableAcceleratedNetworking"]
-		$this.UseManagedDisks = $ParamTable["UseManagedDisks"]
 		$this.DeployVMPerEachTest = $ParamTable["DeployVMPerEachTest"]
 		$this.ResultDBTable = $ParamTable["ResultDBTable"]
 		$this.ResultDBTestTag = $ParamTable["ResultDBTestTag"]
@@ -94,7 +91,13 @@ Class TestController
 
 		$this.TestProvider.CustomKernel = $ParamTable["CustomKernel"]
 		$this.TestProvider.CustomLIS = $ParamTable["CustomLIS"]
-
+		$this.CustomParams = @{}
+		if ( $ParamTable.ContainsKey("CustomParameters") ) {
+			$ParamTable["CustomParameters"].ToLower().Split(';').Trim() | ForEach-Object {
+				$key,$value = $_.ToLower().Split('=').Trim()
+				$this.CustomParams[$key] = $value
+			}
+		}
 		$parameterErrors = @()
 		# Validate general parameters
 		if (!$this.RGIdentifier) {
@@ -179,7 +182,7 @@ Class TestController
 		$this.TestCasePassStatus = @($passResult, $skippedResult)
 	}
 
-	[void] LoadTestCases($WorkingDirectory, $CustomParameters) {
+	[void] LoadTestCases($WorkingDirectory, $CustomTestParameters) {
 		$this.SetupTypeToTestCases = @{}
 		$this.SetupTypeTable = @{}
 
@@ -208,10 +211,10 @@ Class TestController
 			}
 		}
 		# Inject custom parameters
-		if ($CustomParameters) {
+		if ($CustomTestParameters) {
 			Write-LogInfo "Checking custom parameters ..."
-			$CustomParameters = $CustomParameters.Trim().Trim(";").Split(";")
-			foreach ($CustomParameter in $CustomParameters)
+			$CustomTestParameters = $CustomTestParameters.Trim().Trim(";").Split(";")
+			foreach ($CustomParameter in $CustomTestParameters)
 			{
 				$CustomParameter = $CustomParameter.Trim()
 				$ReplaceThis = $CustomParameter.Split("=")[0]
@@ -235,12 +238,12 @@ Class TestController
 				}
 			}
 
-			# Inject EnableAcceleratedNetworking, UseManagedDisks, OverrideVMSize to test case data
-			if ($this.EnableAcceleratedNetworking) {
-				Set-AdditionalHWConfigInTestCaseData -CurrentTestData $test -ConfigName "Networking" -ConfigValue "SRIOV"
+			# Inject Networking=SRIOV/Synthetic, DiskType=Managed, OverrideVMSize to test case data
+			if ( $this.CustomParams["Networking"] -eq "sriov" -or $this.CustomParams["Networking"] -eq "synthetic" ) {
+				Set-AdditionalHWConfigInTestCaseData -CurrentTestData $test -ConfigName "Networking" -ConfigValue $this.CustomParams["Networking"]
 			}
-			if ($this.UseManagedDisks) {
-				Set-AdditionalHWConfigInTestCaseData -CurrentTestData $test -ConfigName "DiskType" -ConfigValue "Managed"
+			if ( $this.CustomParams["DiskType"] -eq "managed" -or $this.CustomParams["DiskType"] -eq "unmanaged") {
+				Set-AdditionalHWConfigInTestCaseData -CurrentTestData $test -ConfigName "DiskType" -ConfigValue $this.CustomParams["DiskType"]
 			}
 			if ($this.OverrideVMSize) {
 				Write-LogInfo "The OverrideVMSize of case $($test.testName) is set to $($this.OverrideVMSize)"

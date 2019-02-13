@@ -704,7 +704,7 @@ Function Generate-AzureDeployJSONFile ($RGName, $ImageName, $osVHD, $RGXMLData, 
     $RGrandomWord = ([System.IO.Path]::GetRandomFileName() -replace '[^a-z]')
     $RGRandomNumber = Get-Random -Minimum 11111 -Maximum 99999
 
-    $UseManagedDisks = $CurrentTestData.AdditionalHWConfig.DiskType -imatch "Managed"
+    $UseManagedDisks = $CurrentTestData.AdditionalHWConfig.DiskType -contains "managed"
     if ($UseManagedDisks) {
         $DiskType = "Managed"
     } else {
