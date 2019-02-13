@@ -141,19 +141,19 @@ function main {
                 BUILD_DIR=$2
                 shift 2;;
             --source_dest)
-                SOURCE_DEST=$(readlink -f $2) 
+                SOURCE_DEST=$(readlink -f $2)
                 shift 2;;
             --packages_dest)
-                PACKAGE_DEST=$(readlink -f $2) 
+                PACKAGE_DEST=$(readlink -f $2)
                 shift 2;;
             --git_repo)
-                GIT_REPO=$2 
+                GIT_REPO=$2
                 shift 2;;
             --package_path)
                 PACKAGE_NAME="$2"
                 shift 2;;
             --custom_config_url)
-                CONFIG_URL=$2 
+                CONFIG_URL=$2
                 shift 2;;
             --) shift; break ;;
             *) break ;;
@@ -185,7 +185,7 @@ function main {
     
     if [[ ! -e $PACKAGE_DEST ]] || [[ ! -e $SOURCE_DEST ]];then
        report_error 1 "ARTIFACTS_MISSING_ERROR"
-    else 
+    else
        report_result "BUILD_SUCCEDED"
     fi
     

@@ -8,7 +8,7 @@ while true;do
             DEST=$(readlink -f $2)
             shift 2;;
         --result)
-            RESULT=$(readlink -f $2) 
+            RESULT=$(readlink -f $2)
             shift 2;;
         --) shift; break ;;
         *) break ;;
