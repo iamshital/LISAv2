@@ -67,7 +67,7 @@ function Get-DNSAddress($session)
 {
 	Write-LogInfo "Get DNS Server IP"
 	$ips=Invoke-Command -Session $session -ScriptBlock {
-		Get-DnsClientServerAddress | Select-Object –ExpandProperty ServerAddresses
+		Get-DnsClientServerAddress | Select-Object -ExpandProperty ServerAddresses
 	}
 	return $ips | Where-Object {$_ -imatch "\b(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)){3}\b"}
 }
@@ -187,7 +187,7 @@ function Install-Hyperv ($session, $ip, $port=3389) {
 		$null = Test-TCP  -testIP $ip -testport $port
 	} while(($? -ne $true) -and ($retryTimes++ -lt $maxRetryTimes))
 	if($retryTimes -eq 10) {
-		throw "Can't connect to server any more."
+		throw "Can't connect to server anymore."
 	}
 }
 
@@ -223,7 +223,7 @@ function New-NAT ($session, $switchName, $natName) {
 		New-NetNat -Name $natName -InternalIPInterfaceAddressPrefix "192.168.0.0/24"
 	} -ArgumentList $switchName, $natName
 
-	Write-LogInfo "Create the network NAT named $natName completes."
+	Write-LogInfo "Create the network NAT named $natName completed."
 }
 
 function Add-NestedNatStaticMapping ($session, $natName, $ip_addr, $internalPort, $externalPort) {
@@ -333,7 +333,7 @@ function Send-ResultToDatabase ($GlobalConfig, $logDir, $session) {
 		$command.CommandText = $SQLQuery
 		$command.executenonquery()
 		$connection.Close()
-		Write-LogInfo "Uploading the test results done!!"
+		Write-LogInfo "Uploading the test results done."
 	} else {
 		Write-LogInfo "Database details are not provided. Results will not be uploaded to database!"
 	}
@@ -395,7 +395,7 @@ function Main () {
 				} while(($? -ne $true) -and ($retryTimes++ -lt $maxRetryTimes))
 
 				if($retryTimes -eq 10) {
-					throw "Can't connect to server any more."
+					throw "Can't connect to server anymore."
 				}
 			}
 		} else {
@@ -420,7 +420,7 @@ function Main () {
 				$serverSession = New-PSSession -ComputerName $hs1VIP -Credential $cred
 			} while(($? -ne $true) -and ($retryTimes++ -lt $maxRetryTimes))
 			if($retryTimes -eq 10) {
-				throw "Can't connect to server any more."
+				throw "Can't connect to server anymore."
 			}
 
 			$retryTimes=1
@@ -606,7 +606,7 @@ function Main () {
 			$testResult = $resultPass
 		}
 		elseif ($finalStatus -imatch "TestRunning") {
-			Write-LogInfo "Powershell backgroud job for test is completed but VM is reporting that test is still running. Please check $LogDir\zkConsoleLogs.txt"
+			Write-LogInfo "Powershell background job for test is completed but VM is reporting that test is still running. Please check $LogDir\zkConsoleLogs.txt"
 			$testResult = $resultAborted
 		}
 

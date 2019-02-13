@@ -118,7 +118,7 @@ function main {
     # Generate SOURCE_DIR
     if [[ -e "${BUILD_DIR}" ]];then
         SOURCE_DIR="${BUILD_DIR}"
-    else 
+    else
         echo "Cannot find sources directory"
         exit 0
     fi

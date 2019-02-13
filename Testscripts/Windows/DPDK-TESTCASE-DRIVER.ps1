@@ -169,7 +169,7 @@ function Main {
 
 		Add-Content -Value "USER_FILES='$bashFileNames'" -Path $constantsFile
 
-		Write-LogInfo "constanst.sh created successfully..."
+		Write-LogInfo "constants.sh created successfully..."
 		Write-LogInfo (Get-Content -Path $constantsFile)
 		foreach ($param in $currentTestData.TestParameters.param) {
 			Add-Content -Value "$param" -Path $constantsFile
@@ -241,8 +241,8 @@ collect_VM_properties
 			$testResult = (Get-FunctionAndInvoke("Confirm-Performance"))
 		}
 		elseif ($finalState -imatch "TestRunning") {
-			Write-LogWarn "Powershell backgroud job for test is completed but VM is reporting that test is still running. Please check $LogDir\zkConsoleLogs.txt"
-			Write-LogWarn "Contests of summary.log : $testSummary"
+			Write-LogWarn "Powershell background job for test is completed but VM is reporting that test is still running. Please check $LogDir\zkConsoleLogs.txt"
+			Write-LogWarn "Content of summary.log : $testSummary"
 			$testResult = "ABORTED"
 		}
 
@@ -272,7 +272,7 @@ collect_VM_properties
 				$SQLQuery = "INSERT INTO $dataTableName (TestPlatFrom,TestCaseName,TestDate,HostType,HostBy,HostOS,GuestOSType,GuestDistro,GuestSize,KernelVersion,LISVersion,IPVersion,ProtocolType,DataPath,DPDKVersion,TestMode,Cores,Max_Rxpps,Txpps,Rxpps,Fwdpps,Txbytes,Rxbytes,Fwdbytes,Txpackets,Rxpackets,Fwdpackets,Tx_PacketSize_KBytes,Rx_PacketSize_KBytes) VALUES "
 				foreach ($mode in $testDataCsv) {
 					$SQLQuery += "('$TestPlatform','$TestCaseName','$(Get-Date -Format yyyy-MM-dd)','$HostType','$HostBy','$HostOS','$GuestOSType','$GuestDistro','$GuestSize','$KernelVersion','Inbuilt','$IPVersion','$ProtocolType','$DataPath','$($mode.dpdk_version)','$($mode.test_mode)','$($mode.core)','$($mode.max_rx_pps)','$($mode.tx_pps_avg)','$($mode.rx_pps_avg)','$($mode.fwdtx_pps_avg)','$($mode.tx_bytes)','$($mode.rx_bytes)','$($mode.fwd_bytes)','$($mode.tx_packets)','$($mode.rx_packets)','$($mode.fwd_packets)','$($mode.tx_packet_size)','$($mode.rx_packet_size)'),"
-					Write-LogInfo "Collected performace data for $($mode.TestMode) mode."
+					Write-LogInfo "Collected performance data for $($mode.TestMode) mode."
 				}
 				$SQLQuery = $SQLQuery.TrimEnd(',')
 				Write-LogInfo $SQLQuery
@@ -285,7 +285,7 @@ collect_VM_properties
 
 				$command.executenonquery() | Out-Null
 				$connection.Close()
-				Write-LogInfo "Uploading the test results done!!"
+				Write-LogInfo "Uploading the test results done."
 			} else {
 				Write-LogErr "Invalid database details. Failed to upload result to database!"
 				$ErrorMessage =  $_.Exception.Message
