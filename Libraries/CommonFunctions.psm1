@@ -112,7 +112,7 @@ Function Match-TestTag($currentTest, $TestTag)
 # Before entering this function, $TestPlatform has been verified as "valid" in Run-LISAv2.ps1.
 # So, here we don't need to check $TestPlatform
 #
-Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $TestTag, $TestPriority)
+Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $TestTag, $TestPriority, $ExcludeTests)
 {
     $AllLisaTests = @()
 
@@ -128,6 +128,7 @@ Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $Tes
     if (!$TestNames)    { $TestNames = "*" }
     if (!$TestTag)      { $TestTag = "*" }
     if (!$TestPriority) { $TestPriority = "*" }
+    if (!$ExcludeTests) { $ExcludeTests = "NO_EXCLUSIONS" }
 
     # Filter test cases based on the criteria
     foreach ($file in $TestXMLs.FullName) {
@@ -159,7 +160,12 @@ Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $Tes
                 continue
             }
 
-            Write-LogInfo "Collected: $($test.TestName)"
+            if ($ExcludeTests.Split(",").Contains($test.testName)) {
+                Write-LogInfo "Excluded Test  : $($test.TestName)"
+                continue
+            }
+
+            Write-LogInfo "Collected Test : $($test.TestName)"
             $AllLisaTests += $test
         }
     }

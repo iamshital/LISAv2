@@ -41,6 +41,9 @@ function Start-LISAv2 {
 		[string] $TestNames="",
 		[string] $TestPriority="",
 
+		# [Optional] Exclude the tests from being executed. (Comma separated values)
+		[string] $ExcludeTests = "",
+
 		# [Optional] Enable kernel code coverage
 		[switch] $EnableCodeCoverage,
 
