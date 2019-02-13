@@ -681,8 +681,8 @@ function Check-IP {
                 continue
             }
             $publicIP = ""
-            while (-not $publicIP) {
-                Write-LogInfo "$($VM.RoleName) : Waiting for IP address..."
+            while ((-not $publicIP) -and ($runTime -le $Timeout)) {
+                Write-LogInfo "$($VM.RoleName) : Waiting for IP address (Timeout in $($Timeout-$runTime) seconds)..."
                 $vmNic = Get-VM -Name $VM.RoleName -ComputerName `
                     $VM.HyperVHost | Get-VMNetworkAdapter
                 if ($vmNic.Length -gt 1) {
