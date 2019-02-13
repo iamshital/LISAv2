@@ -3,12 +3,12 @@
         <testName>DYNAMIC-MEMORY-VERIFY-UDEV</testName>
         <setupScript>.\Testscripts\Windows\DM-CONFIGURE-MEMORY.ps1</setupScript>
         <TestParameters>
-             <param>enableDM=yes</param>
-             <param>minMem=1024MB</param>
-             <param>maxMem=2GB</param>
-             <param>startupMem=1024MB</param>
-             <param>memWeight=20</param>
-             <param>staticMem=1024MB</param>
+            <param>enableDM=yes</param>
+            <param>minMem=1024MB</param>
+            <param>maxMem=2GB</param>
+            <param>startupMem=1024MB</param>
+            <param>memWeight=20</param>
+            <param>staticMem=1024MB</param>
         </TestParameters>
         <testScript>DM_HotAdd_Verify_udev.sh</testScript>
         <files>.\Testscripts\Linux\DM_HotAdd_Verify_udev.sh,.\Testscripts\Linux\utils.sh</files>
@@ -357,5 +357,89 @@
         <Area>Dynamic_Memory</Area>
         <Tags>memory</Tags>
         <Priority>2</Priority>
+    </test>
+    <test>
+        <testName>DYNAMIC-MEMORY-TOP-LOAD-AVERAGE</testName>
+        <setupScript>.\Testscripts\Windows\DM-CONFIGURE-MEMORY.ps1</setupScript>
+        <testScript>DM_Top_Load_Average.sh</testScript>
+        <files>.\Testscripts\Linux\DM_Top_Load_Average.sh,.\Testscripts\Linux\utils.sh</files>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>enableDM=yes</param>
+            <param>minMem=1024MB</param>
+            <param>maxMem=2GB</param>
+            <param>startupMem=1024MB</param>
+            <param>memWeight=0</param>
+            <param>staticMem=1024MB</param>
+        </TestParameters>
+        <timeout>1200</timeout>
+        <Platform>HyperV</Platform>
+        <Category>Functional</Category>
+        <Area>Dynamic_Memory</Area>
+        <Tags>memory</Tags>
+        <Priority>2</Priority>
+    </test>
+    <test>
+        <testName>DYNAMIC-MEMORY-HOT-REMOVE-THEN-PRESSURE</testName>
+        <setupScript>.\Testscripts\Windows\DM-CONFIGURE-MEMORY.ps1</setupScript>
+        <testScript>DM-REMOVE-THEN-PRESSURE.ps1</testScript>
+        <files>.\Testscripts\Linux\check_traces.sh,.\Testscripts\Linux\utils.sh</files>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>enableDM=yes</param>
+            <param>minMem=512MB</param>
+            <param>maxMem=10%</param>
+            <param>startupMem=10%</param>
+            <param>memWeight=20</param>
+            <param>staticMem=1024MB</param>
+            <param>appGitURL=DYNAMIC_MEMORY_STRESSNG</param>
+            <param>appGitTag=APP_GIT_TAG</param>
+        </TestParameters>
+        <Platform>HyperV</Platform>
+        <Category>Functional</Category>
+        <Area>Dynamic_Memory</Area>
+        <Tags>memory</Tags>
+        <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>DYNAMIC-MEMORY-HOT-ADD-EAT-MEM-SMP</testName>
+        <setupScript>.\Testscripts\Windows\DM-CONFIGURE-MEMORY.ps1,.\Testscripts\Windows\SETUP-Change-CPU.ps1</setupScript>
+        <testScript>DM-HOTADD-EATMEMORY.ps1</testScript>
+        <files>.\Testscripts\Linux\check_traces.sh,.\Testscripts\Linux\utils.sh</files>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>enableDM=yes</param>
+            <param>minMem=1024MB</param>
+            <param>maxMem=4GB</param>
+            <param>startupMem=1024MB</param>
+            <param>staticMem=1024MB</param>
+            <param>memWeight=100</param>
+            <param>appGitURL=DM_EATMEMORY</param>
+            <param>VCPU=4</param>
+        </TestParameters>
+        <Platform>HyperV</Platform>
+        <Category>Functional</Category>
+        <Area>Dynamic_Memory</Area>
+        <Tags>memory</Tags>
+        <Priority>1</Priority>
+    </test>
+    <test>
+        <testName>DYNAMIC-MEMORY-HOT-ADD-EAT-MEM-UP</testName>
+        <setupScript>.\Testscripts\Windows\DM-CONFIGURE-MEMORY.ps1,.\Testscripts\Windows\SETUP-Change-CPU.ps1</setupScript>
+        <testScript>DM-HOTADD-EATMEMORY.ps1</testScript>
+        <files>.\Testscripts\Linux\check_traces.sh,.\Testscripts\Linux\utils.sh</files>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>enableDM=No</param>
+            <param>startupMem=4096MB</param>
+            <param>memWeight=100</param>
+            <param>appGitURL=DM_EATMEMORY</param>
+            <param>VCPU=1</param>
+        </TestParameters>
+        <Platform>HyperV</Platform>
+        <Category>Functional</Category>
+        <Area>Dynamic_Memory</Area>
+        <Tags>memory</Tags>
+        <Priority>1</Priority>
     </test>
 </TestCases>

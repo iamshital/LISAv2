@@ -90,7 +90,7 @@ function Upload-RemoteFile($uploadTo, $port, $file, $username, $password, $usePr
 							Set-Content -Value "1" -Path $args[6];
 							$username = $args[4];
 							$uploadTo = $args[5];
-							if ($using:testPlatform -eq "OL") {
+							if ($($using:testPlatform).StartsWith('OL')) {
 								Write-Output "yes" | .\tools\pscp -scp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
 							}
 							else {
@@ -182,7 +182,7 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 				$downloadTo=$args[6];
 				$downloadStatusRandomFile=$args[7];
 				Set-Location $curDir;
-				if ($using:testPlatform -eq "OL") {
+				if ($($using:testPlatform).StartsWith('OL')) {
 					Write-Output "yes" | .\tools\pscp.exe -scp -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
 				}
 				else {

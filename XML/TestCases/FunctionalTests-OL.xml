@@ -14,4 +14,18 @@
         <Tags>package</Tags>
         <Priority>0</Priority>
     </test>
+    <test>
+        <TestName>KERNEL-CONFIG-VERIFY-TEST</TestName>
+        <testScript>KERNEL-CONFIG-VERIFY-TEST.ps1</testScript>
+        <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\kernel_config_verify_test.sh</files>
+        <setupType>OneVM</setupType>
+        <TestParameters>
+            <param>MasterConfigUrl=MASTER_KERNEL_CONFIG_URL</param>
+        </TestParameters>
+        <Platform>OL</Platform>
+        <Category>Functional</Category>
+        <Area>OL</Area>
+        <Tags>ol</Tags>
+        <Priority>1</Priority>
+    </test>
 </TestCases>

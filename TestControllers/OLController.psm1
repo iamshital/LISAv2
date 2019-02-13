@@ -25,7 +25,7 @@
 #>
 ###############################################################################################
 using Module ".\AzureController.psm1"
-using Module "..\TestProviders\OLProvider.psm1"
+using Module "..\TestProviders\OLQProvider.psm1"
 
 Class OLController : AzureController
 {
@@ -35,9 +35,9 @@ Class OLController : AzureController
 	[string] $OLImageName
 	[string] $HostFwdPort
 
-	OLController() {
-		$this.TestProvider = New-Object -TypeName "OLProvider"
-		$this.TestPlatform = "OL"
+	OLController([String]$TestPlatform) {
+		$this.TestProvider = New-Object -TypeName $TestPlatform"Provider"
+		$this.TestPlatform = $TestPlatform
 	}
 
 	[void] ParseAndValidateParameters([Hashtable]$ParamTable) {
