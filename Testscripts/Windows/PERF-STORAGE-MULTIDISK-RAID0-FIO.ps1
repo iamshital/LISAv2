@@ -187,7 +187,7 @@ function Consume-FioPerformanceResults {
 
             if ($BlockSize_KB) {
                 $SQLQuery += "('$TestCaseName','$(Get-Date -Format yyyy-MM-dd)','$TestPlatform','$TestLocation','$HostOS','$GuestOSType','$GuestDistro','$GuestSize','$KernelVersion','RAID0:12xP30','$BlockSize_KB','$QDepth','$seq_read_iops','$seq_read_lat_usec','$rand_read_iops','$rand_read_lat_usec','$seq_write_iops','$seq_write_lat_usec','$rand_write_iops','$rand_write_lat_usec'),"
-                Write-LogInfo "Collected performace data for $qDepth qDepth."
+                Write-LogInfo "Collected performance data for $qDepth qDepth."
             }
         }
         Write-LogInfo "Uploading the test results to database.."

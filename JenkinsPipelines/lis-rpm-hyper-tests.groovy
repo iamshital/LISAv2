@@ -52,9 +52,9 @@ def supportedDistros = nodesMap["ws2012"] + nodesMap["ws2012r2"] + nodesMap["ws2
 //def supportedDistros = nodesMap["ws2016"]
 
 def RunPowershellCommand(psCmd) {
-    //bat "powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;$psCmd;EXIT \$global:LastExitCode\""
+    bat "powershell.exe -NonInteractive -ExecutionPolicy Bypass -Command \"[Console]::OutputEncoding=[System.Text.Encoding]::UTF8;$psCmd;EXIT \$global:LastExitCode\""
     //powershell (psCmd)
-    println(psCmd)
+    //println(psCmd)
 }
 
 def getDistros (distros, supportedDistros) {
@@ -84,6 +84,9 @@ def getDistros (distros, supportedDistros) {
 DISTROS = getDistros (DISTRO_VERSIONS, supportedDistros)
 
 def ErrorCount = 0
+def FVTDistros = "centos_6.8_x64,centos_7.2_x64,rhel_6.6_x64,centos_7.4_gen2vm,rhel_6.10_x64,rhel_7.4,rhel_7.5,"
+def BVTDistros = "centos_6.4_x64,rhel_7.1,rhel_6.4_32bit,rhel_6.9_x64,rhel_7.0,centos_6.5_x64,centos_7.3,centos_7.5,"
+def SRIOVDistros = "rhel_7.3,rhel_7.4,centos_7.4,centos_7.3,rhel_7.3_gen2vm,rhel_7.5,centos_7.5,"
 
 def CategoryAreaMap = ["Functional" : "LIS_DEPLOY,LIS,DYNAMIC_MEMORY,KVP,MIGRATION,NETWORK,SRIOV,STORAGE,BACKUP,CORE,FCOPY,KDUMP,PROD_CHECKPOINT,RUNTIME_MEMORY",\
                 "BVT":"BVT,CORE,NETWORK",\
@@ -91,20 +94,22 @@ def CategoryAreaMap = ["Functional" : "LIS_DEPLOY,LIS,DYNAMIC_MEMORY,KVP,MIGRATI
 
 def TestAndDistroMap = ["Functional-LIS_DEPLOY" : "${supportedDistros}",\
                 "Functional-LIS" : "${supportedDistros}",\
-                "Functional-DYNAMIC_MEMORY": "${supportedDistros}",\
-                "Functional-KVP": "${supportedDistros}",\
-                "Functional-MIGRATION": "${supportedDistros}",\
-                "Functional-NETWORK": "${supportedDistros}",\
-                "Functional-SRIOV": "${supportedDistros}",\
-                "Functional-STORAGE": "${supportedDistros}",\
-                "Functional-BACKUP": "${supportedDistros}",\
-                "Functional-CORE": "${supportedDistros}",\
-                "Functional-FCOPY": "${supportedDistros}",\
-                "Functional-KDUMP": "${supportedDistros}",\
-                "BVT-BVT": "${supportedDistros}",\
-                "BVT-CORE": "${supportedDistros}",\
-                "BVT-NETWORK": "${supportedDistros}",\
-                "Stress-stress": "${supportedDistros}"
+                "Functional-DYNAMIC_MEMORY": "${FVTDistros}",\
+                "Functional-KVP": "${FVTDistros}",\
+                "Functional-MIGRATION": "${FVTDistros}",\
+                "Functional-NETWORK": "${FVTDistros}",\
+                "Functional-SRIOV": "${SRIOVDistros}",\
+                "Functional-STORAGE": "${FVTDistros}",\
+                "Functional-BACKUP": "${FVTDistros}",\
+                "Functional-CORE": "${FVTDistros}",\
+                "Functional-FCOPY": "${FVTDistros}",\
+                "Functional-KDUMP": "${FVTDistros}",\
+                "Functional-PROD_CHECKPOINT": "${FVTDistros}",\
+                "Functional-RUNTIME_MEMORY": "${FVTDistros}",\
+                "BVT-BVT": "${BVTDistros}",\
+                "BVT-CORE": "${BVTDistros}",\
+                "BVT-NETWORK": "${BVTDistros}",\
+                "Stress-stress": "${FVTDistros}"
                 ]
 
 CategoryAreaMapKeySet=CategoryAreaMap.keySet()

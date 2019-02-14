@@ -3,7 +3,7 @@
 # Licensed under the Apache License.
 
 function install_packages {
-    apt -y update 
+    apt -y update
     apt install -y python-pip zip
     pip install gcovr
 }
