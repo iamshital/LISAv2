@@ -19,7 +19,13 @@ There are two ways to start the tests -
     <CustomParameters>ReplaceThis1=ReplaceWith1;ReplaceThis2=ReplaceWith2</CustomParameters>
     Run-LisaV2.ps1 -TestParameters .\XML\TestParameters.xml
 
-Note: Multiple replace operations can be done using sign - semicolumn (";").
+Note:   1. Multiple replace operations can be done using sign - semicolumn (";").
+        2. LISAv2 supports replacing parameters,
+            ...if parameter is assigned in one of the following format
+            ...in Test Definition -
+            a.  <ParameterName>REPLACEABLE_PARAMETER1</ParameterName>
+            b.  <param>ParameterName=REPLACEABLE_PARAMETER2</param>
+            c.  <param>ParameterName="REPLACEABLE_PARAMETER3"</param>
 
 Scenario 1 : You need to run the DPDK test with "git://dpdk.org/next/dpdk-next-net", instead of default.
     -CustomParameters "DPDK_SOURCE_URL=git://dpdk.org/next/dpdk-next-net"
