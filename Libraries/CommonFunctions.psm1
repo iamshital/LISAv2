@@ -115,6 +115,8 @@ Function Match-TestTag($currentTest, $TestTag)
 Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $TestTag, $TestPriority, $ExcludeTests)
 {
     $AllLisaTests = @()
+    $WildCards = @('^','.','[',']','?','+','*')
+    $ExcludedTestsCount = 0
 
     # Check and cleanup the parameters
     if ( $TestCategory -eq "All")   { $TestCategory = "*" }
@@ -160,14 +162,29 @@ Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $Tes
                 continue
             }
 
-            if ($ExcludeTests.Split(",").Contains($test.testName)) {
-                Write-LogInfo "Excluded Test  : $($test.TestName)"
+            $ExcludeTestMatched = $false
+            foreach ($TestString in $ExcludeTests.Split(",")) {
+                if (($TestString.IndexOfAny($WildCards))-ge 0) {
+                    if ($test.TestName -match $TestString) {
+                        Write-LogInfo "Excluded Test  : $($test.TestName) [Wildcards match]"
+                        $ExcludeTestMatched = $true
+                    }
+                } elseif ($TestString -eq $test.TestName) {
+                    Write-LogInfo "Excluded Test  : $($test.TestName) [Exact match]"
+                    $ExcludeTestMatched = $true
+                }
+            }
+            if ($ExcludeTestMatched -eq $true) {
+                $ExcludedTestsCount += 1
                 continue
             }
 
             Write-LogInfo "Collected Test : $($test.TestName)"
             $AllLisaTests += $test
         }
+    }
+    if ($ExcludeTests -ne "NO_EXCLUSIONS") {
+        Write-LogInfo "$ExcludedTestsCount Test Cases have been excluded"
     }
     return $AllLisaTests
 }
