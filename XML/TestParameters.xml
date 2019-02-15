@@ -63,6 +63,7 @@
 	<EnableCodeCoverage></EnableCodeCoverage>
 
 	<!-- [Optional] Parameters for changing framework behavior. -->
+	<ExcludeTests></ExcludeTests>
 	<TestIterations></TestIterations>
 	<XMLSecretFile></XMLSecretFile>
 	<EnableTelemetry></EnableTelemetry>

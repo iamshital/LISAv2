@@ -56,6 +56,7 @@ Class TestController
 	[string] $TestNames
 	[string] $TestArea
 	[string] $TestTag
+	[string] $ExcludeTests
 	[string] $TestPriority
 	[int] $TestIterations
 	[bool] $EnableTelemetry
@@ -78,6 +79,7 @@ Class TestController
 		$this.TestNames = $ParamTable["TestNames"]
 		$this.TestArea = $ParamTable["TestArea"]
 		$this.TestTag = $ParamTable["TestTag"]
+		$this.ExcludeTests = $ParamTable["ExcludeTests"]
 		$this.TestPriority = $ParamTable["TestPriority"]
 		$this.ResourceCleanup = $ParamTable["ResourceCleanup"]
 		$this.EnableTelemetry = $ParamTable["EnableTelemetry"]
@@ -191,7 +193,7 @@ Class TestController
 		$ReplaceableTestParameters = [xml](Get-Content -Path "$WorkingDirectory\XML\Other\ReplaceableTestParameters.xml")
 
 		$allTests = Collect-TestCases -TestXMLs $TestXMLs -TestCategory $this.TestCategory -TestArea $this.TestArea `
-			-TestNames $this.TestNames -TestTag $this.TestTag -TestPriority $this.TestPriority
+			-TestNames $this.TestNames -TestTag $this.TestTag -TestPriority $this.TestPriority -ExcludeTests $this.ExcludeTests
 
 		if( !$allTests ) {
 			Throw "Not able to collect any test cases from XML files"

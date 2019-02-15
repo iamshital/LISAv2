@@ -112,9 +112,11 @@ Function Match-TestTag($currentTest, $TestTag)
 # Before entering this function, $TestPlatform has been verified as "valid" in Run-LISAv2.ps1.
 # So, here we don't need to check $TestPlatform
 #
-Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $TestTag, $TestPriority)
+Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $TestTag, $TestPriority, $ExcludeTests)
 {
     $AllLisaTests = @()
+    $WildCards = @('^','.','[',']','?','+','*')
+    $ExcludedTestsCount = 0
 
     # Check and cleanup the parameters
     if ( $TestCategory -eq "All")   { $TestCategory = "*" }
@@ -159,9 +161,34 @@ Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $Tes
                 continue
             }
 
-            Write-LogInfo "Collected: $($test.TestName)"
+            if ($ExcludeTests) {
+                $ExcludeTestMatched = $false
+                foreach ($TestString in $ExcludeTests.Split(",")) {
+                    if (($TestString.IndexOfAny($WildCards))-ge 0) {
+                        if ($TestString.StartsWith('*')) {
+                            $TestString = ".$TestString"
+                        }
+                        if ($test.TestName -match $TestString) {
+                            Write-LogInfo "Excluded Test  : $($test.TestName) [Wildcards match]"
+                            $ExcludeTestMatched = $true
+                        }
+                    } elseif ($TestString -eq $test.TestName) {
+                        Write-LogInfo "Excluded Test  : $($test.TestName) [Exact match]"
+                        $ExcludeTestMatched = $true
+                    }
+                }
+                if ($ExcludeTestMatched) {
+                    $ExcludedTestsCount += 1
+                    continue
+                }
+            }
+
+            Write-LogInfo "Collected Test : $($test.TestName)"
             $AllLisaTests += $test
         }
+    }
+    if ($ExcludeTests) {
+        Write-LogInfo "$ExcludedTestsCount Test Cases have been excluded"
     }
     return $AllLisaTests
 }
