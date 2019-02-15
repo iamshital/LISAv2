@@ -73,9 +73,14 @@ Param(
 	[string] $CustomParameters = "",
 	[string] $OverrideVMSize = "",
 	[switch] $EnableAcceleratedNetworking,
-	[switch] $ForceDeleteResources,
+	[ValidateSet('Default','Keep','Delete',IgnoreCase = $true)]
+
+	#ResourceCleanup options:
+	#	"Default" = If test is PASS then delete resources else preserve for analysis.
+	#	"Keep" = Preserve resources for analysis irrespective of test result.
+	#	"Delete" = Delete resources irrespective of test result.
+	[string] $ResourceCleanup,
 	[switch] $UseManagedDisks,
-	[switch] $DoNotDeleteVMs,
 	[switch] $DeployVMPerEachTest,
 	[string] $VMGeneration = "",
 

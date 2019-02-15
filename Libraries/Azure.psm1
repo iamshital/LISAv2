@@ -551,8 +551,8 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
             else {
                 $retValue = $false
                 Write-LogErr "Failed to create Resource Group Deployment - $RGName."
-                if ($ForceDeleteResources) {
-                    Write-LogInfo "-ForceDeleteResources is Set. Deleting $RGName."
+                if ($ResourceCleanup -imatch "Delete") {
+                    Write-LogInfo "-ResourceCleanup = Delete is Set. Deleting $RGName."
                     $isCleaned = Delete-ResourceGroup -RGName $RGName
                     if (!$isCleaned) {
                         Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
