@@ -60,6 +60,7 @@
 	<CustomLIS></CustomLIS>
 
 	<!-- [Optional] Parameters for changing framework behavior. -->
+	<ExcludeTests></ExcludeTests>
 	<TestIterations></TestIterations>
 	<TiPSessionId></TiPSessionId>
 	<TiPCluster></TiPCluster>
