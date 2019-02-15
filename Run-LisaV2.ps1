@@ -63,16 +63,16 @@ Param(
 
 	# [Optional] Parameters for changing framework behavior.
 	[int]    $TestIterations = 1,
-	[string] $TiPSessionId,
-	[string] $TiPCluster,
 	[string] $XMLSecretFile = "",
 	[switch] $EnableTelemetry,
 	[switch] $UseExistingRG,
 
-	# [Optional] Parameters for Overriding VM Configuration.
+	# [Optional] Parameters for setting TiPCluster, TipSessionId, DiskType=Managed/Unmanaged, Networking=SRIOV/Synthetic.
 	[string] $CustomParameters = "",
+
+	# [Optional] Parameters for Overriding VM Configuration.
+	[string] $CustomTestParameters = "",
 	[string] $OverrideVMSize = "",
-	[switch] $EnableAcceleratedNetworking,
 	[ValidateSet('Default','Keep','Delete',IgnoreCase = $true)]
 
 	#ResourceCleanup options:
@@ -80,7 +80,6 @@ Param(
 	#	"Keep" = Preserve resources for analysis irrespective of test result.
 	#	"Delete" = Delete resources irrespective of test result.
 	[string] $ResourceCleanup,
-	[switch] $UseManagedDisks,
 	[switch] $DeployVMPerEachTest,
 	[string] $VMGeneration = "",
 

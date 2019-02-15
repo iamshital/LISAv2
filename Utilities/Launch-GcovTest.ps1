@@ -111,7 +111,7 @@ function Main {
         -ARMImageName $ARM_IMAGE_NAME `
         -TestIterations 1 -StorageAccount $StorageAccount `
         -XMLSecretFile $XMLSecretFile `
-        -CustomParameters "GCOV_REPORT_CATEGORY=${reportName}"
+        -CustomTestParameters "GCOV_REPORT_CATEGORY=${reportName}"
 
     $reportsPath = ".\CodeCoverage\${reportName}.zip"
     if (-not (Test-Path $reportsPath)) {
