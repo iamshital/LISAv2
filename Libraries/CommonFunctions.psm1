@@ -1958,8 +1958,7 @@ Function Download-File {
                 Write-LogInfo "Download status : $($jobStatus.JobState)"
                 [void](Remove-Item -Path $TempFilePath -ErrorAction SilentlyContinue -Force)
             }
-        }
-        else {
+        } else {
             Write-LogInfo "BITS service is not available. Downloading via HTTP request."
             $request = [System.Net.HttpWebRequest]::Create($URL)
             $request.set_Timeout(5000) # 5 second timeout
