@@ -204,4 +204,14 @@ Class HyperVProvider : TestProvider
 		}
 		return $false
 	}
+
+	[void] RunTestCleanup() {
+		# $OsVhdDownloaded is set to global variable in HyperV.psm1 in
+		# Create-HyperVGroupDeployment(), if VHD is downloaded from external (web) source.
+		# It's value will be path of downloaded VHD file.
+		if ($Global:OsVhdDownloaded) {
+			Write-LogInfo "Removing downloaded OsVHD: $Global:OsVhdDownloaded"
+			[void](Remove-Item -Path $Global:OsVhdDownloaded -Force -ErrorAction SilentlyContinue)
+		}
+	}
 }

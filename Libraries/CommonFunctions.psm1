@@ -112,9 +112,11 @@ Function Match-TestTag($currentTest, $TestTag)
 # Before entering this function, $TestPlatform has been verified as "valid" in Run-LISAv2.ps1.
 # So, here we don't need to check $TestPlatform
 #
-Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $TestTag, $TestPriority)
+Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $TestTag, $TestPriority, $ExcludeTests)
 {
     $AllLisaTests = @()
+    $WildCards = @('^','.','[',']','?','+','*')
+    $ExcludedTestsCount = 0
 
     # Check and cleanup the parameters
     if ( $TestCategory -eq "All")   { $TestCategory = "*" }
@@ -159,15 +161,40 @@ Function Collect-TestCases($TestXMLs, $TestCategory, $TestArea, $TestNames, $Tes
                 continue
             }
 
-            Write-LogInfo "Collected: $($test.TestName)"
+            if ($ExcludeTests) {
+                $ExcludeTestMatched = $false
+                foreach ($TestString in $ExcludeTests.Split(",")) {
+                    if (($TestString.IndexOfAny($WildCards))-ge 0) {
+                        if ($TestString.StartsWith('*')) {
+                            $TestString = ".$TestString"
+                        }
+                        if ($test.TestName -match $TestString) {
+                            Write-LogInfo "Excluded Test  : $($test.TestName) [Wildcards match]"
+                            $ExcludeTestMatched = $true
+                        }
+                    } elseif ($TestString -eq $test.TestName) {
+                        Write-LogInfo "Excluded Test  : $($test.TestName) [Exact match]"
+                        $ExcludeTestMatched = $true
+                    }
+                }
+                if ($ExcludeTestMatched) {
+                    $ExcludedTestsCount += 1
+                    continue
+                }
+            }
+
+            Write-LogInfo "Collected Test : $($test.TestName)"
             $AllLisaTests += $test
         }
+    }
+    if ($ExcludeTests) {
+        Write-LogInfo "$ExcludedTestsCount Test Cases have been excluded"
     }
     return $AllLisaTests
 }
 
 # This function set the AdditionalHWConfig of the test case data
-# Called when -EnableAcceleratedNetworking or -UseManagedDisks is set
+# Called when DiskType=Managed/Unmanaged or Networking=SRIOV/Synthetic set in -CustomParameters
 function Set-AdditionalHWConfigInTestCaseData ($CurrentTestData, $ConfigName, $ConfigValue) {
 	Write-LogInfo "The AdditionalHWConfig $ConfigName of case $($CurrentTestData.testName) is set to $ConfigValue"
 	if (!$CurrentTestData.AdditionalHWConfig) {
@@ -1901,6 +1928,216 @@ function IsGreaterKernelVersion() {
     } else {
             Write-LogErr "Unsupported Distro: $detectedDistro"
             throw "Unsupported Distro: $detectedDistro"
+    }
+}
+
+Function Download-File {
+    param (
+        [string] $URL,
+        [string] $FilePath
+    )
+    try {
+        $DownloadID = New-TestID
+        if ($FilePath) {
+            $FileName = $FilePath | Split-Path -Leaf
+            $ParentFolder = $FilePath | Split-Path -Parent
+        } else {
+            $FileName = $URL | Split-Path -Leaf
+            $ParentFolder = ".\DownloadedFiles"
+            $FilePath = Join-Path $ParentFolder $FileName
+        }
+        $TempFilePath = "$FilePath.$DownloadID.LISAv2Download"
+        if (!(Test-Path $ParentFolder)) {
+            [void](New-Item -Path $ParentFolder -Type Directory)
+        }
+        Write-LogInfo "Downloading '$URL' to '$TempFilePath'"
+        try {
+            $DownloadJob = Start-BitsTransfer -Source "$URL" -Asynchronous -Destination "$TempFilePath" `
+                -TransferPolicy Unrestricted -TransferType Download -Priority Foreground
+            $BitsStarted = $true
+        } catch {
+            $BitsStarted = $false
+        }
+        if ( $BitsStarted ) {
+            $jobStatus = Get-BitsTransfer -JobId $DownloadJob.JobId
+            Start-Sleep -Seconds 1
+            Write-LogInfo "JobID: $($DownloadJob.JobId)"
+            while ($jobStatus.JobState -eq "Connecting" -or $jobStatus.JobState -eq "Transferring" -or `
+                    $jobStatus.JobState -eq "Queued" -or $jobStatus.JobState -eq "TransientError" ) {
+                $DownloadProgress = 100 - ((($jobStatus.BytesTotal - $jobStatus.BytesTransferred) / $jobStatus.BytesTotal) * 100)
+                $DownloadProgress = [math]::Round($DownloadProgress, 2)
+                if (($DownloadProgress % 5) -lt 1) {
+                    Write-LogInfo "Download '$($jobStatus.JobState)': $DownloadProgress%"
+                }
+                Start-Sleep -Seconds 1
+            }
+            if ($jobStatus.JobState -eq "Transferred") {
+                Write-LogInfo "Download '$($jobStatus.JobState)': 100%"
+                Write-LogInfo "Finalizing downloaded file..."
+                Complete-BitsTransfer -BitsJob $DownloadJob
+                Write-LogInfo "Renaming $($TempFilePath | Split-Path -Leaf) --> $($FilePath | Split-Path -Leaf)..."
+                if ( -not ( Rename-File -OriginalFilePath $TempFilePath -NewFilePath $FilePath ) ) {
+                    Throw "Unable to rename downloaded file."
+                } else {
+                    Write-LogInfo "Download Status: Completed."
+                }
+            } else {
+                Write-LogInfo "Download status : $($jobStatus.JobState)"
+                [void](Remove-Item -Path $TempFilePath -ErrorAction SilentlyContinue -Force)
+            }
+        } else {
+            Write-LogInfo "BITS service is not available. Downloading via HTTP request."
+            $request = [System.Net.HttpWebRequest]::Create($URL)
+            $request.set_Timeout(5000) # 5 second timeout
+            $response = $request.GetResponse()
+            $TotalBytes = $response.ContentLength
+            $ResponseStream = $response.GetResponseStream()
+
+            $buffer = New-Object -TypeName byte[] -ArgumentList 256KB
+            $TargetStream = [System.IO.File]::Create($TempFilePath)
+
+            $timer = New-Object -TypeName timers.timer
+            $timer.Interval = 1000 # Update progress every second
+            $TimerEvent = Register-ObjectEvent -InputObject $timer -EventName Elapsed -Action {
+                $Global:UpdateProgress = $true
+                if ( $Global:UpdateProgress ) {
+                    # $Global:UpdateProgress is used below but still PSScriptAnalyser is giving error -
+                    # Unused variable : "$Global:UpdateProgress".
+                    # Hence added this blank if condition to suppress the error.
+                }
+            }
+            $timer.Start()
+
+            do {
+                $count = $ResponseStream.Read($buffer, 0, $buffer.length)
+                $TargetStream.Write($buffer, 0, $count)
+                $downloaded_bytes = $downloaded_bytes + $count
+                $percent = $downloaded_bytes / $TotalBytes
+                if ($Global:UpdateProgress) {
+                    $status = @{
+                        completed  = "{0,6:p2} Completed" -f $percent
+                        downloaded = "{0:n0} MB of {1:n0} MB" -f ($downloaded_bytes / 1MB), ($TotalBytes / 1MB)
+                        speed      = "{0,7:n0} KB/s" -f (($downloaded_bytes - $prev_downloaded_bytes) / 1KB)
+                        eta        = "ETA {0:hh\:mm\:ss}" -f (New-TimeSpan -Seconds (($TotalBytes - $downloaded_bytes) / ($downloaded_bytes - $prev_downloaded_bytes)))
+                    }
+                    $progress_args = @{
+                        Activity        = "Downloading $URL"
+                        Status          = "$($status.completed) ($($status.downloaded)) $($status.speed) $($status.eta)"
+                        PercentComplete = [math]::Round( ($percent * 100),2)
+                    }
+                    if (($progress_args.PercentComplete % 5)-lt 1) {
+                        Write-LogInfo "Download Status: $($progress_args.PercentComplete)% ($($status.downloaded)) $($status.speed) $($status.eta)"
+                    }
+                    $prev_downloaded_bytes = $downloaded_bytes
+                    $Global:UpdateProgress = $false
+                }
+            } while ($count -gt 0)
+            if (Test-Path $TempFilePath) {
+                Write-LogInfo "Download Status: 100%"
+                if ($TargetStream) { $TargetStream.Dispose() }
+                if ($response) { $response.Dispose() }
+                if ($ResponseStream) { $ResponseStream.Dispose() }
+                Write-LogInfo "Renaming $($TempFilePath | Split-Path -Leaf) --> $($FilePath | Split-Path -Leaf)..."
+                if ( -not ( Rename-File -OriginalFilePath $TempFilePath -NewFilePath $FilePath ) ) {
+                    Throw "Unable to rename downloaded file."
+                } else {
+                    Write-LogInfo "Download Status: Completed."
+                }
+            } else {
+                Throw "Unable to find downloaded file $TempFilePath."
+            }
+        }
+    }
+    catch {
+        $line = $_.InvocationInfo.ScriptLineNumber
+        $script_name = ($_.InvocationInfo.ScriptName).Replace($PWD, ".")
+        $ErrorMessage = $_.Exception.Message
+        Write-LogErr "EXCEPTION : $ErrorMessage"
+        Write-LogErr "Source : Download-File() Line $line in script $script_name."
+    }
+    finally {
+        if ($BitsStarted) {
+            if ($jobStatus.JobState -eq "Connecting" -or $jobStatus.JobState -eq "Transferring" -or `
+            $jobStatus.JobState -eq "Queued" -or $jobStatus.JobState -eq "TransientError" ) {
+                Write-LogErr "Error: User aborted the download process. Removing unfinished BITS job : $($jobStatus.JobId)"
+                $jobStatus | Remove-BitsTransfer
+            }
+        } else {
+            if ($timer) { $timer.Stop() }
+            if ($TimerEvent) {
+                Get-EventSubscriber | Where-Object { $_.SourceIdentifier -eq $TimerEvent.Name} `
+                    | Unregister-Event -Force
+            }
+            if ($TargetStream) { $TargetStream.Dispose() }
+            # If file exists and $count is not zero or $null, then script was interrupted by user
+            if ((Test-Path $TempFilePath) -and $count) {
+                Write-LogErr "Error: User aborted the download process. Removing unfinished file $TempFilePath"
+                [void] (Remove-Item -Path $TempFilePath -Force -ErrorAction SilentlyContinue)
+            }
+            if ($response) { $response.Dispose() }
+            if ($ResponseStream) { $ResponseStream.Dispose() }
+        }
+    }
+}
+
+Function Test-FileLock {
+    param (
+        [parameter(Mandatory = $true)][string]$Path
+    )
+    $OpenFile = New-Object System.IO.FileInfo $Path
+    if ((Test-Path -Path $Path) -eq $false) {
+        return $false
+    }
+    try {
+        $FileStream = $OpenFile.Open([System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+        if ($FileStream) {
+            $FileStream.Close()
+        }
+        return $false
+    } catch {
+        # file is locked by a process.
+        return $true
+    }
+}
+
+Function Rename-File {
+    param (
+        [parameter(Mandatory = $true)]
+        [string]$OriginalFilePath,
+        [parameter(Mandatory = $true)]
+        [string]$NewFilePath
+    )
+
+    $maxRetryAttemps = 10
+    $retryAttempts = 0
+    if (Test-Path $OriginalFilePath) {
+        while ((Test-FileLock -Path $OriginalFilePath) -and ($retryAttempts -lt $maxRetryAttemps)) {
+            $retryAttempts += 1
+            Write-LogInfo "[$retryAttempts / $maxRetryAttemps ] $OriginalFilePath is locked. Waiting 5 seconds..."
+            Start-Sleep -Seconds 5
+        }
+        if (Test-FileLock -Path $OriginalFilePath) {
+            Write-LogErr "Unable to rename due to locked file."
+            return $false
+        }
+    }
+    $retryAttempts = 0
+    if (Test-Path $NewFilePath) {
+        Write-LogInfo "$NewFilePath already exists. Will be overwritten."
+        while ((Test-FileLock -Path $NewFilePath) -and ($retryAttempts -lt $maxRetryAttemps)) {
+            $retryAttempts += 1
+            Write-LogInfo "[$retryAttempts / $maxRetryAttemps ] $NewFilePath is locked. Waiting 5 seconds..."
+        }
+        if (Test-FileLock -Path $NewFilePath) {
+            Write-LogErr "Unable to rename due to locked file."
+            return $false
+        }
+    }
+    [void](Move-Item -Path $OriginalFilePath -Destination $NewFilePath -Force)
+    if (Test-Path -Path $NewFilePath) {
+        return $true
+    } else {
+        return $false
     }
 }
 

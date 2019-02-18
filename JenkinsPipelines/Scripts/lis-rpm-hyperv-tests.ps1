@@ -13,6 +13,8 @@ param(
     [String] $LISAImagesShareUrl,
     [String] $LisUrl,
     [String] $LisOldUrl,
+    [String] $ExcludeTests,
+    [String] $IncludeTests,
     [String] $Delay
 )
 
@@ -30,7 +32,7 @@ function Main {
     git checkout lisav2hyperv
     Write-Output "Sleeping $Delay seconds..."
     Start-Sleep $Delay
-    
+
     Write-Host "Getting the proper VHD folder name for LISA with $DistroVersion"
     $imageFolder = Join-Path $LISAImagesShareUrl $DistroVersion.split("_")[0]
     $imageFolder = Join-Path $imageFolder $DistroVersion
@@ -45,7 +47,7 @@ function Main {
     Write-Output "Starting LISAv2"
     try {
         $SourceVHDPath = $VHD_Path | Split-Path -Parent
-        $OsVHD = $VHD_Path | Split-Path -Leaf        
+        $OsVHD = $VHD_Path | Split-Path -Leaf
         if ((Test-Path $VHD_Path) -or ($VHD_Path.StartsWith("http"))) {
             Write-Host "ComputerName: $env:computername"
             Write-Host "VHD : $VHD_Path"
@@ -58,13 +60,16 @@ function Main {
             $command += " -TestCategory '$TestCategory'"
             $command += " -TestArea '$TestArea'"
             $command += " -VMGeneration '$VMgeneration'"
-            $command += " -ForceDeleteResources"
+            $command += " -ResourceCleanup Delete"
             $command += " -ExitWithZero"
-            if ($TestNames) {
-                $command += " -TestNames '$TestNames'"
+            if ($IncludeTests) {
+                $command += " -TestNames '$IncludeTests'"
+            }
+            if ($ExcludeTests) {
+                $command += " -ExcludeTests '$ExcludeTests'"
             }
             if ($TestArea -imatch "LIS_DEPLOY") {
-                $command += " -CustomParameters 'LIS_OLD_URL=$LisOldUrl;LIS_CURRENT_URL=$LisUrl'"
+                $command += " -CustomTestParameters 'LIS_OLD_URL=$LisOldUrl;LIS_CURRENT_URL=$LisUrl'"
             } else {
                 $command += " -CustomLIS '$LisUrl'"
             }
