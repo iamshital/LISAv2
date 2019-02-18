@@ -132,6 +132,17 @@ Class TestController
 		}
 	}
 
+	[void] UpdateRegionAndStorageAccountsFromSecretsFile()
+	{
+		if ($this.XMLSecrets.secrets.RegionAndStorageAccounts) {
+			$FilePath = Resolve-Path ".\XML\RegionAndStorageAccounts.xml"
+			$CurrentStorageXML = [xml](Get-Content $FilePath)
+			$CurrentStorageXML.AllRegions.InnerXml = $this.XMLSecrets.secrets.RegionAndStorageAccounts.InnerXml
+			$CurrentStorageXML.Save($FilePath)
+			Write-LogInfo "Updated $FilePath from secrets file."
+		}
+	}
+
 	[void] PrepareTestEnvironment($XMLSecretFile) {
 		if ($XMLSecretFile) {
 			if (Test-Path -Path $XMLSecretFile) {
@@ -141,6 +152,7 @@ Class TestController
 				Get-LISAv2Tools -XMLSecretFile $XMLSecretFile
 
 				$this.UpdateXMLStringsFromSecretsFile()
+				$this.UpdateRegionAndStorageAccountsFromSecretsFile()
 			} else {
 				Write-LogErr "The Secret file provided: $XMLSecretFile does not exist"
 			}
