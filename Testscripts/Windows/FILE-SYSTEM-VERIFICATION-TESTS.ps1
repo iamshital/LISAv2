@@ -29,7 +29,7 @@ function Main {
 
         # Construct xfstesting config file
         $xfstestsConfig = Join-Path $env:TEMP "xfstests-config.config"
-        Write-LogInfo "Generating $xfstestsConfige ..."
+        Write-LogInfo "Generating $xfstestsConfig..."
         Set-Content -Value "" -Path $xfstestsConfig -NoNewline
         foreach ($param in $currentTestData.TestParameters.param) {
             if ($param -imatch "FSTYP=") {

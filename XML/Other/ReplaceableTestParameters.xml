@@ -350,4 +350,9 @@ Scenario 2 : You need to run all the performance tests quickly.
         <ReplaceThis>DM_EATMEMORY</ReplaceThis>
         <ReplaceWith>https://github.com/julman99/eatmemory.git</ReplaceWith>
     </Parameter>
+    <Parameter>
+        <ReplaceThis>CUDA_DRIVER</ReplaceThis>
+        <!-- Reference: https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/index.html -->
+        <ReplaceWith>10.0.130-1</ReplaceWith>
+    </Parameter>
 </ReplaceableTestParameters>
