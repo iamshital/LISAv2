@@ -97,10 +97,6 @@ function Create-AllHyperVGroupDeployments($SetupTypeData, $GlobalConfig, $TestLo
                         $DeploymentElapsedTime = $DeploymentEndTime - $DeploymentStartTime
                         if ( $VMCreationStatus[-1] ) {
                             foreach ($HyperVHost in $HyperVHostArray){
-                                if ($TestCaseData.Tags -and $TestCaseData.Tags.ToString().Contains("nested")) {
-                                    Write-LogInfo "Test Platform is $TestPlatform and nested VMs will be created, need to enable nested virtualization"
-                                    $null = Enable-HyperVNestedVirtualization -HyperVGroupName $HyperVGroupName -HyperVHost $HyperVHost
-                                }
                                 $StartVMStatus = Start-HyperVGroupVMs -HyperVGroupName $HyperVGroupName -HyperVHost $HyperVHost
                                 if ($StartVMStatus) {
                                     $retValue = "True"
@@ -401,29 +397,6 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
     }
     if ( $ErrorCount -eq 0 ) {
         $ReturnValue = $true
-    } else {
-        $ReturnValue = $false
-    }
-    return $ReturnValue
-}
-
-function Enable-HyperVNestedVirtualization($HyperVGroupName, $HyperVHost) {
-    $AllVMs = Get-VMGroup -Name $HyperVGroupName -ComputerName $HyperVHost
-    $CurrentErrors = @()
-    foreach ( $VM in $AllVMs.VMMembers) {
-        Write-LogInfo "Enable nested virtualization for $($VM.Name) from $HyperVGroupName..."
-        Set-VMProcessor -VMName $($VM.Name) -ExposeVirtualizationExtensions $true -ComputerName $HyperVHost
-        Set-VMNetworkAdapter -VMName $($VM.Name) -MacAddressSpoofing on -ComputerName $HyperVHost
-        if ( $? ) {
-            Write-LogInfo "Succeeded."
-        } else {
-            Write-LogErr "Failed"
-            $CurrentErrors += "Enable nested virtualization for $($VM.Name) from $HyperVGroupName failed."
-        }
-    }
-    if ($CurrentErrors.Count -eq 0) {
-        $ReturnValue = $true
-        $CurrentErrors | ForEach-Object { Write-LogErr "$_" }
     } else {
         $ReturnValue = $false
     }
