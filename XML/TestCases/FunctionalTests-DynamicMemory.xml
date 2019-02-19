@@ -218,7 +218,7 @@
         <Priority>0</Priority>
     </test>
     <test>
-        <testName>HOT-REMOVE</testName>
+        <testName>DYNAMIC-MEMORY-HOT-REMOVE</testName>
         <testScript>DM_HotAddRemove.ps1</testScript>
         <files>.\Testscripts\Linux\utils.sh</files>
         <setupType>TwoVM</setupType>
@@ -243,7 +243,7 @@
         <Priority>1</Priority>
     </test>
     <test>
-        <testName>STARTUP-LOW-COMPETE</testName>
+        <testName>DYNAMIC-MEMORY-STARTUP-LOW-COMPETE</testName>
         <testScript>DM_StartupLowCompete.ps1</testScript>
         <setupType>TwoVM</setupType>
         <TestParameters>
@@ -265,7 +265,7 @@
         <Priority>0</Priority>
     </test>
     <test>
-        <testName>CLEAN-SHUTDOWN</testName>
+        <testName>DYNAMIC-MEMORY-CLEAN-SHUTDOWN</testName>
         <testScript>DM_CleanShutdown.ps1</testScript>
         <setupType>TwoVM</setupType>
         <TestParameters>
@@ -304,7 +304,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Functional</Category>
-        <Area>Dynamic_Memory</Area>
+        <Area>DYNAMIC_MEMORY</Area>
         <Tags>memory</Tags>
         <Priority>2</Priority>
     </test>
@@ -330,7 +330,7 @@
         <timeout>2600</timeout>
         <Platform>HyperV</Platform>
         <Category>Functional</Category>
-        <Area>Dynamic_Memory</Area>
+        <Area>DYNAMIC_MEMORY</Area>
         <Tags>memory</Tags>
         <Priority>2</Priority>
     </test>
@@ -354,7 +354,7 @@
         <timeout>1200</timeout>
         <Platform>HyperV</Platform>
         <Category>Functional</Category>
-        <Area>Dynamic_Memory</Area>
+        <Area>DYNAMIC_MEMORY</Area>
         <Tags>memory</Tags>
         <Priority>2</Priority>
     </test>
@@ -375,7 +375,7 @@
         <timeout>1200</timeout>
         <Platform>HyperV</Platform>
         <Category>Functional</Category>
-        <Area>Dynamic_Memory</Area>
+        <Area>DYNAMIC_MEMORY</Area>
         <Tags>memory</Tags>
         <Priority>2</Priority>
     </test>
@@ -397,7 +397,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Functional</Category>
-        <Area>Dynamic_Memory</Area>
+        <Area>DYNAMIC_MEMORY</Area>
         <Tags>memory</Tags>
         <Priority>1</Priority>
     </test>
@@ -419,7 +419,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Functional</Category>
-        <Area>Dynamic_Memory</Area>
+        <Area>DYNAMIC_MEMORY</Area>
         <Tags>memory</Tags>
         <Priority>1</Priority>
     </test>
@@ -438,7 +438,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Functional</Category>
-        <Area>Dynamic_Memory</Area>
+        <Area>DYNAMIC_MEMORY</Area>
         <Tags>memory</Tags>
         <Priority>1</Priority>
     </test>

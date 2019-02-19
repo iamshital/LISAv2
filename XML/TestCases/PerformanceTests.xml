@@ -19,7 +19,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc</Tags>
         <Priority>1</Priority>
     </test>
@@ -44,7 +44,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc,sriov</Tags>
         <Priority>1</Priority>
     </test>
@@ -69,7 +69,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc</Tags>
         <Priority>1</Priority>
     </test>
@@ -94,7 +94,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc,sriov</Tags>
         <Priority>1</Priority>
     </test>    
@@ -113,7 +113,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc</Tags>
         <Priority>1</Priority>
     </test>
@@ -135,7 +135,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc,sriov</Tags>
         <Priority>1</Priority>
     </test>
@@ -159,7 +159,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc</Tags>
         <Priority>1</Priority>
     </test>
@@ -186,7 +186,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc,sriov</Tags>
         <Priority>1</Priority>
     </test>
@@ -214,7 +214,7 @@
         <cleanupScript>.\Testscripts\Windows\RemoveHardDisk.ps1</cleanupScript>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>hv_storvsc,storage</Tags>
         <Priority>1</Priority>
     </test>
@@ -238,7 +238,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>hv_storvsc,storage</Tags>
         <Priority>1</Priority>
     </test>
@@ -260,7 +260,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>hv_storvsc,storage</Tags>
         <Priority>2</Priority>
     </test>
@@ -282,7 +282,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>hv_storvsc,storage</Tags>
         <Priority>2</Priority>
     </test>
@@ -307,7 +307,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>hv_storvsc,storage</Tags>
         <Priority>2</Priority>
     </test>
@@ -332,7 +332,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>hv_storvsc,storage</Tags>
         <Priority>2</Priority>
     </test>
@@ -359,7 +359,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>hv_netvsc,network</Tags>
         <Priority>1</Priority>
     </test>
@@ -386,7 +386,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>hv_netvsc,network,sriov</Tags>
         <Priority>1</Priority>
     </test>
@@ -425,7 +425,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc</Tags>
         <Priority>1</Priority>
     </test>
@@ -449,7 +449,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc</Tags>
         <Priority>1</Priority>
     </test>
@@ -473,7 +473,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc</Tags>
         <Priority>1</Priority>
     </test>
@@ -497,7 +497,7 @@
         </TestParameters>
         <Platform>Azure,HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Network</Area>
+        <Area>NETWORK</Area>
         <Tags>network,hv_netvsc</Tags>
         <Priority>1</Priority>
     </test>
@@ -540,7 +540,7 @@
             <param>GOLANG_INSTALL_PACKAGE=https://partnerpipelineshare.blob.core.windows.net/binarytools/go1.11.4.linux-amd64.tar.gz</param>
         </TestParameters>
         <Category>Performance</Category>
-        <Area>Golang</Area>
+        <Area>GOLANG</Area>
         <Tags>golang</Tags>
         <Priority>2</Priority>
     </test>

@@ -15,7 +15,7 @@
         <Timeout>720</Timeout>
         <Platform>Azure</Platform>
         <Category>Functional</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>1</Priority>
     </test>
@@ -39,7 +39,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -70,7 +70,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -102,7 +102,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -133,7 +133,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -166,7 +166,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -194,7 +194,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -221,7 +221,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-hyperv</Tags>
         <Priority>2</Priority>
     </test>
@@ -249,7 +249,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -275,7 +275,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -302,7 +302,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -334,7 +334,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>nested,nested-hyperv</Tags>
         <Priority>2</Priority>
     </test>
@@ -367,7 +367,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>nested,nested-hyperv</Tags>
         <Priority>2</Priority>
     </test>
@@ -400,7 +400,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>nested,nested-hyperv</Tags>
         <Priority>2</Priority>
     </test>
@@ -435,7 +435,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Storage</Area>
+        <Area>STORAGE</Area>
         <Tags>nested,nested-hyperv</Tags>
         <Priority>2</Priority>
     </test>
@@ -463,7 +463,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -487,7 +487,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-kvm</Tags>
         <Priority>2</Priority>
     </test>
@@ -513,7 +513,7 @@
         </TestParameters>
         <Platform>HyperV</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-hyperv</Tags>
         <Priority>2</Priority>
     </test>
@@ -537,7 +537,7 @@
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Performance</Category>
-        <Area>Nested</Area>
+        <Area>NESTED</Area>
         <Tags>nested,nested-hyperv</Tags>
         <Priority>2</Priority>
     </test>
