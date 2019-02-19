@@ -104,9 +104,9 @@ function Collect-TestLogs {
 	)
 	# Note: This is a temporary solution until a standard is decided
 	# for what string py/sh scripts return
-	$resultTranslation = @{"TestCompleted" = $global:ResultPassed;
+	$resultTranslation = @{"TestCompleted" = $global:ResultPass;
 							"TestSkipped" = $global:ResultSkipped;
-							"TestFailed" = $global:ResultFailed;
+							"TestFailed" = $global:ResultFail;
 							"TestAborted" = $global:ResultAborted;
 						}
 
