@@ -708,7 +708,7 @@ Function Get-AllDeploymentData($ResourceGroups)
 }
 
 Function Get-NewVMName ($namePrefix, $numberOfVMs) {
-    if ($IsWindows) {
+    if ($global:IsWindowsImage) {
         # Windows computer name cannot be more than 15 characters long on Azure
         $suffix = "-$numberOfVMs"
         $len = 15 - $suffix.Length

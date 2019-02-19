@@ -332,7 +332,7 @@ function Is-VmAlive {
         $deadVms = 0
         $retryCount += 1
         foreach ( $vm in $AllVMDataObject) {
-            if ($IsWindows) {
+            if ($global:IsWindowsImage) {
                 $port = $vm.RDPPort
             } else {
                 $port = $vm.SSHPort
@@ -344,7 +344,7 @@ function Is-VmAlive {
                 $deadVms += 1
                 # Note(v-advlad): Check for kernel panic once every ${kernelPanicPeriod} retries on Linux Azure
                 if (($retryCount % $kernelPanicPeriod -eq 0) -and ($TestPlatform -eq "Azure") `
-                    -and (!$IsWindows) -and (Check-AzureVmKernelPanic $vm)) {
+                    -and (!$global:IsWindowsImage) -and (Check-AzureVmKernelPanic $vm)) {
                     Write-LogErr "Linux VM $($vm.RoleName) failed to boot because of a kernel panic."
                     return "False"
                 }

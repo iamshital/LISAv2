@@ -280,11 +280,11 @@ Class TestController
 			}
 
 			# Check whether the case if for Windows images
-			$isWindows = $false
+			$IsWindowsImage = $false
 			if($test.Tags -and $test.Tags.ToString().Contains("nested-hyperv")) {
-				$isWindows = $true
+				$IsWindowsImage = $true
 			}
-			Set-Variable -Name IsWindows -Value $isWindows -Scope Global
+			Set-Variable -Name IsWindowsImage -Value $IsWindowsImage -Scope Global
 		}
 	}
 
@@ -311,7 +311,7 @@ Class TestController
 		$currentTestResult = Create-TestResultObject
 
 		Create-ConstantsFile -FilePath $constantsPath -Parameters $Parameters
-		if (!$global:IsWindows) {
+		if (!$global:IsWindowsImage) {
 			foreach ($VM in $VMData) {
 				Copy-RemoteFiles -upload -uploadTo $VM.PublicIP -Port $VM.SSHPort `
 					-files $constantsPath -Username $Username -password $Password
@@ -401,13 +401,13 @@ Class TestController
 			# Run setup script if any
 			$this.TestProvider.RunSetup($VmData, $CurrentTestData, $testParameters, $ApplyCheckpoint)
 
-			if (!$this.IsWindows) {
+			if (!$global:IsWindowsImage) {
 				GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Initial" | Out-Null
 			}
 
 			# Upload test files to VMs
 			if ($CurrentTestData.files) {
-				if(!$this.IsWindows){
+				if(!$global:IsWindowsImage){
 					foreach ($vm in $VmData) {
 						Copy-RemoteFiles -upload -uploadTo $vm.PublicIP -Port $vm.SSHPort `
 							-files $CurrentTestData.files -Username $global:user -password $global:password
@@ -447,14 +447,14 @@ Class TestController
 		}
 
 		# Do log collecting and VM clean up
-		if (!$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True") {
+		if (!$global:IsWindowsImage -and $testParameters["SkipVerifyKernelLogs"] -ne "True") {
 			GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Final" -EnableCodeCoverage $this.EnableCodeCoverage | Out-Null
 			Get-SystemBasicLogs -AllVMData $VmData -User $global:user -Password $global:password -CurrentTestData $CurrentTestData `
 				-CurrentTestResult $currentTestResult -enableTelemetry $this.EnableTelemetry
 		}
 
-		$collectDetailLogs = !$this.TestCasePassStatus.contains($currentTestResult.TestResult) -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
-		$doRemoveFiles = $this.TestCasePassStatus.contains($currentTestResult.TestResult) -and !($this.ResourceCleanup -imatch "Keep") -and !$this.IsWindows -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
+		$collectDetailLogs = !$this.TestCasePassStatus.contains($currentTestResult.TestResult) -and !$global:IsWindowsImage -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
+		$doRemoveFiles = $this.TestCasePassStatus.contains($currentTestResult.TestResult) -and !($this.ResourceCleanup -imatch "Keep") -and !$global:IsWindowsImage -and $testParameters["SkipVerifyKernelLogs"] -ne "True"
 		$this.TestProvider.RunTestCaseCleanup($vmData, $CurrentTestData, $currentTestResult, $collectDetailLogs, $doRemoveFiles, `
 			$global:user, $global:password, $SetupTypeData, $testParameters)
 

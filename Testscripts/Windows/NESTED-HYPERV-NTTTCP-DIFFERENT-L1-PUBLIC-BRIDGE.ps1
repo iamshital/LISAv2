@@ -291,9 +291,9 @@ function Main () {
 			$allDeployedNestedVMs += $NestedVMNode
 			$NestedVMNode = ""
 		}
-		Set-Variable -Name IsWindows -Value $false -Scope Global
+		Set-Variable -Name IsWindowsImage -Value $false -Scope Global
 		Is-VmAlive $allDeployedNestedVMs
-		Set-Variable -Name IsWindows -Value $true -Scope Global
+		Set-Variable -Name IsWindowsImage -Value $true -Scope Global
 
 		Remove-PSSession -Session $serverSession
 		Remove-PSSession -Session $clientSession

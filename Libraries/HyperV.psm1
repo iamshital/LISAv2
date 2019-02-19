@@ -495,7 +495,7 @@ function Get-AllHyperVDeployementData($HyperVGroupNames,$GlobalConfig,$RetryCoun
         Add-Member -InputObject $objNode -MemberType NoteProperty -Name PublicIP -Value $null -Force
         Add-Member -InputObject $objNode -MemberType NoteProperty -Name InternalIP -Value $null -Force
         Add-Member -InputObject $objNode -MemberType NoteProperty -Name RoleName -Value $null -Force
-        if ($IsWindows) {
+        if ($global:IsWindowsImage) {
             Add-Member -InputObject $objNode -MemberType NoteProperty -Name RDPPort -Value 3389 -Force
         } else {
             Add-Member -InputObject $objNode -MemberType NoteProperty -Name SSHPort -Value 22 -Force
@@ -561,7 +561,7 @@ Function Inject-HostnamesInHyperVVMs($allVMData)
         foreach ( $VM in $allVMData )
         {
             Write-LogInfo "Injecting hostname '$($VM.RoleName)' in HyperV VM..."
-            if (!$IsWindows) {
+            if (!$global:IsWindowsImage) {
                Run-LinuxCmd -username $user -password $password -ip $VM.PublicIP -port $VM.SSHPort -command "echo $($VM.RoleName) > /etc/hostname" -runAsSudo -maxRetryCount 5
             } else {
                 $cred = Get-Cred $user $password
@@ -703,7 +703,7 @@ function Check-IP {
                 $vmIP = $vmNic.IPAddresses[0]
                 if ($vmIP) {
                     $vmIP = $([ipaddress]$vmIP.trim()).IPAddressToString
-                    if ($IsWindows) {
+                    if ($global:IsWindowsImage) {
                         $port = $($VM.RDPPort)
                     } else {
                         $port = $($VM.SSHPort)

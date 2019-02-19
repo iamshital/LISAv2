@@ -49,7 +49,7 @@ If you add a custom test menu, you will need to re-build the Jenkins menu, and t
                 $resultPass: PASS
                 $resultFail: FAIL
                 $resultAborted: ABORTED
-                $IsWindows: Whether the test image is Windows
+                $IsWindowsImage: Whether the test image is Windows
 
             ii. For Azure
                 $ARMImageName: The ARM image name

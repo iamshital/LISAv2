@@ -527,9 +527,9 @@ function Main () {
 			$allDeployedNestedVMs += $NestedVMNode
 		}
 		if($testPlatform -ne "Azure") {
-			Set-Variable -Name IsWindows -Value $false -Scope Global
+			Set-Variable -Name IsWindowsImage -Value $false -Scope Global
 			Is-VmAlive $allDeployedNestedVMs
-			Set-Variable -Name IsWindows -Value $true -Scope Global
+			Set-Variable -Name IsWindowsImage -Value $true -Scope Global
 
 			Write-LogInfo "Map port for SSH and ntttcp"
 			$nestedVmIP="192.168.0.3"
