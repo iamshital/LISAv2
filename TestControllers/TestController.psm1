@@ -188,9 +188,9 @@ Class TestController
 		$skippedResult = "SKIPPED"
 		$failResult = "FAIL"
 		$abortedResult = "ABORTED"
-		Set-Variable -Name ResultPassed  -Value $passResult -Scope Global
+		Set-Variable -Name ResultPass -Value $passResult -Scope Global
 		Set-Variable -Name ResultSkipped -Value $skippedResult -Scope Global
-		Set-Variable -Name ResultFailed  -Value $failResult -Scope Global
+		Set-Variable -Name ResultFail -Value $failResult -Scope Global
 		Set-Variable -Name ResultAborted -Value $abortedResult -Scope Global
 		$this.TestCaseStatus = @($passResult, $skippedResult, $failResult, $abortedResult)
 		$this.TestCasePassStatus = @($passResult, $skippedResult)
@@ -443,7 +443,7 @@ Class TestController
 			$scriptName = ($_.InvocationInfo.ScriptName).Replace($PWD,".")
 			Write-LogErr "EXCEPTION: $errorMessage"
 			Write-LogErr "Source: Line $line in script $scriptName."
-			$currentTestResult.TestResult = $global:ResultFailed
+			$currentTestResult.TestResult = $global:ResultFail
 		}
 
 		# Do log collecting and VM clean up

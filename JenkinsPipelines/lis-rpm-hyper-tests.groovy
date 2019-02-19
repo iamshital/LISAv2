@@ -34,6 +34,14 @@ properties ([
         [$class: 'StringParameterDefinition',
             name: 'RUN_SELECTED_TESTS',
             defaultValue: "",
+            description: ''],
+        [$class: 'StringParameterDefinition',
+            name: 'GIT_REPO',
+            defaultValue: "https://github.com/LIS/LISAv2.git",
+            description: ''],
+        [$class: 'StringParameterDefinition',
+            name: 'GIT_BRANCH',
+            defaultValue: "master",
             description: '']
         ]
     ]
@@ -186,7 +194,7 @@ node("meta_slave") {
                                                             globalSleepTime = globalSleepTime + 30
                                                             def lisSuite = ''
                                                             dir ("d${BUILD_NUMBER}") {
-                                                                git branch: 'lisav2hyperv', url: 'https://github.com/iamshital/LISAv2.git'
+                                                                git branch: "${GIT_BRANCH}", url: "${GIT_REPO}"
                                                                 RunPowershellCommand(".\\JenkinsPipelines\\Scripts\\lis-rpm-hyperv-tests.ps1" +
                                                                     " -JobId '${CurrentDistro}-d-${BUILD_NUMBER}'" +
                                                                     " -DistroVersion '${CurrentDistro}'" +
