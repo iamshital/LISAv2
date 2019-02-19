@@ -1,7 +1,7 @@
 <TestCases>
 <!-- INTEL MPI -->
     <test>
-        <testName>VERIFY-INFINIBAND-INTEL-MPI-2VM</testName>
+        <testName>INFINIBAND-INTEL-MPI-2VM</testName>
         <testScript>VERIFY-INFINIBAND-MultiVM.ps1</testScript>
         <setupType>TwoVM1Dep</setupType>
         <OverrideVMSize>Standard_A9</OverrideVMSize>
@@ -29,7 +29,7 @@
         <Tags>rdma</Tags>
     </test>
     <test>
-        <testName>VERIFY-INFINIBAND-INTEL-MPI-32VM</testName>
+        <testName>INFINIBAND-INTEL-MPI-32VM</testName>
         <testScript>VERIFY-INFINIBAND-MultiVM.ps1</testScript>
         <setupType>RDMA32VMs</setupType>
         <OverrideVMSize>Standard_A9</OverrideVMSize>
@@ -58,7 +58,7 @@
     </test>
 <!-- OPEN MPI -->
     <test>
-        <testName>VERIFY-INFINIBAND-OPEN-MPI-2VM</testName>
+        <testName>INFINIBAND-OPEN-MPI-2VM</testName>
         <testScript>VERIFY-INFINIBAND-MultiVM.ps1</testScript>
         <setupType>TwoVM1Dep</setupType>
         <OverrideVMSize>Standard_A9</OverrideVMSize>
@@ -86,7 +86,7 @@
         <Tags>rdma</Tags>
     </test>
     <test>
-        <testName>VERIFY-INFINIBAND-OPEN-MPI-32VM</testName>
+        <testName>INFINIBAND-OPEN-MPI-32VM</testName>
         <testScript>VERIFY-INFINIBAND-MultiVM.ps1</testScript>
         <setupType>RDMA32VMs</setupType>
         <OverrideVMSize>Standard_A9</OverrideVMSize>
@@ -115,7 +115,7 @@
     </test>
 <!-- IBM MPI -->
     <test>
-        <testName>VERIFY-INFINIBAND-IBM-MPI-2VM</testName>
+        <testName>INFINIBAND-IBM-MPI-2VM</testName>
         <testScript>VERIFY-INFINIBAND-MultiVM.ps1</testScript>
         <setupType>TwoVM1Dep</setupType>
         <OverrideVMSize>Standard_A9</OverrideVMSize>
@@ -143,7 +143,7 @@
         <Tags>rdma</Tags>
     </test>
     <test>
-        <testName>VERIFY-INFINIBAND-IBM-MPI-32VM</testName>
+        <testName>INFINIBAND-IBM-MPI-32VM</testName>
         <testScript>VERIFY-INFINIBAND-MultiVM.ps1</testScript>
         <setupType>RDMA32VMs</setupType>
         <OverrideVMSize>Standard_A9</OverrideVMSize>
@@ -172,7 +172,7 @@
     </test>
 <!-- MVAPICH MPI -->
     <test>
-        <testName>VERIFY-INFINIBAND-MVAPICH-MPI-2VM</testName>
+        <testName>INFINIBAND-MVAPICH-MPI-2VM</testName>
         <testScript>VERIFY-INFINIBAND-MultiVM.ps1</testScript>
         <setupType>TwoVM1Dep</setupType>
         <OverrideVMSize>Standard_A9</OverrideVMSize>
@@ -200,7 +200,7 @@
         <Tags>rdma</Tags>
     </test>
     <test>
-        <testName>VERIFY-INFINIBAND-MVAPICH-MPI-32VM</testName>
+        <testName>INFINIBAND-MVAPICH-MPI-32VM</testName>
         <testScript>VERIFY-INFINIBAND-MultiVM.ps1</testScript>
         <setupType>RDMA32VMs</setupType>
         <OverrideVMSize>Standard_A9</OverrideVMSize>
