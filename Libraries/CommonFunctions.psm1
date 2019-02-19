@@ -849,8 +849,53 @@ function Enable-SRIOVInAllVMs($allVMData, $TestProvider)
 	}
 }
 
+Function Install-RhelSubscription {
+	param (
+		$AllVMData,
+		[string] $RedhatNetworkUsername,
+		[string] $RedhatNetworkPassword
+	)
+	try {
+		foreach ($vmData in $allVMData) {
+			$scriptName = "Register-Redhat.sh"
+			Copy-RemoteFiles -uploadTo $vmData.PublicIP -port $vmData.SSHPort -files ".\Testscripts\Linux\$scriptName" -username $user -password $password -upload
+			$RegistrationStatus = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password `
+			-command "bash $scriptName -Username $RedhatNetworkUsername -Password $RedhatNetworkPassword" -runAsSudo `
+			-MaskStrings "$RedhatNetworkUsername,$RedhatNetworkPassword"
+			if ($RegistrationStatus -imatch "RHEL_REGISTERED") {
+				Write-LogInfo "$($vmData.Rolename): RHN Network Registration: Succeeded."
+			} elseif ($RegistrationStatus -imatch "RHEL_REGISTRATION_FAILED") {
+				Write-LogErr "$($vmData.Rolename): RHN Network Registration: Failed."
+			} elseif ($RegistrationStatus -imatch "RHEL_REGISTRATION_SKIPPED") {
+				Write-LogInfo "$($vmData.Rolename): RHN Network Registration: Skipped."
+			}
+		}
+	}
+	catch {
+		Raise-Exception($_)
+	}
+}
+
 Function Set-CustomConfigInVMs($CustomKernel, $CustomLIS, $EnableSRIOV, $AllVMData, $TestProvider) {
-	$retValue = $true
+    $retValue = $true
+
+	# Check the registration of the RHEL VHDs
+	# RedhatNetworkUsername and #RedhatNetworkPassword should be present in $XMLSecrets file at below location -
+	# RedhatNetworkUsername = $XMLSecrets.secrets.RedhatNetwork.Username
+	# RedhatNetworkPassword = $XMLSecrets.secrets.RedhatNetwork.Password	
+	if ($Global:TestPlatform -imatch "HyperV") {
+		$RedhatNetworkUsername = $Global:XMLSecrets.secrets.RedhatNetwork.Username
+		$RedhatNetworkPassword = $Global:XMLSecrets.secrets.RedhatNetwork.Password
+		if ($RedhatNetworkUsername -and $RedhatNetworkPassword) {
+		Install-RhelSubscription -AllVMData $AllVMData -RedhatNetworkUsername $RedhatNetworkUsername `
+			-RedhatNetworkPassword $RedhatNetworkPassword
+		} else {
+			if ( -not $RedhatNetworkUsername ) { Write-Loginfo "RHN username is not available in secrets file." }
+			if ( -not $RedhatNetworkPassword ) { Write-Loginfo "RHN password is not available in secrets file." }
+			Write-LogWarn "Skipping Install-RhelSubscription()."
+		}
+	}
+
 	if ( $CustomKernel)
 	{
 		Write-LogInfo "Custom kernel: $CustomKernel will be installed on all machines..."
