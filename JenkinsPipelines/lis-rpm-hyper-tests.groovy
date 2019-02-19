@@ -37,11 +37,11 @@ properties ([
             description: ''],
         [$class: 'StringParameterDefinition',
             name: 'GIT_REPO',
-            defaultValue: "https://github.com/LIS/LISAv2.git",
+            defaultValue: "https://github.com/iamshital/LISAv2.git",
             description: ''],
         [$class: 'StringParameterDefinition',
             name: 'GIT_BRANCH',
-            defaultValue: "master",
+            defaultValue: "lisav2hyperv",
             description: '']
         ]
     ]

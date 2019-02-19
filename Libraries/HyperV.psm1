@@ -386,7 +386,7 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
                 Move-VMStorage $CurrentVMName -DestinationStoragePath $DestinationOsVHDPath
                 Add-ClusterVirtualMachineRole -VirtualMachine $CurrentVMName
                 if ($? -eq $False) {
-                    LogErr "High Availability configure for VM ${CurrentVMName} could not be added to the Hyper-V cluster"
+                    Write-LogErr "High Availability configure for VM ${CurrentVMName} could not be added to the Hyper-V cluster"
                     $ErrorCount += 1
                 }
             }
