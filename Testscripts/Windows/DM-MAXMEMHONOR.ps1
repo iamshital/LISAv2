@@ -74,8 +74,8 @@ function Main {
         Write-LogInfo "appGitTag is  $appGitTag"
         Write-LogInfo "Param vm1 Details are -VM $VM1 -minMem $minMem -maxMem $TestParams.maxMem -startupMem $TestParams.startupMem -memWeight $memWeight"
         Write-LogInfo "Param vm2 Details are -VM $VM2 -minMem $minMem1 -maxMem $maxMem1 -startupMem $TestParams.startupMem1 -memWeight $memWeight1"
-        Set-VMDynamicMemory -VM $VM1 -minMem $minMem -maxMem $maxMem -startupMem $startupMem -memWeight $TestParams.memWeight
-        Set-VMDynamicMemory -VM $VM2 -minMem $minMem1 -maxMem $maxMem1 -startupMem $startupMem1 -memWeight $TestParams.memWeight1
+        Set-VMDynamicMemory -VM $VM1 -minMem $minMem -maxMem $maxMem -startupMem $startupMem -memWeight $TestParams.memWeight | Out-Null
+        Set-VMDynamicMemory -VM $VM2 -minMem $minMem1 -maxMem $maxMem1 -startupMem $startupMem1 -memWeight $TestParams.memWeight1 | Out-Null
         Write-LogInfo "Starting VM1 $vm1name"
         $VM1Ipv4=Start-VMandGetIP $vm1name $HvServer $VMPort $user $password
         # change working directory to root dir

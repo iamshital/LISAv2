@@ -19,7 +19,7 @@ function Start-LISAv2 {
 		[string] $ParametersFile = "",
 
 		# [Required]
-		[ValidateSet('Azure','HyperV','OLQ','WSL',IgnoreCase = $false)]
+		[ValidateSet('Azure','HyperV','OLQ','WSL' ,'OLVM',IgnoreCase = $false)]
 		[string] $TestPlatform = "",
 
 		# [Required] for Azure.
@@ -34,6 +34,7 @@ function Start-LISAv2 {
 		[string] $RGIdentifier = "",
 		[string] $OsVHD = "",   #... [Azure: Required only if -ARMImageName is not provided.]
 								#... [HyperV: Mandatory]
+								#... [OLVM: Mandatory]
 								#... [WSL: Mandatory, which can be the URL of the distro, or the path to the distro file on the local host]
 		[string] $TestCategory = "",
 		[string] $TestArea = "",
@@ -139,7 +140,7 @@ function Start-LISAv2 {
 			}
 
 			# Validate test platform, and select test controller of the platform
-			$supportedPlatforms = @("Azure", "HyperV", "OLQ", "WSL")
+			$supportedPlatforms = @("Azure", "HyperV", "OLQ", "WSL", "OLVM")
 			if ($paramTable.ContainsKey("TestPlatform")) {
 				$testPlatform = $paramTable["TestPlatform"]
 			}

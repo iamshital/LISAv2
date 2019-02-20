@@ -151,7 +151,7 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 			$vmData = $allVMData
 		}
 		if ($TestPlatform.StartsWith('OL')) {
-			$FilesToDownload = "over*.txt"
+			$FilesToDownload = "*.txt"
 		}
 		else{
 			$FilesToDownload = "$($vmData.RoleName)-*.txt"

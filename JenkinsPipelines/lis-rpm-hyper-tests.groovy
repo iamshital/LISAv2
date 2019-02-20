@@ -29,7 +29,7 @@ properties ([
             description: 'What test areas to run'],
         [$class: 'StringParameterDefinition',
             name: 'EXCLUDE_TESTS',
-            defaultValue: "",
+            defaultValue: "PRODUCTION-CHECKPOINT-iSCSI",
             description: ''],
         [$class: 'StringParameterDefinition',
             name: 'RUN_SELECTED_TESTS',

@@ -54,8 +54,7 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
                 if ($item.Name.Value -eq $text) {
                     $allowedCount = [int](($currentStatus[$counter].Limit) * ($AllowedUsagePercentage / 100))
                     #Write-LogInfo "Max allowed $($item.Name.LocalizedValue) usage : $allowedCount out of $(($currentStatus[$counter].Limit))."
-                    if ($currentStatus[$counter].CurrentValue -le $allowedCount) {
-                    } else {
+                    if ($currentStatus[$counter].CurrentValue -gt $allowedCount) {
                         Write-LogErr "  Current $text Estimated use: $($currentStatus[$counter].CurrentValue)"
                         $overFlowErrors += 1
                     }
@@ -63,10 +62,7 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
                 if ($item.Name.Value -eq "cores") {
                     $allowedCount = [int](($currentStatus[$counter].Limit) * ($AllowedUsagePercentage / 100))
                     #Write-LogInfo "Max allowed $($item.Name.LocalizedValue) usage : $allowedCount out of $(($currentStatus[$counter].Limit))."
-                    if ($currentStatus[$counter].CurrentValue -le $allowedCount) {
-
-                    }
-                    else {
+                    if ($currentStatus[$counter].CurrentValue -gt $allowedCount) {
                         Write-LogErr "  Current Regional Cores Estimated use: $($currentStatus[$counter].CurrentValue)"
                         $overFlowErrors += 1
                     }
@@ -118,15 +114,13 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
             Write-LogInfo "Estimating VM #$vmCounter usage."
             if ($OverrideVMSize) {
                 $testVMSize = $OverrideVMSize
-            }
-            else {
+            } else {
                 $testVMSize = $VM.ARMInstanceSize
             }
 
             if ($OverrideVMSize -and ($testVMUsage -gt 0)) {
                 #Do nothing.
-            }
-            else {
+            } else {
                 $testVMUsage = (Get-AzureRmVMSize -Location $Location | Where-Object { $_.Name -eq $testVMSize}).NumberOfCores
             }
 
@@ -281,8 +275,7 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
             $retryDeployment = 0
             if ( $null -ne $RG.Tag ) {
                 $groupName = "LISAv2-" + $RG.Tag + "-" + $Distro + "-" + "$TestID-" + "$uniqueId"
-            }
-            else {
+            } else {
                 $groupName = "LISAv2-" + $SetupTypeData.Name + "-" + $Distro + "-" + "$TestID-" + "$uniqueId"
             }
             if ($SetupTypeData.ResourceGroup.Count -gt 1) {
@@ -306,14 +299,22 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
                     elseif (!$UseExistingRG) {
                         $isServiceCreated = Create-ResourceGroup -RGName $groupName -location $location -CurrentTestData $TestCaseData
                     }
+                    Write-LogInfo "test platform is : $testPlatform"
                     if ($isServiceCreated -eq "True") {
-                        $azureDeployJSONFilePath = Join-Path $env:TEMP "$groupName.json"
-                        $null = Generate-AzureDeployJSONFile -RGName $groupName -ImageName $osImage -osVHD $osVHD -RGXMLData $RG -Location $location `
-                            -azuredeployJSONFilePath $azureDeployJSONFilePath -CurrentTestData $TestCaseData -TiPSessionId $TiPSessionId -TipCluster $TipCluster `
-                            -StorageAccountName $GlobalConfig.Global.Azure.Subscription.ARMStorageAccount
-                        $DeploymentStartTime = (Get-Date)
-                        $CreateRGDeployments = Create-ResourceGroupDeployment -RGName $groupName -location $location -TemplateFile $azureDeployJSONFilePath `
-                            -UseExistingRG $UseExistingRG
+                        if ($testPlatform -eq 'OLVM') {
+                            $DeploymentStartTime = (Get-Date)
+                            $CreateRGDeployments =  Create-ResourceForOLVM -RGName $groupName -Location $location -RGXMLData $RG -OsVHD $osVHD -CurrentTestData $TestCaseData
+                        }
+                        else {
+                            $azureDeployJSONFilePath = Join-Path $env:TEMP "$groupName.json"
+                            $null = Generate-AzureDeployJSONFile -RGName $groupName -ImageName $osImage -osVHD $osVHD -RGXMLData $RG -Location $location `
+                                -azuredeployJSONFilePath $azureDeployJSONFilePath -CurrentTestData $TestCaseData -TiPSessionId $TiPSessionId -TipCluster $TipCluster `
+                                -StorageAccountName $GlobalConfig.Global.Azure.Subscription.ARMStorageAccount
+                            $DeploymentStartTime = (Get-Date)
+                            $CreateRGDeployments = Create-ResourceGroupDeployment -RGName $groupName -location $location -TemplateFile $azureDeployJSONFilePath `
+                                -UseExistingRG $UseExistingRG
+                        }
+
                         $DeploymentEndTime = (Get-Date)
                         $DeploymentElapsedTime = $DeploymentEndTime - $DeploymentStartTime
                         if ( $CreateRGDeployments ) {
@@ -340,22 +341,75 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
                         $retValue = "False"
                         $isServiceDeployed = "False"
                     }
-                }
-                else {
+                } else {
                     Write-LogErr "Unable to delete existing resource group - $groupName"
                     $retryDeployment = 3
                     $retValue = "False"
                     $isServiceDeployed = "False"
                 }
             }
-        }
-        else {
+        } else {
             Write-LogErr "Core quota is not sufficient. Stopping VM deployment."
             $retValue = "False"
             $isServiceDeployed = "False"
         }
     }
     return $retValue, $deployedGroups, $resourceGroupCount, $DeploymentElapsedTime
+}
+
+Function Create-ResourceForOLVM([string]$RGName, [string]$Location, $RGXMLData, [string]$OsVHD, $CurrentTestData) {
+
+    $randomVal = Get-Random -Maximum 999999 -Minimum 111111
+    $networkName = "Network$randomVal"
+	$NICName = "NIC$randomVal"
+	$publicIPAddressName = "PublicIP$randomVal"
+	$SubnetName = "Subnet$randomVal"
+	$SubnetAddressPrefix = "10.0.0.0/24"
+	$VnetAddressPrefix = "10.0.0.0/16"
+    $DNSNameLabel = "dns$randomVal"
+    $retValue = $false
+    $VMSize = $null
+
+    foreach ( $newVM in $RGXMLData.VirtualMachine) {
+        if ( $CurrentTestData.OverrideVMSize) {
+            $VMSize = $CurrentTestData.OverrideVMSize
+        }
+        else {
+            $VMSize = $newVM.ARMInstanceSize
+        }
+    }
+
+    $StorageAccountName = $GlobalConfig.Global.Azure.Subscription.ARMStorageAccount
+    $vhduri = "https://$StorageAccountName.blob.core.windows.net/vhds/$OsVHD"
+    $vmName = Get-NewVMName -namePrefix $RGName -numberOfVMs 0
+    $sourceContainer = $vhduri.Split("/")[$vhduri.Split("/").Count - 2]
+    $destVHDName = "$randomVal-$OsVHD"
+
+    $copyStatus = Copy-VHDToAnotherStorageAccount -sourceStorageAccount $StorageAccountName -sourceStorageContainer $sourceContainer -destinationStorageAccount $StorageAccountName -destinationStorageContainer "vhds" -vhdName $OsVHD -destVHDName $destVHDName
+    if (!$copyStatus) {
+		Throw "Failed to copy the VHD to $ARMStorageAccount"
+		} else {
+		Write-LogInfo "New Base VHD name - $destVHDName"
+    }
+
+    $vhduri = "https://$StorageAccountName.blob.core.windows.net/vhds/$destVHDName"
+
+    try {
+        $vmSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name $SubnetName -AddressPrefix $SubnetAddressPrefix
+        $Vnet = New-AzureRmVirtualNetwork -Name $networkName -ResourceGroupName $RGName -Location $Location -AddressPrefix $VnetAddressPrefix -Subnet $vmSubnet -force
+        $publicIPInstance = New-AzureRmPublicIpAddress -Name $publicIPAddressName -DomainNameLabel $DNSNameLabel -ResourceGroupName $RGName -Location $Location -AllocationMethod Dynamic -force
+        $NIC = New-AzureRmNetworkInterface -Name $NICName -ResourceGroupName $RGName -Location $Location -SubnetId $Vnet.Subnets[0].Id -PublicIpAddressId $publicIPInstance.Id -Force
+        $virtualMachine = New-AzureRmVMConfig -VMName $vmName -VMSize $VMSize -ErrorAction Stop
+        $virtualMachine = Add-AzureRmVMNetworkInterface -VM $virtualMachine -Id $NIC.Id -ErrorAction Stop
+        $virtualMachine = Set-AzureRmVMOSDisk -VM $virtualMachine -Name $destVHDName -VhdUri $vhduri -CreateOption Attach -Linux -ErrorAction Stop
+        Write-LogInfo "Creating a OLVM "
+        New-AzureRmVm -ResourceGroupName $RGName -Location $Location  -VM $virtualMachine -ErrorAction Stop
+        $retValue = $true
+    }
+    catch {
+        Write-LogErr "Create-ResourceForVM failed with an error : $_"
+    }
+    return $retValue
 }
 
 Function Delete-ResourceGroup([string]$RGName, [switch]$KeepDisks, [bool]$UseExistingRG) {
@@ -391,7 +445,9 @@ Function Delete-ResourceGroup([string]$RGName, [switch]$KeepDisks, [bool]$UseExi
                 $CleanupRG = Get-AzureRmResourceGroup  -Name $XmlSecrets.secrets.AutomationRunbooks.ResourceGroupName -ErrorAction SilentlyContinue
             }
             if ($CleanupRG) {
-                $rubookJob = Start-AzureRmAutomationRunbook -Name $XmlSecrets.secrets.AutomationRunbooks.CleanupResourceGroupRunBook -Parameters $parameters -AutomationAccountName $XmlSecrets.secrets.AutomationRunbooks.AutomationAccountName -ResourceGroupName $XmlSecrets.secrets.AutomationRunbooks.ResourceGroupName
+                $rubookJob = Start-AzureRmAutomationRunbook -Name $XmlSecrets.secrets.AutomationRunbooks.CleanupResourceGroupRunBook `
+                                -Parameters $parameters -AutomationAccountName $XmlSecrets.secrets.AutomationRunbooks.AutomationAccountName `
+                                -ResourceGroupName $XmlSecrets.secrets.AutomationRunbooks.ResourceGroupName
                 Write-LogInfo "Cleanup job ID: '$($rubookJob.JobId)' for '$RGName' started using runbooks."
                 $retValue = $true
             }
@@ -426,7 +482,7 @@ Function Create-ResourceGroup([string]$RGName, $location, $CurrentTestData) {
             }
             $operationStatus = $createRG.ProvisioningState
             if ($operationStatus -eq "Succeeded") {
-                Write-LogInfo "Resource Group $RGName Created."
+                Write-LogInfo "Resource Group $RGName created."
                 Add-DefaultTagsToResourceGroup -ResourceGroup $RGName -CurrentTestData $CurrentTestData
                 $retValue = $true
             }
@@ -458,7 +514,8 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
             $FailCounter++
             if ($location) {
                 Write-LogInfo "Creating Deployment using $TemplateFile ..."
-                $createRGDeployment = New-AzureRmResourceGroupDeployment -Name $ResourceGroupDeploymentName -ResourceGroupName $RGName -TemplateFile $TemplateFile -Verbose
+                $createRGDeployment = New-AzureRmResourceGroupDeployment -Name $ResourceGroupDeploymentName `
+                                        -ResourceGroupName $RGName -TemplateFile $TemplateFile -Verbose
             }
             $operationStatus = $createRGDeployment.ProvisioningState
             if ($operationStatus -eq "Succeeded") {
@@ -475,7 +532,7 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
                         Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
                     }
                     else {
-                        Write-LogInfo "Cleanup successful for $RGName.."
+                        Write-LogInfo "Cleanup successful for $RGName."
                     }
                 }
                 else {
@@ -490,7 +547,7 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
                             Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
                         }
                         else {
-                            Write-LogInfo "Cleanup successful for $RGName.."
+                            Write-LogInfo "Cleanup successful for $RGName."
                         }
                     }
                 }
@@ -545,6 +602,9 @@ Function Get-AllDeploymentData($ResourceGroups)
         foreach ($testVM in $RGVMs)
         {
             $QuickVMNode = Create-QuickVMNode
+            if ($testPlatform -eq 'OLVM') {
+                Add-Member -InputObject $QuickVMNode -MemberType NoteProperty -Name "SSHPort" -Value "22" -Force
+            }
             $InboundNatRules = $LBdata.Properties.InboundNatRules
             foreach ($endPoint in $InboundNatRules)
             {
@@ -638,7 +698,7 @@ Function Generate-AzureDeployJSONFile ($RGName, $ImageName, $osVHD, $RGXMLData, 
         }
     }
     else {
-        $DiskType += "-Persistant"
+        $DiskType += "-Persistent"
         $UseEphemeralOSDisk = $false
     }
     #Generate the initial data

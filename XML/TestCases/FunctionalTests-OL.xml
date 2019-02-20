@@ -10,12 +10,12 @@
         </TestParameters>
         <Platform>OL</Platform>
         <Category>OL</Category>
-        <Area>ol</Area>
+        <Area>OL</Area>
         <Tags>package</Tags>
         <Priority>0</Priority>
     </test>
     <test>
-        <TestName>KERNEL-CONFIG-VERIFY-TEST</TestName>
+        <TestName>OL-KERNEL-CONFIG-VERIFY-TEST</TestName>
         <testScript>KERNEL-CONFIG-VERIFY-TEST.ps1</testScript>
         <files>.\Testscripts\Linux\utils.sh,.\Testscripts\Linux\kernel_config_verify_test.sh</files>
         <setupType>OneVM</setupType>

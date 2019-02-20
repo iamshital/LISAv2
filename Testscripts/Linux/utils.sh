@@ -238,19 +238,6 @@ GetDistro()
 	#Get distro (snipper take from alsa-info.sh)
 	__DISTRO=$(grep -ihs "Ubuntu\|SUSE\|Fedora\|Debian\|CentOS\|Red Hat Enterprise Linux\|clear-linux-os\|CoreOS" /{etc,usr/lib}/{issue,*release,*version})
 	case $__DISTRO in
-		*Ubuntu*12*)
-			DISTRO=ubuntu_12
-			;;
-		*Ubuntu*13*)
-			DISTRO=ubuntu_13
-			;;
-		*Ubuntu*14*)
-			DISTRO=ubuntu_14
-			;;
-		# ubuntu 14 in current beta state does not use the number 14 in its description
-		*Ubuntu*Trusty*)
-			DISTRO=ubuntu_14
-			;;
 		*Ubuntu*)
 			DISTRO=ubuntu_x
 			;;
@@ -278,10 +265,10 @@ GetDistro()
 		*CentOS*release*5.*Final)
 			DISTRO=centos_5
 			;;
-		*CentOS*release*6.*)
+		*CentOS*release*6\.*Final*)
 			DISTRO=centos_6
 			;;
-		*CentOS*Linux*7.*)
+		*CentOS*release*7\.*\.*)
 			DISTRO=centos_7
 			;;
 		*CentOS*)
@@ -302,10 +289,10 @@ GetDistro()
 		*Red*5.*)
 			DISTRO=redhat_5
 			;;
-		*Red*6.*)
+		*Red*6\.*)
 			DISTRO=redhat_6
 			;;
-		*Red*7.*)
+		*Red*7\.*)
 			DISTRO=redhat_7
 			;;
 		*Red*8.*)
