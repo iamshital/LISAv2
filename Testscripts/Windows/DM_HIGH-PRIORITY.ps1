@@ -71,11 +71,11 @@ function Main {
         $memweight1=$TestParams.memWeight1
         $memweight2=$TestParams.memWeight2
         Set-VMDynamicMemory -VM $VM1 -minMem $TestParams.minMem1 -maxMem $TestParams.maxMem1 `
-            -startupMem $TestParams.startupMem1 -memWeight $memweight1
+            -startupMem $TestParams.startupMem1 -memWeight $memweight1  | Out-Null
         Set-VMDynamicMemory -VM $VM2 -minMem $TestParams.minMem2 -maxMem $TestParams.maxMem2 `
-             -startupMem $TestParams.startupMem2 -memWeight $memweight2
+            -startupMem $TestParams.startupMem2 -memWeight $memweight2 | Out-Null
         # Waiting for the VM to run again and respond to SSH - port 22
-        $VM1Ipv4=Start-VMandGetIP $VM1Name $HvServer $VMPort $user $password
+        $VM1Ipv4 = Start-VMandGetIP $VM1Name $HvServer $VMPort $user $password
         $summaryLog = "${vmName}_summary.log"
         Remove-Item $summaryLog -ErrorAction SilentlyContinue
         $vm2 = Get-VM -Name $VM2Name -ComputerName $HvServer -ErrorAction SilentlyContinue
@@ -89,7 +89,7 @@ function Main {
         #
         # LIS Started VM1, so start VM2
         #
-        $vm2Ipv4=Start-VMandGetIP $VM2Name $HvServer $VMPort $user $password
+        $vm2Ipv4 = Start-VMandGetIP $VM2Name $HvServer $VMPort $user $password
         $timeoutStress = 0
         $sleepPeriod = 120 #seconds
         # get VM1 and VM2's Memory
@@ -99,7 +99,7 @@ function Main {
             [int64]$vm2BeforeAssigned = ($vm2.MemoryAssigned/1MB)
             [int64]$vm2BeforeDemand = ($vm2.MemoryDemand/1MB)
             if (($vm1BeforeAssigned -gt 0) -and ($vm1BeforeDemand -gt 0) -and ($vm2BeforeAssigned -gt 0) -and ($vm2BeforeDemand -gt 0)) {
-              break
+                break
             }
             $sleepPeriod-= 5
             Start-Sleep -s 5
@@ -133,15 +133,15 @@ function Main {
         [int]$vm2Duration = 380 #seconds
         # Send Command to consume
         $cmdAddConstants = "echo -e `"timeoutStress=$($timeoutStress)\nmemMB=$($vm1ConsumeMem)\nduration=$($vm1Duration)\nchunk=$($chunks)`" > /home/$user/constants.sh"
-        Run-LinuxCmd -username $user -password $password -ip $VM1Ipv4 -port $VMPort -command $cmdAddConstants -runAsSudo
+        $null = Run-LinuxCmd -username $user -password $password -ip $VM1Ipv4 -port $VMPort -command $cmdAddConstants -runAsSudo
         $Memcheck = "echo '${password}' | sudo -S -s eval `"export HOME=``pwd``;. utils.sh && UtilsInit && ConsumeMemory`""
-        $job1=Run-LinuxCmd -username $user -password $password -ip $VM1Ipv4 -port $VMPort -command $Memcheck -runAsSudo -RunInBackGround
+        $job1 = Run-LinuxCmd -username $user -password $password -ip $VM1Ipv4 -port $VMPort -command $Memcheck -runAsSudo -RunInBackGround
         if (-not $?) {
             throw "Unable to start job for creating pressure on $VM1Name" | Tee-Object -Append -file $summaryLog
         }
         $cmdAddConstants = "echo -e `"timeoutStress=$($timeoutStress)\nmemMB=$($vm2ConsumeMem)\nduration=$($vm2Duration)\nchunk=$($chunks)`" > /home/$user/constants.sh"
-        Run-LinuxCmd -username $user -password $password -ip $vm2Ipv4 -port $VMPort -command $cmdAddConstants -runAsSudo
-        $job2=Run-LinuxCmd -username $user -password $password -ip $vm2Ipv4 -port $VMPort -command $Memcheck -runAsSudo -RunInBackGround
+        $null = Run-LinuxCmd -username $user -password $password -ip $vm2Ipv4 -port $VMPort -command $cmdAddConstants -runAsSudo
+        $job2 = Run-LinuxCmd -username $user -password $password -ip $vm2Ipv4 -port $VMPort -command $Memcheck -runAsSudo -RunInBackGround
         if (-not $?) {
             throw "Unable to start job for creating pressure on $VM2Name" | Tee-Object -Append -file $summaryLog
         }

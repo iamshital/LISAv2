@@ -49,16 +49,10 @@ $scriptBlock = {
         # sendig command to vm: $cmdToVM"
         $FILE_NAME = "ConsumeMem.sh"
         Set-Content $FILE_NAME "$cmdToVM"
-        # Remote copy did not work in Script block so pscp tool is to send file
-        .\Tools\pscp.exe -pw ${password} -P ${VMSSHPort} ${FILE_NAME} $user@${VMIpv4}:
-        if ([string]::Compare($leaveTrail, "yes", $true) -ne 0) {
-            Remove-Item ".\${FILE_NAME}"
-        }
-        # The Run-LinuxCmd did not work on Scrip block so plink is used to execute the command
+        $null = Copy-RemoteFiles -uploadTo $VMIpv4 -port $VMSSHPort -files $FILE_NAME -username $user -password $password -uploadd
         $command = "echo $password | chmod u+x ${FILE_NAME} && sed -i 's/\r//g' ${FILE_NAME} && ./${FILE_NAME}"
-        .\tools\plink.exe -t -pw $password -P $VMSSHPort $user@$VMIpv4 $command
-        return $retVal
-   }
+        $null = Run-LinuxCmd -username $user -password $password -ip $VM1Ipv4 -port $VMSSHPort -command $command -runAsSudo
+    }
 }
 
 #######################################################################
@@ -72,8 +66,8 @@ function Main {
         $TestParams, $AllVmData
     )
     $currentTestResult = Create-TestResultObject
-    $resultArr = @()
     try {
+        $resultArr = @()
         $testResult = $null
         $captureVMData = $allVMData
         $VMName = $captureVMData.RoleName

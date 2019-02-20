@@ -72,9 +72,9 @@ function Main {
         Write-LogInfo "Param vm1 Details are -VM $VM1 -minMem $TestParams.minMem -maxMem $TestParams.maxMem -startupMem $TestParams.startupMem -memWeight $TestParams.memWeight"
         Write-LogInfo "Param vm2 Details are -VM $VM2 -minMem $TestParams.minMem1 -maxMem $TestParams.maxMem1 -startupMem $TestParams.startupMem1 -memWeight $TestParams.memWeight1"
         Set-VMDynamicMemory -VM $VM1 -minMem $TestParams.minMem -maxMem $TestParams.maxMem `
-            -startupMem $TestParams.startupMem -memWeight $TestParams.memWeight
+            -startupMem $TestParams.startupMem -memWeight $TestParams.memWeight | Out-Null
         Set-VMDynamicMemory -VM $VM2 -minMem $TestParams.minMem1 -maxMem $TestParams.maxMem1 `
-            -startupMem $TestParams.startupMem1 -memWeight $TestParams.memWeight1
+            -startupMem $TestParams.startupMem1 -memWeight $TestParams.memWeight1 | Out-Null
         Write-LogInfo "Starting VM1 $vm1name"
         $VM1Ipv4=Start-VMandGetIP $vm1name $HvServer $VMPort $user $password
         Write-LogInfo "IP address of the VM $vm1name is  $VM1Ipv4"
