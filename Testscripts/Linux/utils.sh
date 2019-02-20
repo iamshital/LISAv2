@@ -265,10 +265,10 @@ GetDistro()
 		*CentOS*release*5.*Final)
 			DISTRO=centos_5
 			;;
-		*CentOS*release*6.*)
+		*CentOS*release*6\.*Final*)
 			DISTRO=centos_6
 			;;
-		*CentOS*Linux*7.*)
+		*CentOS*release*7\.*\.*)
 			DISTRO=centos_7
 			;;
 		*CentOS*)
@@ -289,10 +289,10 @@ GetDistro()
 		*Red*5.*)
 			DISTRO=redhat_5
 			;;
-		*Red*6.*)
+		*Red*6\.*)
 			DISTRO=redhat_6
 			;;
-		*Red*7.*)
+		*Red*7\.*)
 			DISTRO=redhat_7
 			;;
 		*Red*8.*)
