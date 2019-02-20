@@ -67,7 +67,7 @@ Class OLQProvider : AzureProvider
 
         $cmdResult = Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -Username $global:user -password $global:password `
         -command "bash ./deploy_ol_vm.sh -OLImageUrl $($this.OLImageUrl) -OLip $($allVMData.InternalIP) -HostFwdPort $($this.HostFwdPort) -OLUser $($this.OLUserName) -OLUserPassword $($this.OLUserPassword) -OLImageName $($this.OLImageName)" `
-        -runAsSudo -runMaxAllowedTime 1000
+        -runAsSudo -runMaxAllowedTime 2000
 
         if (-not $cmdResult) {
             Write-LogErr "Fail to Deploy OL VM"

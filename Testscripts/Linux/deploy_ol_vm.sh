@@ -120,7 +120,7 @@ Download_Image_Files()
         echo "Download OL image succeed"
     fi
     rm -rf $OL_BUILD_DIR
-    mkdir $OL_BUILD_DIR && tar xf $destination_image_name -C $OL_BUILD_DIR --strip-components 1
+    mkdir $OL_BUILD_DIR && tar xf $destination_image_name -C $OL_BUILD_DIR
     exit_status=$?
     if [ $exit_status -ne 0 ]; then
         echo "untar of OL image failed"
@@ -173,7 +173,7 @@ Start_OL_VM()
     fi    
     echo "Wait for the OL VM to boot up ..."
     sleep 30
-    retry_times=20
+    retry_times=40
     exit_status=1
     while [ $exit_status -ne 0 ] && [ $retry_times -gt 0 ];
     do
