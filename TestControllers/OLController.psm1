@@ -26,6 +26,7 @@
 ###############################################################################################
 using Module ".\AzureController.psm1"
 using Module "..\TestProviders\OLQProvider.psm1"
+using Module "..\TestProviders\OLVMProvider.psm1"
 
 Class OLController : AzureController
 {

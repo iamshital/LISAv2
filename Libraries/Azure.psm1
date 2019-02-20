@@ -299,14 +299,22 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
                     elseif (!$UseExistingRG) {
                         $isServiceCreated = Create-ResourceGroup -RGName $groupName -location $location -CurrentTestData $TestCaseData
                     }
+                    Write-LogInfo "test platform is : $testPlatform"
                     if ($isServiceCreated -eq "True") {
-                        $azureDeployJSONFilePath = Join-Path $env:TEMP "$groupName.json"
-                        $null = Generate-AzureDeployJSONFile -RGName $groupName -ImageName $osImage -osVHD $osVHD -RGXMLData $RG -Location $location `
-                            -azuredeployJSONFilePath $azureDeployJSONFilePath -CurrentTestData $TestCaseData -TiPSessionId $TiPSessionId -TipCluster $TipCluster `
-                            -StorageAccountName $GlobalConfig.Global.Azure.Subscription.ARMStorageAccount
-                        $DeploymentStartTime = (Get-Date)
-                        $CreateRGDeployments = Create-ResourceGroupDeployment -RGName $groupName -location $location -TemplateFile $azureDeployJSONFilePath `
-                            -UseExistingRG $UseExistingRG
+                        if ($testPlatform -eq 'OLVM') {
+                            $DeploymentStartTime = (Get-Date)
+                            $CreateRGDeployments =  Create-ResourceForOLVM -RGName $groupName -Location $location -RGXMLData $RG -OsVHD $osVHD -CurrentTestData $TestCaseData
+                        }
+                        else {
+                            $azureDeployJSONFilePath = Join-Path $env:TEMP "$groupName.json"
+                            $null = Generate-AzureDeployJSONFile -RGName $groupName -ImageName $osImage -osVHD $osVHD -RGXMLData $RG -Location $location `
+                                -azuredeployJSONFilePath $azureDeployJSONFilePath -CurrentTestData $TestCaseData -TiPSessionId $TiPSessionId -TipCluster $TipCluster `
+                                -StorageAccountName $GlobalConfig.Global.Azure.Subscription.ARMStorageAccount
+                            $DeploymentStartTime = (Get-Date)
+                            $CreateRGDeployments = Create-ResourceGroupDeployment -RGName $groupName -location $location -TemplateFile $azureDeployJSONFilePath `
+                                -UseExistingRG $UseExistingRG
+                        }
+
                         $DeploymentEndTime = (Get-Date)
                         $DeploymentElapsedTime = $DeploymentEndTime - $DeploymentStartTime
                         if ( $CreateRGDeployments ) {
@@ -347,6 +355,61 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
         }
     }
     return $retValue, $deployedGroups, $resourceGroupCount, $DeploymentElapsedTime
+}
+
+Function Create-ResourceForOLVM([string]$RGName, [string]$Location, $RGXMLData, [string]$OsVHD, $CurrentTestData) {
+
+    $randomVal = Get-Random -Maximum 999999 -Minimum 111111
+    $networkName = "Network$randomVal"
+	$NICName = "NIC$randomVal"
+	$publicIPAddressName = "PublicIP$randomVal"
+	$SubnetName = "Subnet$randomVal"
+	$SubnetAddressPrefix = "10.0.0.0/24"
+	$VnetAddressPrefix = "10.0.0.0/16"
+    $DNSNameLabel = "dns$randomVal"
+    $retValue = $false
+    $VMSize = $null
+
+    foreach ( $newVM in $RGXMLData.VirtualMachine) {
+        if ( $CurrentTestData.OverrideVMSize) {
+            $VMSize = $CurrentTestData.OverrideVMSize
+        }
+        else {
+            $VMSize = $newVM.ARMInstanceSize
+        }
+    }
+
+    $StorageAccountName = $GlobalConfig.Global.Azure.Subscription.ARMStorageAccount
+    $vhduri = "https://$StorageAccountName.blob.core.windows.net/vhds/$OsVHD"
+    $vmName = Get-NewVMName -namePrefix $RGName -numberOfVMs 0
+    $sourceContainer = $vhduri.Split("/")[$vhduri.Split("/").Count - 2]
+    $destVHDName = "$randomVal-$OsVHD"
+
+    $copyStatus = Copy-VHDToAnotherStorageAccount -sourceStorageAccount $StorageAccountName -sourceStorageContainer $sourceContainer -destinationStorageAccount $StorageAccountName -destinationStorageContainer "vhds" -vhdName $OsVHD -destVHDName $destVHDName
+    if (!$copyStatus) {
+		Throw "Failed to copy the VHD to $ARMStorageAccount"
+		} else {
+		Write-LogInfo "New Base VHD name - $destVHDName"
+    }
+
+    $vhduri = "https://$StorageAccountName.blob.core.windows.net/vhds/$destVHDName"
+
+    try {
+        $vmSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name $SubnetName -AddressPrefix $SubnetAddressPrefix
+        $Vnet = New-AzureRmVirtualNetwork -Name $networkName -ResourceGroupName $RGName -Location $Location -AddressPrefix $VnetAddressPrefix -Subnet $vmSubnet -force
+        $publicIPInstance = New-AzureRmPublicIpAddress -Name $publicIPAddressName -DomainNameLabel $DNSNameLabel -ResourceGroupName $RGName -Location $Location -AllocationMethod Dynamic -force
+        $NIC = New-AzureRmNetworkInterface -Name $NICName -ResourceGroupName $RGName -Location $Location -SubnetId $Vnet.Subnets[0].Id -PublicIpAddressId $publicIPInstance.Id -Force
+        $virtualMachine = New-AzureRmVMConfig -VMName $vmName -VMSize $VMSize -ErrorAction Stop
+        $virtualMachine = Add-AzureRmVMNetworkInterface -VM $virtualMachine -Id $NIC.Id -ErrorAction Stop
+        $virtualMachine = Set-AzureRmVMOSDisk -VM $virtualMachine -Name $destVHDName -VhdUri $vhduri -CreateOption Attach -Linux -ErrorAction Stop
+        Write-LogInfo "Creating a OLVM "
+        New-AzureRmVm -ResourceGroupName $RGName -Location $Location  -VM $virtualMachine -ErrorAction Stop
+        $retValue = $true
+    }
+    catch {
+        Write-LogErr "Create-ResourceForVM failed with an error : $_"
+    }
+    return $retValue
 }
 
 Function Delete-ResourceGroup([string]$RGName, [switch]$KeepDisks, [bool]$UseExistingRG) {
@@ -539,6 +602,9 @@ Function Get-AllDeploymentData($ResourceGroups)
         foreach ($testVM in $RGVMs)
         {
             $QuickVMNode = Create-QuickVMNode
+            if ($testPlatform -eq 'OLVM') {
+                Add-Member -InputObject $QuickVMNode -MemberType NoteProperty -Name "SSHPort" -Value "22" -Force
+            }
             $InboundNatRules = $LBdata.Properties.InboundNatRules
             foreach ($endPoint in $InboundNatRules)
             {
