@@ -246,9 +246,18 @@ Class TestController
 		foreach ( $test in $allTests) {
 			# Inject replaceable parameters
 			foreach ($ReplaceableParameter in $ReplaceableTestParameters.ReplaceableTestParameters.Parameter) {
-				if ($test.InnerXml -imatch $ReplaceableParameter.ReplaceThis) {
-					$test.InnerXml = $test.InnerXml.Replace($ReplaceableParameter.ReplaceThis,$ReplaceableParameter.ReplaceWith)
-					Write-LogInfo "$($ReplaceableParameter.ReplaceThis)=$($ReplaceableParameter.ReplaceWith) injected to case $($test.testName)"
+				$FindReplaceArray = @(
+					("=$($ReplaceableParameter.ReplaceThis)<" ,"=$($ReplaceableParameter.ReplaceWith)<" ),
+					("=`"$($ReplaceableParameter.ReplaceThis)`"" ,"=`"$($ReplaceableParameter.ReplaceWith)`""),
+					(">$($ReplaceableParameter.ReplaceThis)<" ,">$($ReplaceableParameter.ReplaceWith)<")
+				)
+				foreach ($item in $FindReplaceArray) {
+					$Find = $item[0]
+					$Replace = $item[1]
+					if ($test.InnerXml -imatch $Find) {
+						$test.InnerXml = $test.InnerXml.Replace($Find,$Replace)
+						Write-LogInfo "$($ReplaceableParameter.ReplaceThis)=$($ReplaceableParameter.ReplaceWith) injected to case $($test.testName)"
+					}
 				}
 			}
 
@@ -550,6 +559,3 @@ Class TestController
 		$this.TestSummary.SaveHtmlTestSummary(".\Report\TestSummary-$global:TestID.html")
 	}
 }
-
-
-

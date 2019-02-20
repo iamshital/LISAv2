@@ -54,8 +54,7 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
                 if ($item.Name.Value -eq $text) {
                     $allowedCount = [int](($currentStatus[$counter].Limit) * ($AllowedUsagePercentage / 100))
                     #Write-LogInfo "Max allowed $($item.Name.LocalizedValue) usage : $allowedCount out of $(($currentStatus[$counter].Limit))."
-                    if ($currentStatus[$counter].CurrentValue -le $allowedCount) {
-                    } else {
+                    if ($currentStatus[$counter].CurrentValue -gt $allowedCount) {
                         Write-LogErr "  Current $text Estimated use: $($currentStatus[$counter].CurrentValue)"
                         $overFlowErrors += 1
                     }
@@ -63,10 +62,7 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
                 if ($item.Name.Value -eq "cores") {
                     $allowedCount = [int](($currentStatus[$counter].Limit) * ($AllowedUsagePercentage / 100))
                     #Write-LogInfo "Max allowed $($item.Name.LocalizedValue) usage : $allowedCount out of $(($currentStatus[$counter].Limit))."
-                    if ($currentStatus[$counter].CurrentValue -le $allowedCount) {
-
-                    }
-                    else {
+                    if ($currentStatus[$counter].CurrentValue -gt $allowedCount) {
                         Write-LogErr "  Current Regional Cores Estimated use: $($currentStatus[$counter].CurrentValue)"
                         $overFlowErrors += 1
                     }
@@ -118,15 +114,13 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
             Write-LogInfo "Estimating VM #$vmCounter usage."
             if ($OverrideVMSize) {
                 $testVMSize = $OverrideVMSize
-            }
-            else {
+            } else {
                 $testVMSize = $VM.ARMInstanceSize
             }
 
             if ($OverrideVMSize -and ($testVMUsage -gt 0)) {
                 #Do nothing.
-            }
-            else {
+            } else {
                 $testVMUsage = (Get-AzureRmVMSize -Location $Location | Where-Object { $_.Name -eq $testVMSize}).NumberOfCores
             }
 
@@ -281,8 +275,7 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
             $retryDeployment = 0
             if ( $null -ne $RG.Tag ) {
                 $groupName = "LISAv2-" + $RG.Tag + "-" + $Distro + "-" + "$TestID-" + "$uniqueId"
-            }
-            else {
+            } else {
                 $groupName = "LISAv2-" + $SetupTypeData.Name + "-" + $Distro + "-" + "$TestID-" + "$uniqueId"
             }
             if ($SetupTypeData.ResourceGroup.Count -gt 1) {
@@ -340,16 +333,14 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
                         $retValue = "False"
                         $isServiceDeployed = "False"
                     }
-                }
-                else {
+                } else {
                     Write-LogErr "Unable to delete existing resource group - $groupName"
                     $retryDeployment = 3
                     $retValue = "False"
                     $isServiceDeployed = "False"
                 }
             }
-        }
-        else {
+        } else {
             Write-LogErr "Core quota is not sufficient. Stopping VM deployment."
             $retValue = "False"
             $isServiceDeployed = "False"
@@ -391,7 +382,9 @@ Function Delete-ResourceGroup([string]$RGName, [switch]$KeepDisks, [bool]$UseExi
                 $CleanupRG = Get-AzureRmResourceGroup  -Name $XmlSecrets.secrets.AutomationRunbooks.ResourceGroupName -ErrorAction SilentlyContinue
             }
             if ($CleanupRG) {
-                $rubookJob = Start-AzureRmAutomationRunbook -Name $XmlSecrets.secrets.AutomationRunbooks.CleanupResourceGroupRunBook -Parameters $parameters -AutomationAccountName $XmlSecrets.secrets.AutomationRunbooks.AutomationAccountName -ResourceGroupName $XmlSecrets.secrets.AutomationRunbooks.ResourceGroupName
+                $rubookJob = Start-AzureRmAutomationRunbook -Name $XmlSecrets.secrets.AutomationRunbooks.CleanupResourceGroupRunBook `
+                                -Parameters $parameters -AutomationAccountName $XmlSecrets.secrets.AutomationRunbooks.AutomationAccountName `
+                                -ResourceGroupName $XmlSecrets.secrets.AutomationRunbooks.ResourceGroupName
                 Write-LogInfo "Cleanup job ID: '$($rubookJob.JobId)' for '$RGName' started using runbooks."
                 $retValue = $true
             }
@@ -426,7 +419,7 @@ Function Create-ResourceGroup([string]$RGName, $location, $CurrentTestData) {
             }
             $operationStatus = $createRG.ProvisioningState
             if ($operationStatus -eq "Succeeded") {
-                Write-LogInfo "Resource Group $RGName Created."
+                Write-LogInfo "Resource Group $RGName created."
                 Add-DefaultTagsToResourceGroup -ResourceGroup $RGName -CurrentTestData $CurrentTestData
                 $retValue = $true
             }
@@ -458,7 +451,8 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
             $FailCounter++
             if ($location) {
                 Write-LogInfo "Creating Deployment using $TemplateFile ..."
-                $createRGDeployment = New-AzureRmResourceGroupDeployment -Name $ResourceGroupDeploymentName -ResourceGroupName $RGName -TemplateFile $TemplateFile -Verbose
+                $createRGDeployment = New-AzureRmResourceGroupDeployment -Name $ResourceGroupDeploymentName `
+                                        -ResourceGroupName $RGName -TemplateFile $TemplateFile -Verbose
             }
             $operationStatus = $createRGDeployment.ProvisioningState
             if ($operationStatus -eq "Succeeded") {
@@ -475,7 +469,7 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
                         Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
                     }
                     else {
-                        Write-LogInfo "Cleanup successful for $RGName.."
+                        Write-LogInfo "Cleanup successful for $RGName."
                     }
                 }
                 else {
@@ -490,7 +484,7 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
                             Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
                         }
                         else {
-                            Write-LogInfo "Cleanup successful for $RGName.."
+                            Write-LogInfo "Cleanup successful for $RGName."
                         }
                     }
                 }
@@ -638,7 +632,7 @@ Function Generate-AzureDeployJSONFile ($RGName, $ImageName, $osVHD, $RGXMLData, 
         }
     }
     else {
-        $DiskType += "-Persistant"
+        $DiskType += "-Persistent"
         $UseEphemeralOSDisk = $false
     }
     #Generate the initial data
