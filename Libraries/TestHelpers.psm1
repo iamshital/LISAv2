@@ -328,9 +328,15 @@ Function Wrap-CommandsToFile([string] $username,[string] $password,[string] $ip,
 	}
 }
 
-Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string] $command, [int] $port, [switch]$runAsSudo, [Boolean]$WriteHostOnly, [Boolean]$NoLogsPlease, [switch]$ignoreLinuxExitCode, [int]$runMaxAllowedTime = 300, [switch]$RunInBackGround, [int]$maxRetryCount = 20)
+Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string] $command, [int] $port, [switch]$runAsSudo, [Boolean]$WriteHostOnly, [Boolean]$NoLogsPlease, [switch]$ignoreLinuxExitCode, [int]$runMaxAllowedTime = 300, [switch]$RunInBackGround, [int]$maxRetryCount = 20, [string] $MaskStrings)
 {
 	Wrap-CommandsToFile $username $password $ip $command $port
+	$MaskedCommand = $command
+	if ($MaskStrings) {
+		foreach ($item in $MaskStrings.Split(",")) {
+			if ($item) { $MaskedCommand = $MaskedCommand.Replace($item,'*******') }
+		}
+	}
 	$randomFileName = [System.IO.Path]::GetRandomFileName()
 	if ( $maxRetryCount -eq 0)
 	{
@@ -345,12 +351,12 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 		if ( $detectedDistro -eq "COREOS" )
 		{
 			$linuxCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && echo $plainTextPassword | sudo -S env `"PATH=`$PATH`" bash -c `'bash runtest.sh ; echo AZURE-LINUX-EXIT-CODE-`$?`' `""
-			$logCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && echo $plainTextPassword | sudo -S env `"PATH=`$PATH`" $command`""
+			$logCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && echo $plainTextPassword | sudo -S env `"PATH=`$PATH`" $MaskedCommand`""
 		}
 		else
 		{
 			$linuxCommand = "`"echo $plainTextPassword | sudo -S bash -c `'bash runtest.sh ; echo AZURE-LINUX-EXIT-CODE-`$?`' `""
-			$logCommand = "`"echo $plainTextPassword | sudo -S $command`""
+			$logCommand = "`"echo $plainTextPassword | sudo -S $MaskedCommand`""
 		}
 	}
 	else
@@ -358,12 +364,12 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 		if ( $detectedDistro -eq "COREOS" )
 		{
 			$linuxCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && bash -c `'bash runtest.sh ; echo AZURE-LINUX-EXIT-CODE-`$?`' `""
-			$logCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && $command`""
+			$logCommand = "`"export PATH=/usr/share/oem/python/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/share/oem/bin:/opt/bin && $MaskedCommand`""
 		}
 		else
 		{
 			$linuxCommand = "`"bash -c `'bash runtest.sh ; echo AZURE-LINUX-EXIT-CODE-`$?`' `""
-			$logCommand = "`"$command`""
+			$logCommand = "`"$MaskedCommand`""
 		}
 	}
 	Write-LogInfo ".\tools\plink.exe -t -pw $password -P $port $username@$ip $logCommand"
@@ -482,7 +488,7 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 				-Status $runLinuxCmdJob.State -Id 87678 -SecondsRemaining ($RunMaxAllowedTime - $RunElaplsedTime) -Completed
 			if ( $isBackGroundProcessStarted -and !$isBackGroundProcessTerminated )
 			{
-				Write-LogInfo "$command is running in background with ID $($runLinuxCmdJob.Id) ..."
+				Write-LogInfo "$MaskedCommand is running in background with ID $($runLinuxCmdJob.Id) ..."
 				Add-Content -Path $LogDir\CurrentTestBackgroundJobs.txt -Value $runLinuxCmdJob.Id
 				$retValue = $runLinuxCmdJob.Id
 			}
@@ -508,18 +514,18 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 				if ($timeOut)
 				{
 					$retValue = ""
-					Throw "Calling function - $($MyInvocation.MyCommand). Timeout while executing command : $command"
+					Throw "Calling function - $($MyInvocation.MyCommand). Tmeout while executing command : $MaskedCommand"
 				}
 				Write-LogErr "Linux machine returned exit code : $($LinuxExitCode.Split("-")[4])"
 				if ($attempts -eq $maxRetryCount)
 				{
-					Throw "Calling function - $($MyInvocation.MyCommand). Failed to execute : $command."
+					Throw "Calling function - $($MyInvocation.MyCommand). Failed to execute : $MaskedCommand."
 				}
 				else
 				{
 					if ($notExceededTimeLimit)
 					{
-						Write-LogInfo "Failed to execute : $command. Retrying..."
+						Write-LogInfo "Failed to execute : $MaskedCommand. Retrying..."
 					}
 				}
 			}
@@ -605,7 +611,7 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 			if ($LinuxExitCode -imatch "AZURE-LINUX-EXIT-CODE-0")
 			{
 				$returnCode = 0
-				Write-LogInfo "$command executed successfully in $([math]::Round($RunElaplsedTime,2)) seconds." `
+				Write-LogInfo "$MaskedCommand executed successfully in $([math]::Round($RunElaplsedTime,2)) seconds." `
 					-WriteHostOnly $WriteHostOnly -NoLogsPlease $NoLogsPlease
 				$retValue = $RunLinuxCmdOutput.Trim()
 			}
@@ -633,18 +639,18 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 					if ($timeOut)
 					{
 						$retValue = ""
-						Write-LogErr "Timeout while executing command : $command"
+						Write-LogErr "Tmeout while executing command : $MaskedCommand"
 					}
 					Write-LogErr "Linux machine returned exit code : $($LinuxExitCode.Split("-")[4])"
 					if ($attemptswt -eq $maxRetryCount -and $attemptswot -eq $maxRetryCount)
 					{
-						Throw "Calling function - $($MyInvocation.MyCommand). Failed to execute : $command."
+						Throw "Calling function - $($MyInvocation.MyCommand). Failed to execute : $MaskedCommand."
 					}
 					else
 					{
 						if ($notExceededTimeLimit)
 						{
-							Write-LogErr "Failed to execute : $command. Retrying..."
+							Write-LogErr "Failed to execute : $MaskedCommand. Retrying..."
 						}
 					}
 				}
