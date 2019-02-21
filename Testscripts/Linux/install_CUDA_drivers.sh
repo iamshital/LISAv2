@@ -45,7 +45,7 @@ function InstallGPUDrivers() {
         fi
 
         install_epel
-        yum --nogpgcheck -y install dkms hyperv-tools
+        yum --nogpgcheck -y install dkms
 
         wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/"${CUDA_REPO_PKG}" -O /tmp/"${CUDA_REPO_PKG}"
         if [ $? -ne 0 ]; then

@@ -39,6 +39,28 @@ function Main {
         Copy-RemoteFiles -uploadTo $allVMData.PublicIP -port $allVMData.SSHPort `
             -files $currentTestData.files -username $superuser -password $password -upload | Out-Null
 
+        $linuxRelease = Detect-LinuxDistro -VIP $AllVMData.PublicIP -SSHport $AllVMData.SSHPort `
+            -testVMUser $user -testVMPassword $password
+        # For CentOS and RedHat the requirement is to install LIS RPMs
+        if ($linuxRelease -eq "CENTOS" -or $linuxRelease -eq "REDHAT") {
+            Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username $superuser `
+                -password $password -command "wget -q https://aka.ms/lis -O - | tar -xz" -ignoreLinuxExitCode | Out-Null
+            Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username $superuser `
+                -password $password -command "cd LISISO && ./install.sh" | Out-Null
+            if (-not $?) {
+                Write-LogErr "Unable to install the LIS RPMs!"
+                $resultArr += "ABORTED"
+                break;
+            }
+        }
+
+        # Restart VM to load the new LIS drivers
+        if (-not $TestProvider.RestartAllDeployments($allVMData)) {
+            Write-LogErr "Unable to connect to VM after restart!"
+            $resultArr += "ABORTED"
+            break;
+        }
+
         # Start the test script
         Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username $superuser `
             -password $password -command "/$superuser/${testScript}" -runMaxAllowedTime 1800 | Out-Null
@@ -48,7 +70,7 @@ function Main {
             break;
         }
 
-        # Restart the VM in order to load the driver and run validation
+        # Restart VM to load the driver and run validation
         if (-not $TestProvider.RestartAllDeployments($allVMData)) {
             Write-LogErr "Unable to connect to VM after restart!"
             $resultArr += "ABORTED"
