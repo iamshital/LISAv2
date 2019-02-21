@@ -535,7 +535,8 @@ Function Inject-HostnamesInHyperVVMs($allVMData)
         {
             Write-LogInfo "Injecting hostname '$($VM.RoleName)' in HyperV VM..."
             if (!$global:IsWindowsImage) {
-               Run-LinuxCmd -username $user -password $password -ip $VM.PublicIP -port $VM.SSHPort -command "echo $($VM.RoleName) > /etc/hostname" -runAsSudo -maxRetryCount 5
+                Run-LinuxCmd -username $user -password $password -ip $VM.PublicIP -port $VM.SSHPort `
+                    -command "echo $($VM.RoleName) > /etc/hostname ; sed -i `"/127/s/`$/ $($VM.RoleName)/`" /etc/hosts" -runAsSudo -maxRetryCount 5
             } else {
                 $cred = Get-Cred $user $password
                 Invoke-Command -ComputerName $VM.PublicIP -ScriptBlock {$computerInfo=Get-ComputerInfo;if($computerInfo.CsDNSHostName -ne $args[0]){Rename-computer -computername $computerInfo.CsDNSHostName -newname $args[0] -force}} -ArgumentList $VM.RoleName -Credential $cred
