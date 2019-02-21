@@ -43,22 +43,27 @@ function Main {
             -testVMUser $user -testVMPassword $password
         # For CentOS and RedHat the requirement is to install LIS RPMs
         if ($linuxRelease -eq "CENTOS" -or $linuxRelease -eq "REDHAT") {
-            Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username $superuser `
+            # HPC images already have the LIS RPMs installed
+            $sts = Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username $user -password $password `
+                -command "rpm -qa | grep kmod-microsoft-hyper-v && rpm -qa | grep microsoft-hyper-v" -ignoreLinuxExitCode
+            if (-not $sts) {
+                # Download and install the latest LIS version
+                Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username $superuser `
                 -password $password -command "wget -q https://aka.ms/lis -O - | tar -xz" -ignoreLinuxExitCode | Out-Null
-            Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username $superuser `
+                Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username $superuser `
                 -password $password -command "cd LISISO && ./install.sh" | Out-Null
-            if (-not $?) {
-                Write-LogErr "Unable to install the LIS RPMs!"
-                $resultArr += "ABORTED"
-                break;
+                if (-not $?) {
+                    Write-LogErr "Unable to install the LIS RPMs!"
+                    $resultArr += "ABORTED"
+                    break;
+                }
+                # Restart VM to load the new LIS drivers
+                if (-not $TestProvider.RestartAllDeployments($allVMData)) {
+                    Write-LogErr "Unable to connect to VM after restart!"
+                    $resultArr += "ABORTED"
+                    break;
+                }
             }
-        }
-
-        # Restart VM to load the new LIS drivers
-        if (-not $TestProvider.RestartAllDeployments($allVMData)) {
-            Write-LogErr "Unable to connect to VM after restart!"
-            $resultArr += "ABORTED"
-            break;
         }
 
         # Start the test script

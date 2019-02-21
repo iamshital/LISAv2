@@ -44,6 +44,9 @@ function InstallGPUDrivers() {
             yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)
         fi
 
+        # This is to avoid a conflict between libraries - bugzilla.redhat 1584740
+        yum -y install mesa-libEGL
+
         install_epel
         yum --nogpgcheck -y install dkms
 
