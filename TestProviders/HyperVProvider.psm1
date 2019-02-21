@@ -61,7 +61,7 @@ Class HyperVProvider : TestProvider
 			$isVmAlive = Is-VmAlive -AllVMDataObject $allVMData
 			if ($isVmAlive -eq "True") {
 				$customStatus = Set-CustomConfigInVMs -CustomKernel $this.CustomKernel -CustomLIS $this.CustomLIS `
-					-AllVMData $allVMData -TestProvider $this
+					-AllVMData $allVMData -TestProvider $this -RegisterRhelSubscription
 				if (!$customStatus) {
 					Write-LogErr "Failed to set custom config in VMs, abort the test"
 					return $null

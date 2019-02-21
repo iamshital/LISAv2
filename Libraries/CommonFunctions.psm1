@@ -849,7 +849,7 @@ function Enable-SRIOVInAllVMs($allVMData, $TestProvider)
 	}
 }
 
-Function Install-RhelSubscription {
+Function Register-RhelSubscription {
 	param (
 		$AllVMData,
 		[string] $RedhatNetworkUsername,
@@ -875,23 +875,23 @@ Function Install-RhelSubscription {
 	}
 }
 
-Function Set-CustomConfigInVMs($CustomKernel, $CustomLIS, $EnableSRIOV, $AllVMData, $TestProvider) {
+Function Set-CustomConfigInVMs($CustomKernel, $CustomLIS, $EnableSRIOV, $AllVMData, $TestProvider, [switch]$RegisterRhelSubscription) {
 	$retValue = $true
 
 	# Check the registration of the RHEL VHDs
 	# RedhatNetworkUsername and #RedhatNetworkPassword should be present in $XMLSecrets file at below location -
 	# RedhatNetworkUsername = $XMLSecrets.secrets.RedhatNetwork.Username
 	# RedhatNetworkPassword = $XMLSecrets.secrets.RedhatNetwork.Password
-	if ($Global:TestPlatform -imatch "HyperV") {
+	if ($RegisterRhelSubscription) {
 		$RedhatNetworkUsername = $Global:XMLSecrets.secrets.RedhatNetwork.Username
 		$RedhatNetworkPassword = $Global:XMLSecrets.secrets.RedhatNetwork.Password
 		if ($RedhatNetworkUsername -and $RedhatNetworkPassword) {
-		Install-RhelSubscription -AllVMData $AllVMData -RedhatNetworkUsername $RedhatNetworkUsername `
+		Register-RhelSubscription -AllVMData $AllVMData -RedhatNetworkUsername $RedhatNetworkUsername `
 			-RedhatNetworkPassword $RedhatNetworkPassword
 		} else {
 			if ( -not $RedhatNetworkUsername ) { Write-Loginfo "RHN username is not available in secrets file." }
 			if ( -not $RedhatNetworkPassword ) { Write-Loginfo "RHN password is not available in secrets file." }
-			Write-LogWarn "Skipping Install-RhelSubscription()."
+			Write-LogWarn "Skipping Register-RhelSubscription()."
 		}
 	}
 
