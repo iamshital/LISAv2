@@ -818,6 +818,7 @@ Function Get-LISAv2Tools($XMLSecretFile)
 		$WebClient = New-Object System.Net.WebClient
 		$xmlSecret = [xml](Get-Content $XMLSecretFile)
 		$toolFileAccessLocation = $xmlSecret.secrets.blobStorageLocation
+		Write-LogInfo "Refreshed Blob Storage Location information, $toolFileAccessLocation"
 	}
 
 	$CmdArray | ForEach-Object {
