@@ -8,7 +8,7 @@
             <param>CSV_PATH=OL_VERSIONS_CSV</param>
             <param>SkipVerifyKernelLogs=true</param>
         </TestParameters>
-        <Platform>OL</Platform>
+        <Platform>OLQ</Platform>
         <Category>OL</Category>
         <Area>OL</Area>
         <Tags>package</Tags>
@@ -22,7 +22,7 @@
         <TestParameters>
             <param>MasterConfigUrl=MASTER_KERNEL_CONFIG_URL</param>
         </TestParameters>
-        <Platform>OL</Platform>
+        <Platform>OLQ</Platform>
         <Category>Functional</Category>
         <Area>OL</Area>
         <Tags>ol</Tags>

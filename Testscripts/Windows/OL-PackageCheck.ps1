@@ -39,7 +39,7 @@ function Main() {
             Write-LogWarn $msg
             echo $msg >> "${LogDir}\${logFile}"
             $testResult = "FAIL"
-        } elseif (-not ($version -match $expectedVersion)) {
+        } elseif (-not ($version | Select-String -SimpleMatch $expectedVersion)) {
             $msg = "Expected version: $expectedVersion does not match version: $version for package: $packageName"
             Write-LogWarn $msg
             echo $msg >> "${LogDir}\${logFile}"
