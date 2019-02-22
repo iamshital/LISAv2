@@ -355,6 +355,10 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
                     Write-LogInfo "Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off"
                     Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off
                 }
+                if ($NewVM.AutomaticCheckpointsEnabled) {
+                    Write-LogInfo "Set-VM -Name $CurrentVMName -AutomaticCheckpointsEnabled $false -ComputerName $HyperVHost"
+                    Set-VM -Name $CurrentVMName -AutomaticCheckpointsEnabled $false -ComputerName $HyperVHost
+                }
                 if ($currentTestData.AdditionalHWConfig.SwitchName) {
                     Add-VMNetworkAdapter -VMName $CurrentVMName -SwitchName $currentTestData.AdditionalHWConfig.SwitchName -ComputerName $HyperVHost
                 }
