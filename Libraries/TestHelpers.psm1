@@ -74,7 +74,7 @@ function Upload-RemoteFile($uploadTo, $port, $file, $username, $password, $usePr
 		if ($usePrivateKey)
 		{
 			Write-LogInfo "Uploading $file to $username : $uploadTo, port $port using PrivateKey authentication"
-			Write-Output "yes" | .\tools\pscp -i .\ssh\$sshKey -q -P $port $file $username@${uploadTo}:
+			Write-Output "yes" | .\Tools\pscp -i .\ssh\$sshKey -q -P $port $file $username@${uploadTo}:
 			$returnCode = $LASTEXITCODE
 		}
 		else
@@ -91,10 +91,10 @@ function Upload-RemoteFile($uploadTo, $port, $file, $username, $password, $usePr
 							$username = $args[4];
 							$uploadTo = $args[5];
 							if ($($using:testPlatform).StartsWith('OL')) {
-								Write-Output "yes" | .\tools\pscp -scp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
+								Write-Output "yes" | .\Tools\pscp -scp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
 							}
 							else {
-								Write-Output "yes" | .\tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
+								Write-Output "yes" | .\Tools\pscp -v -pw $args[1] -q -P $args[2] $args[3] $username@${uploadTo}: ;
 							}
 							Set-Content -Value $LASTEXITCODE -Path $args[6];
 						} -ArgumentList $curDir,$password,$port,$file,$username,${uploadTo},$uploadStatusRandomFile
@@ -168,7 +168,7 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 				$downloadStatusRandomFile=$args[7];
 				Set-Location $curDir;
 				Set-Content -Value "1" -Path $args[6];
-				Write-Output "yes" | .\tools\pscp -i .\ssh\$sshKey -q -P $port $username@${downloadFrom}:$testFile $downloadTo;
+				Write-Output "yes" | .\Tools\pscp -i .\ssh\$sshKey -q -P $port $username@${downloadFrom}:$testFile $downloadTo;
 				Set-Content -Value $LASTEXITCODE -Path $downloadStatusRandomFile;
 			} -ArgumentList $curDir,$sshKey,$port,$file,$username,${downloadFrom},$downloadTo,$downloadStatusRandomFile
 		} else {
@@ -183,10 +183,10 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 				$downloadStatusRandomFile=$args[7];
 				Set-Location $curDir;
 				if ($($using:testPlatform).StartsWith('OL')) {
-					Write-Output "yes" | .\tools\pscp.exe -scp -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+					Write-Output "yes" | .\Tools\pscp.exe -scp -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
 				}
 				else {
-					Write-Output "yes" | .\tools\pscp.exe  -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+					Write-Output "yes" | .\Tools\pscp.exe  -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
 				}
 				Add-Content -Value "DownloadExitCode_$LASTEXITCODE" -Path $downloadStatusRandomFile;
 			} -ArgumentList $curDir,$password,$port,$file,$username,${downloadFrom},$downloadTo,$downloadStatusRandomFile
@@ -263,7 +263,7 @@ Function Copy-RemoteFiles($uploadTo, $downloadFrom, $downloadTo, $port, $files, 
 		{
 			$file = $f.Trim()
 			if ($file.EndsWith(".sh") -or $file.EndsWith(".py")) {
-				$out = .\tools\dos2unix.exe $file 2>&1
+				$out = .\Tools\dos2unix.exe $file 2>&1
 				Write-LogInfo ([string]$out)
 			}
 			$fileList += $file
@@ -277,7 +277,7 @@ Function Copy-RemoteFiles($uploadTo, $downloadFrom, $downloadTo, $port, $files, 
 			foreach ($f in $fileList)
 			{
 				Write-LogInfo "Compressing $f and adding to $tarFileName"
-				$CompressFile = .\tools\7za.exe a $tarFileName $f
+				$CompressFile = .\Tools\7za.exe a $tarFileName $f
 				if ( ! $CompressFile -imatch "Everything is Ok" )
 				{
 					Remove-Item -Path $tarFileName -Force 2>&1 | Out-Null
@@ -372,7 +372,7 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 			$logCommand = "`"$MaskedCommand`""
 		}
 	}
-	Write-LogInfo ".\tools\plink.exe -t -pw $password -P $port $username@$ip $logCommand"
+	Write-LogInfo ".\Tools\plink.exe -t -pw $password -P $port $username@$ip $logCommand"
 	$returnCode = 1
 	$attemptswt = 0
 	$attemptswot = 0
@@ -389,7 +389,7 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 			{ `
 				$username = $args[1]; $password = $args[2]; $ip = $args[3]; $port = $args[4]; $jcommand = $args[5]; `
 				Set-Location $args[0]; `
-				.\tools\plink.exe -C -v -pw $password -P $port $username@$ip $jcommand;`
+				.\Tools\plink.exe -C -v -pw $password -P $port $username@$ip $jcommand;`
 			} `
 			-ArgumentList $currentDir, $username, $password, $ip, $port, $linuxCommand
 		}
@@ -400,7 +400,7 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 			{ `
 				$username = $args[1]; $password = $args[2]; $ip = $args[3]; $port = $args[4]; $jcommand = $args[5]; `
 				Set-Location $args[0]; `
-				.\tools\plink.exe -t -C -v -pw $password -P $port $username@$ip $jcommand;`
+				.\Tools\plink.exe -t -C -v -pw $password -P $port $username@$ip $jcommand;`
 			} `
 			-ArgumentList $currentDir, $username, $password, $ip, $port, $linuxCommand
 		}
