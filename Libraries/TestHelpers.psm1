@@ -186,7 +186,7 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 					Write-Output "yes" | .\tools\pscp.exe -scp -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
 				}
 				else {
-					Write-Output "yes" | .\tools\pscp.exe  -v -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
+					Write-Output "yes" | .\tools\pscp.exe -2 -unsafe -pw $password -q -P $port $username@${downloadFrom}:$testFile $downloadTo 2> $downloadStatusRandomFile;
 				}
 				Add-Content -Value "DownloadExitCode_$LASTEXITCODE" -Path $downloadStatusRandomFile;
 			} -ArgumentList $curDir,$password,$port,$file,$username,${downloadFrom},$downloadTo,$downloadStatusRandomFile
@@ -237,8 +237,8 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 		}
 		elseif (($returnCode -ne 0) -and ($retry -eq $maxRetry))
 		{
-			Write-Output "Error in download after $retry Attempt,Hence giving up"
-			Throw "Calling function - $($MyInvocation.MyCommand). Error in download after $retry Attempt,Hence giving up."
+			Write-Output "Error in download after $retry attempt, hence giving up"
+			Throw "Calling function - $($MyInvocation.MyCommand). Error in download after $retry attempt, hence giving up."
 		}
 		elseif ($returnCode -eq 0)
 		{
