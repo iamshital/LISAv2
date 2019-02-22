@@ -6,7 +6,7 @@
 #############################################################################################################
 #
 # Description:
-#   This script verifies that the network doesn't loose connection 
+#   This script verifies that the network doesn't lose connection
 #   by copying a large file(~10GB)file between two VM's with IC installed.
 #
 #   Steps:
@@ -51,12 +51,10 @@ if [ "${NETMASK:-UNDEFINED}" = "UNDEFINED" ]; then
     NETMASK=255.255.255.0
 fi
 if [ "$ADDRESS_FAMILY" = "IPv6" ];then
-    LogMsg "AM INTRAT IN IPV6"
     scp_cmd="scp -6"
     ssh_cmd="ssh -6"
     ip_cmd="$remote_user"@"[${STATIC_IP2}]"
 else
-    LogMsg "AM INTRAT IN IPV4"
     scp_cmd="scp"
     ssh_cmd="ssh"
     ip_cmd="$remote_user"@"${STATIC_IP2}"
