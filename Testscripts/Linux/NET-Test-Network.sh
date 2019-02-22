@@ -20,13 +20,13 @@
 ###############################################################################
 # Source utils.sh
 . utils.sh || {
-    echo "Error: unable to source utils.sh!"
+    echo "unable to source utils.sh!"
     echo "TestAborted" > state.txt
     exit 0
 }
 # Source net_constants.sh file
 . net_constants.sh || {
-    echo "Error: unable to source net_constants.sh!"
+    echo "unable to source net_constants.sh!"
     echo "TestAborted" > state.txt
     exit 0
 }

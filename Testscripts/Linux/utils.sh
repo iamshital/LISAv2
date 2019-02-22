@@ -1260,6 +1260,9 @@ CreateIfupConfigFile()
 
 				ip link set "$__interface_name" up
 				service networking restart || service network restart
+				if $(ifup --help > /dev/null 2>&1) ; then
+					ifup "$__interface_name"
+				fi
 				;;
 			*)
 				LogMsg "CreateIfupConfigFile: Platform not supported yet!"
@@ -1419,6 +1422,9 @@ CreateIfupConfigFile()
 
 				ip link set "$__interface_name" up
 				service networking restart || service network restart
+				if $(ifup --help > /dev/null 2>&1) ; then
+					ifup "$__interface_name"
+				fi
 				;;
 			*)
 				LogMsg "CreateIfupConfigFile: Platform not supported!"
