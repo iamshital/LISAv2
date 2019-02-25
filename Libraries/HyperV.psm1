@@ -352,8 +352,8 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
                 $NewVM = New-VM -Name $CurrentVMName -MemoryStartupBytes $CurrentVMMemory -BootDevice VHD `
                     -VHDPath $CurrentVMOsVHDPath -Generation $VMGeneration -Switch $($VMSwitches.Name) -ComputerName $HyperVHost
                 if ([string]$VMGeneration -eq "2") {
-                    Write-LogInfo "Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off"
-                    Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off
+                    Write-LogInfo "Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off -ComputerName $HyperVHost"
+                    Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off -ComputerName $HyperVHost
                 }
                 if ($NewVM.AutomaticCheckpointsEnabled) {
                     Write-LogInfo "Set-VM -Name $CurrentVMName -AutomaticCheckpointsEnabled $false -ComputerName $HyperVHost"
