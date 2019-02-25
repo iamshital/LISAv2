@@ -1780,7 +1780,7 @@ function GetOSVersion {
         os_CODENAME=""
         for r in "Red Hat" CentOS Fedora XenServer; do
             os_VENDOR=$r
-            if [[ -n "$(grep \"$r\" /etc/redhat-release)" ]]; then
+            if [[ -n $(grep "${r}" "/etc/redhat-release") ]]; then
                 ver=$(sed -e 's/^.* \([0-9].*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release)
                 os_CODENAME=${ver#*|}
                 os_RELEASE=${ver%|*}
