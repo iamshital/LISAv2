@@ -342,6 +342,9 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
             $vhdName = [System.IO.Path]::GetFileNameWithoutExtension($(Split-Path -Leaf $parentOsVHDPath))
             Write-LogInfo "Checking if we have a local VHD with the same disk identifier on the host"
             $hypervVHDLocalPath = (Get-VMHost -ComputerName $HyperVHost).VirtualHardDiskPath
+            if ($SetupTypeData.ClusteredVM) {
+                $hypervVHDLocalPath = $DestinationOsVHDPath
+            }
             $newVhdName = "{0}-{1}{2}" -f @($vhdName, $infoParentOsVHD.DiskIdentifier.Replace("-", ""),$vhdSuffix)
             $localVHDPath = Join-Path $hypervVHDLocalPath $newVhdName
             $localVHDUncPath = $localVHDPath -replace '^(.):', "\\${HyperVHost}\`$1$"
