@@ -99,7 +99,6 @@
             <param>FSTYP=xfs</param>
             <param>TEST_DEV=/dev/nvme0n1p1</param>
             <param>TEST_DIR=/root/test</param>
-            <param>TEST_FS_MOUNT_OPTS='-o nobarrier'</param>
             <param>NVME=yes</param>
             <param>GENERIC=yes</param>
         </TestParameters>
@@ -119,7 +118,6 @@
             <param>FSTYP=xfs</param>
             <param>TEST_DEV=/dev/nvme0n1p1</param>
             <param>TEST_DIR=/root/test</param>
-            <param>TEST_FS_MOUNT_OPTS='-o nobarrier'</param>
             <param>NVME=yes</param>
         </TestParameters>
         <Platform>Azure</Platform>
