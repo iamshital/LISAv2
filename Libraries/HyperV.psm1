@@ -346,7 +346,7 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
                 $hypervVHDLocalPath = $DestinationOsVHDPath
             }
             $newVhdName = "{0}-{1}{2}" -f @($vhdName, $infoParentOsVHD.DiskIdentifier.Replace("-", ""),$vhdSuffix)
-            $localVHDPath = Join-Path $hypervVHDLocalPath $newVhdName
+            $localVHDPath = "{0}{1}{2}" -f @($hypervVHDLocalPath,[System.IO.Path]::DirectorySeparatorChar,$newVhdName)
             $localVHDUncPath = $localVHDPath -replace '^(.):', "\\${HyperVHost}\`$1$"
             if ((Test-Path $localVHDUncPath)) {
                 Write-LogInfo "${parentOsVHDPath} is already found at path ${localVHDUncPath}"
