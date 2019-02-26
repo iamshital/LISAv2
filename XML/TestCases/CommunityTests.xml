@@ -8,7 +8,6 @@
             <param>FSTYP=xfs</param>
             <param>TEST_DEV=/dev/sdc1</param>
             <param>TEST_DIR=/root/test</param>
-            <param>TEST_FS_MOUNT_OPTS='-o nobarrier'</param>
             <param>GENERIC=yes</param>
         </TestParameters>
         <Platform>Azure</Platform>
@@ -26,7 +25,6 @@
             <param>FSTYP=xfs</param>
             <param>TEST_DEV=/dev/sdc1</param>
             <param>TEST_DIR=/root/test</param>
-            <param>TEST_FS_MOUNT_OPTS='-o nobarrier'</param>
         </TestParameters>
         <Platform>Azure</Platform>
         <Category>Community</Category>
