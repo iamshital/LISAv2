@@ -307,8 +307,10 @@ Function GetAndCheck-KernelLogs($allDeployedVMs, $status, $vmUser, $vmPassword, 
 			}
 
 			if ($status -imatch "Initial") {
-				$detectedDistro = Detect-LinuxDistro -VIP $VM.PublicIP -SSHport $VM.SSHPort `
-					-testVMUser $vmUser -testVMPassword $vmPassword
+				if (!$global:detectedDistro) {
+					$detectedDistro = Detect-LinuxDistro -VIP $VM.PublicIP -SSHport $VM.SSHPort `
+						-testVMUser $vmUser -testVMPassword $vmPassword
+				}
 				Set-DistroSpecificVariables -detectedDistro $detectedDistro
 				$retValue = $true
 			}
