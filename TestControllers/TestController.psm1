@@ -506,7 +506,7 @@ Class TestController
 					if (!$vmData -or $this.DeployVMPerEachTest -or ($this.ResourceCleanup -imatch "Delete")) {
 						# Deploy the VM for the setup
 						$vmData = $this.TestProvider.DeployVMs($this.GlobalConfig, $this.SetupTypeTable[$setupType], $this.SetupTypeToTestCases[$key][0], `
-							$this.TestLocation, $this.RGIdentifier, $this.UseExistingRG)
+							$this.TestLocation, $this.RGIdentifier, $this.UseExistingRG, $this.ResourceCleanup)
 						if (!$vmData) {
 							# Failed to deploy the VMs, Set the case to abort
 							$this.JunitReport.StartLogTestCase("LISAv2Test-$($this.TestPlatform)","$($case.testName)","$($case.Category)-$($case.Area)")

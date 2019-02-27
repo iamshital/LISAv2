@@ -233,7 +233,7 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
     }
 }
 
-Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Distro, [string]$TestLocation, $GlobalConfig, $TiPSessionId, $TipCluster, $UseExistingRG) {
+Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Distro, [string]$TestLocation, $GlobalConfig, $TiPSessionId, $TipCluster, $UseExistingRG, $ResourceCleanup) {
     $resourceGroupCount = 0
 
     Write-LogInfo "Current test setup: $($SetupTypeData.Name)"
@@ -312,7 +312,7 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
                                 -StorageAccountName $GlobalConfig.Global.Azure.Subscription.ARMStorageAccount
                             $DeploymentStartTime = (Get-Date)
                             $CreateRGDeployments = Create-ResourceGroupDeployment -RGName $groupName -location $location -TemplateFile $azureDeployJSONFilePath `
-                                -UseExistingRG $UseExistingRG
+                                -UseExistingRG $UseExistingRG -ResourceCleanup $ResourceCleanup
                         }
 
                         $DeploymentEndTime = (Get-Date)
@@ -505,7 +505,7 @@ Function Create-ResourceGroup([string]$RGName, $location, $CurrentTestData) {
     return $retValue
 }
 
-Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFile, $UseExistingRG) {
+Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFile, $UseExistingRG, $ResourceCleanup) {
     $FailCounter = 0
     $retValue = "False"
     $ResourceGroupDeploymentName = "eosg" + (Get-Date).Ticks
@@ -542,7 +542,7 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
                     }
                     else {
                         Write-LogInfo "Removing Failed resource group, as we found 0 VM(s) deployed."
-                        $isCleaned = Delete-ResourceGroup -RGName $RGName -UseExistingRG
+                        $isCleaned = Delete-ResourceGroup -RGName $RGName
                         if (!$isCleaned) {
                             Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
                         }
