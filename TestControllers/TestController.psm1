@@ -455,6 +455,11 @@ Class TestController
 			$currentTestResult.TestResult = $global:ResultFail
 		}
 
+		# Upload results to database
+		if ($currentTestResult.TestResultData) {
+			Upload-TestResultToDatabase -TestResultData $currentTestResult.TestResultData -DatabaseConfig $this.GlobalConfig.Global.$($this.TestPlatform).ResultsDatabase
+		}
+
 		# Do log collecting and VM clean up
 		if (!$global:IsWindowsImage -and $testParameters["SkipVerifyKernelLogs"] -ne "True") {
 			GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Final" -EnableCodeCoverage $this.EnableCodeCoverage | Out-Null

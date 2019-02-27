@@ -58,6 +58,8 @@ function Create-TestResultObject()
 	$objNode = New-Object -TypeName PSObject
 	Add-Member -InputObject $objNode -MemberType NoteProperty -Name TestResult -Value $null -Force
 	Add-Member -InputObject $objNode -MemberType NoteProperty -Name TestSummary -Value $null -Force
+	# An array of map, which contains column/value data to be inserted to database
+	Add-Member -InputObject $objNode -MemberType NoteProperty -Name TestResultData -Value @() -Force
 	return $objNode
 }
 
