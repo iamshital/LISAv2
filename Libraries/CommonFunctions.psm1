@@ -889,8 +889,8 @@ Function Set-CustomConfigInVMs($CustomKernel, $CustomLIS, $EnableSRIOV, $AllVMDa
 		Register-RhelSubscription -AllVMData $AllVMData -RedhatNetworkUsername $RedhatNetworkUsername `
 			-RedhatNetworkPassword $RedhatNetworkPassword
 		} else {
-			if ( -not $RedhatNetworkUsername ) { Write-Loginfo "RHN username is not available in secrets file." }
-			if ( -not $RedhatNetworkPassword ) { Write-Loginfo "RHN password is not available in secrets file." }
+			if (-not $RedhatNetworkUsername) { Write-LogInfo "RHN username is not available in secrets file." }
+			if (-not $RedhatNetworkPassword) { Write-LogInfo "RHN password is not available in secrets file." }
 			Write-LogWarn "Skipping Register-RhelSubscription()."
 		}
 	}
@@ -915,27 +915,29 @@ Function Set-CustomConfigInVMs($CustomKernel, $CustomLIS, $EnableSRIOV, $AllVMDa
 	{
 		Write-LogInfo "Custom kernel: $CustomKernel will be installed on all machines..."
 		$kernelUpgradeStatus = Install-CustomKernel -CustomKernel $CustomKernel -allVMData $AllVMData -RestartAfterUpgrade -TestProvider $TestProvider
-		if ( !$kernelUpgradeStatus )
-		{
+		if (!$kernelUpgradeStatus) {
 			Write-LogErr "Custom Kernel: $CustomKernel installation FAIL. Aborting tests."
 			$retValue = $false
 		}
 	}
-	if ( $CustomLIS)
-	{
-		Write-LogInfo "Custom LIS: $CustomLIS will be installed on all machines..."
-		$LISUpgradeStatus = Install-CustomLIS -CustomLIS $CustomLIS -allVMData $AllVMData -customLISBranch $customLISBranch -RestartAfterUpgrade -TestProvider $TestProvider
-		if ( !$LISUpgradeStatus )
-		{
-			Write-LogErr "Custom Kernel: $CustomKernel installation FAIL. Aborting tests."
+	if ($CustomLIS) {
+		# LIS is only available Redhat, CentOS and Oracle image which uses Redhat kernel.
+		if(@("REDHAT", "ORACLELINUX", "CENTOS").contains($global:detectedDistro)) {
+			Write-LogInfo "Custom LIS: $CustomLIS will be installed on all machines..."
+			$LISUpgradeStatus = Install-CustomLIS -CustomLIS $CustomLIS -allVMData $AllVMData `
+				-customLISBranch $customLISBranch -RestartAfterUpgrade -TestProvider $TestProvider
+			if (!$LISUpgradeStatus) {
+				Write-LogErr "Custom LIS: $CustomLIS installation FAIL. Aborting tests."
+				$retValue = $false
+			}
+		} else {
+			Write-LogErr "Custom LIS: $CustomLIS installation stopped because UNSUPPORTED distro - $global:detectedDistro"
 			$retValue = $false
 		}
 	}
-	if ( $EnableSRIOV)
-	{
+	if ($EnableSRIOV) {
 		$SRIOVStatus = Enable-SRIOVInAllVMs -allVMData $AllVMData -TestProvider $TestProvider
-		if ( !$SRIOVStatus)
-		{
+		if (!$SRIOVStatus) {
 			Write-LogErr "Failed to enable Accelerated Networking. Aborting tests."
 			$retValue = $false
 		}
