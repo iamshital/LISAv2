@@ -623,14 +623,14 @@ function Install-CustomKernel ($CustomKernel, $allVMData, [switch]$RestartAfterU
 	}
 }
 
-function Install-CustomLIS ($CustomLIS, $customLISBranch, $allVMData, [switch]$RestartAfterUpgrade, $TestProvider)
+function Install-CustomLIS ($CustomLIS, $allVMData, [switch]$RestartAfterUpgrade, $TestProvider)
 {
 	try
 	{
 		$CustomLIS = $CustomLIS.Trim()
-		if ( ($CustomLIS -ne "lisnext") -and !($CustomLIS.EndsWith("tar.gz")))
+		if ( !($CustomLIS.StartsWith("lisnext")) -and !($CustomLIS.EndsWith("tar.gz")))
 		{
-			Write-LogErr "Only lisnext and *.tar.gz links are supported. Use -CustomLIS lisnext -LISbranch <branch name>. Or use -CustomLIS <link to tar.gz file>"
+			Write-LogErr "Only lisnext and *.tar.gz links are supported. Use -CustomLIS lisnext/<optinal_branch_name>. Or use -CustomLIS <link to tar.gz file>"
 		}
 		else
 		{
@@ -639,6 +639,16 @@ function Install-CustomLIS ($CustomLIS, $customLISBranch, $allVMData, [switch]$R
 			$jobCount = 0
 			$lisSuccess = 0
 			$packageInstallJobs = @()
+			if ($CustomLIS.StartsWith("lisnext")) {
+				if ($CustomLIS -match "\\|/") {
+					$customLISBranch = $CustomLIS.Split("/").Split("\")[1]
+					$CustomLIS = $CustomLIS.Split("/").Split("\")[0]
+				} else {
+					Write-LogInfo "LIS branch was not given. Setting to 'master'"
+					$customLISBranch = "master"
+				}
+			}
+
 			foreach ( $vmData in $allVMData )
 			{
 				Copy-RemoteFiles -uploadTo $vmData.PublicIP -port $vmData.SSHPort -files ".\Testscripts\Linux\$scriptName,.\Testscripts\Linux\DetectLinuxDistro.sh" -username "root" -password $password -upload
@@ -924,7 +934,7 @@ Function Set-CustomConfigInVMs($CustomKernel, $CustomLIS, $EnableSRIOV, $AllVMDa
 	if ( $CustomLIS)
 	{
 		Write-LogInfo "Custom LIS: $CustomLIS will be installed on all machines..."
-		$LISUpgradeStatus = Install-CustomLIS -CustomLIS $CustomLIS -allVMData $AllVMData -customLISBranch $customLISBranch -RestartAfterUpgrade -TestProvider $TestProvider
+		$LISUpgradeStatus = Install-CustomLIS -CustomLIS $CustomLIS -allVMData $AllVMData -RestartAfterUpgrade -TestProvider $TestProvider
 		if ( !$LISUpgradeStatus )
 		{
 			Write-LogErr "Custom Kernel: $CustomKernel installation FAIL. Aborting tests."
