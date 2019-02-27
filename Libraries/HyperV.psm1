@@ -43,12 +43,7 @@ function Create-AllHyperVGroupDeployments($SetupTypeData, $GlobalConfig, $TestLo
             $HyperVHostArray += $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$index].ServerName
         }
 
-        if ($SetupTypeData.ClusteredVM) {
-            $ClusterVolume = Get-ClusterSharedVolume
-            $DestinationOsVHDPath = $ClusterVolume.SharedVolumeInfo.FriendlyVolumeName
-        } else {
-            $DestinationOsVHDPath = $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$index].DestinationOsVHDPath
-        }
+        $DestinationOsVHDPath = $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$index].DestinationOsVHDPath
         $index++
         $readyToDeploy = $false
         while (!$readyToDeploy)
@@ -267,6 +262,24 @@ function Create-HyperVGroup([string]$HyperVGroupName, [string]$HyperVHost) {
     return $retValue
 }
 
+function Get-ClusterVolumePath {
+	param(
+		$ComputerName
+	)
+	$invokeCommandParams = @{
+		"ScriptBlock" = {
+			$ClusterVolume = Get-ClusterSharedVolume -ErrorAction SilentlyContinue
+			if ($ClusterVolume) {
+				Write-Output $ClusterVolume.SharedVolumeInfo.FriendlyVolumeName
+			}
+		};
+	}
+	if ($ComputerName -ne "localhost" -and $ComputerName -ne $(hostname)) {
+		$invokeCommandParams.ComputerName = $ComputerName
+	}
+	return (Invoke-Command @invokeCommandParams)
+}
+
 function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML, $HyperVHost, $DestinationOsVHDPath, $VMGeneration,
     $GlobalConfig, $SetupTypeData, $CurrentTestData) {
     $HyperVMappedSizes = [xml](Get-Content .\XML\AzureVMSizeToHyperVMapping.xml)
@@ -280,13 +293,17 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
             if ($VirtualMachine.DeployOnDifferentHyperVHost -and ($TestLocation -match ",")) {
                 $hostNumber = $HyperVGroupXML.VirtualMachine.indexOf($VirtualMachine)
                 $HyperVHost = $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$hostNumber].ServerName
-                if ($SetupTypeData.ClusteredVM) {
-                    $ClusterVolume = Get-ClusterSharedVolume
-                    $DestinationOsVHDPath = $ClusterVolume.SharedVolumeInfo.FriendlyVolumeName
-                } else {
-                    $DestinationOsVHDPath = $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$hostNumber].DestinationOsVHDPath
+                $DestinationOsVHDPath = $GlobalConfig.Global.HyperV.Hosts.ChildNodes[$hostNumber].DestinationOsVHDPath
+            }
+            if ($SetupTypeData.ClusteredVM) {
+                $DestinationOsVHDPath = Get-ClusterVolumePath -ComputerName $HyperVHost
+                if (!$DestinationOsVHDPath) {
+                    Write-LogErr "ClusterVolume could not be found. Make sure that server ${HyperVHost} has clustering enabled."
+                    $ErrorCount += 1
+                    continue
                 }
             }
+
             $vhdSuffix = [System.IO.Path]::GetExtension($OsVHD)
             $InterfaceAliasWithInternet = (Get-NetIPConfiguration -ComputerName $HyperVHost | Where-Object {$_.NetProfile.Name -ne 'Unidentified network'}).InterfaceAlias
             $VMSwitches = Get-VMSwitch -ComputerName $HyperVHost | Where-Object {$InterfaceAliasWithInternet -match $_.Name} | Select-Object -First 1
@@ -325,8 +342,11 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
             $vhdName = [System.IO.Path]::GetFileNameWithoutExtension($(Split-Path -Leaf $parentOsVHDPath))
             Write-LogInfo "Checking if we have a local VHD with the same disk identifier on the host"
             $hypervVHDLocalPath = (Get-VMHost -ComputerName $HyperVHost).VirtualHardDiskPath
+            if ($SetupTypeData.ClusteredVM) {
+                $hypervVHDLocalPath = $DestinationOsVHDPath
+            }
             $newVhdName = "{0}-{1}{2}" -f @($vhdName, $infoParentOsVHD.DiskIdentifier.Replace("-", ""),$vhdSuffix)
-            $localVHDPath = Join-Path $hypervVHDLocalPath $newVhdName
+            $localVHDPath = "{0}{1}{2}" -f @($hypervVHDLocalPath,[System.IO.Path]::DirectorySeparatorChar,$newVhdName)
             $localVHDUncPath = $localVHDPath -replace '^(.):', "\\${HyperVHost}\`$1$"
             if ((Test-Path $localVHDUncPath)) {
                 Write-LogInfo "${parentOsVHDPath} is already found at path ${localVHDUncPath}"
@@ -352,8 +372,12 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
                 $NewVM = New-VM -Name $CurrentVMName -MemoryStartupBytes $CurrentVMMemory -BootDevice VHD `
                     -VHDPath $CurrentVMOsVHDPath -Generation $VMGeneration -Switch $($VMSwitches.Name) -ComputerName $HyperVHost
                 if ([string]$VMGeneration -eq "2") {
-                    Write-LogInfo "Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off"
-                    Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off
+                    Write-LogInfo "Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off -ComputerName $HyperVHost"
+                    Set-VMFirmware -VMName $CurrentVMName -EnableSecureBoot Off -ComputerName $HyperVHost
+                }
+                if ($NewVM.AutomaticCheckpointsEnabled) {
+                    Write-LogInfo "Set-VM -Name $CurrentVMName -AutomaticCheckpointsEnabled $false -ComputerName $HyperVHost"
+                    Set-VM -Name $CurrentVMName -AutomaticCheckpointsEnabled $false -ComputerName $HyperVHost
                 }
                 if ($currentTestData.AdditionalHWConfig.SwitchName) {
                     Add-VMNetworkAdapter -VMName $CurrentVMName -SwitchName $currentTestData.AdditionalHWConfig.SwitchName -ComputerName $HyperVHost
@@ -383,10 +407,19 @@ function Create-HyperVGroupDeployment([string]$HyperVGroupName, $HyperVGroupXML,
                 $ErrorCount += 1
             }
             if ($SetupTypeData.ClusteredVM) {
-                Move-VMStorage $CurrentVMName -DestinationStoragePath $DestinationOsVHDPath
-                Add-ClusterVirtualMachineRole -VirtualMachine $CurrentVMName
+                Move-VMStorage -Name $CurrentVMName -DestinationStoragePath $DestinationOsVHDPath -ComputerName $HyperVHost
+                $invokeCommandParams = @{
+                    "ScriptBlock" = {
+                        Add-ClusterVirtualMachineRole -VirtualMachine $args[0]
+                    };
+                    "ArgumentList" = $CurrentVMName;
+                }
+                if ($HyperVHost -ne "localhost" -and $HyperVHost -ne $(hostname)) {
+                    $invokeCommandParams.ComputerName = $HyperVHost
+                }
+                Invoke-Command @invokeCommandParams
                 if ($? -eq $False) {
-                    Write-LogErr "High Availability configure for VM ${CurrentVMName} could not be added to the Hyper-V cluster"
+                    Write-LogErr "High Availability VM ${CurrentVMName} could not be added to the Hyper-V cluster on ${HyperVHost}"
                     $ErrorCount += 1
                 }
             }
@@ -535,7 +568,8 @@ Function Inject-HostnamesInHyperVVMs($allVMData)
         {
             Write-LogInfo "Injecting hostname '$($VM.RoleName)' in HyperV VM..."
             if (!$global:IsWindowsImage) {
-               Run-LinuxCmd -username $user -password $password -ip $VM.PublicIP -port $VM.SSHPort -command "echo $($VM.RoleName) > /etc/hostname" -runAsSudo -maxRetryCount 5
+                Run-LinuxCmd -username $user -password $password -ip $VM.PublicIP -port $VM.SSHPort `
+                    -command "echo $($VM.RoleName) > /etc/hostname ; sed -i `"/127/s/`$/ $($VM.RoleName)/`" /etc/hosts" -runAsSudo -maxRetryCount 5
             } else {
                 $cred = Get-Cred $user $password
                 Invoke-Command -ComputerName $VM.PublicIP -ScriptBlock {$computerInfo=Get-ComputerInfo;if($computerInfo.CsDNSHostName -ne $args[0]){Rename-computer -computername $computerInfo.CsDNSHostName -newname $args[0] -force}} -ArgumentList $VM.RoleName -Credential $cred

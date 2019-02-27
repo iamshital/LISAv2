@@ -849,8 +849,68 @@ function Enable-SRIOVInAllVMs($allVMData, $TestProvider)
 	}
 }
 
-Function Set-CustomConfigInVMs($CustomKernel, $CustomLIS, $EnableSRIOV, $AllVMData, $TestProvider) {
+Function Register-RhelSubscription {
+	param (
+		$AllVMData,
+		[string] $RedhatNetworkUsername,
+		[string] $RedhatNetworkPassword
+	)
+	try {
+		foreach ($vmData in $allVMData) {
+			$scriptName = "Register-Redhat.sh"
+			Copy-RemoteFiles -uploadTo $vmData.PublicIP -port $vmData.SSHPort -files ".\Testscripts\Linux\$scriptName" -username $user -password $password -upload
+			$RegistrationStatus = Run-LinuxCmd -ip $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password `
+			-command "bash $scriptName -Username $RedhatNetworkUsername -Password $RedhatNetworkPassword" -runAsSudo `
+			-MaskStrings "$RedhatNetworkUsername,$RedhatNetworkPassword"
+			if ($RegistrationStatus -imatch "RHEL_REGISTERED") {
+				Write-LogInfo "$($vmData.Rolename): RHN Network Registration: Succeeded."
+			} elseif ($RegistrationStatus -imatch "RHEL_REGISTRATION_FAILED") {
+				Write-LogErr "$($vmData.Rolename): RHN Network Registration: Failed."
+			} elseif ($RegistrationStatus -imatch "RHEL_REGISTRATION_SKIPPED") {
+				Write-LogInfo "$($vmData.Rolename): RHN Network Registration: Skipped."
+			}
+		}
+	} catch {
+		Raise-Exception($_)
+	}
+}
+
+Function Set-CustomConfigInVMs($CustomKernel, $CustomLIS, $EnableSRIOV, $AllVMData, $TestProvider, [switch]$RegisterRhelSubscription) {
 	$retValue = $true
+
+	# Check the registration of the RHEL VHDs
+	# RedhatNetworkUsername and #RedhatNetworkPassword should be present in $XMLSecrets file at below location -
+	# RedhatNetworkUsername = $XMLSecrets.secrets.RedhatNetwork.Username
+	# RedhatNetworkPassword = $XMLSecrets.secrets.RedhatNetwork.Password
+	if ($RegisterRhelSubscription) {
+		$RedhatNetworkUsername = $Global:XMLSecrets.secrets.RedhatNetwork.Username
+		$RedhatNetworkPassword = $Global:XMLSecrets.secrets.RedhatNetwork.Password
+		if ($RedhatNetworkUsername -and $RedhatNetworkPassword) {
+		Register-RhelSubscription -AllVMData $AllVMData -RedhatNetworkUsername $RedhatNetworkUsername `
+			-RedhatNetworkPassword $RedhatNetworkPassword
+		} else {
+			if ( -not $RedhatNetworkUsername ) { Write-Loginfo "RHN username is not available in secrets file." }
+			if ( -not $RedhatNetworkPassword ) { Write-Loginfo "RHN password is not available in secrets file." }
+			Write-LogWarn "Skipping Register-RhelSubscription()."
+		}
+	}
+
+	# Detect Linux Distro
+	if(!$global:detectedDistro -and !$global:IsWindowsImage) {
+		$detectedDistro = Detect-LinuxDistro -VIP $AllVMData[0].PublicIP -SSHport $AllVMData[0].SSHPort `
+			-testVMUser $global:user -testVMPassword $global:password
+	}
+
+	# Solution for resolve download file issue "Fatal: Received unexpected end-of-file from server" for clear-os-linux
+	if(!$global:IsWindowsImage){
+		foreach ($vm in $AllVMData) {
+			if($detectedDistro -imatch "CLEARLINUX") {
+				Run-LinuxCmd -Username $global:user -password $global:password -ip $vm.PublicIP -Port $vm.SSHPort `
+					-Command "echo 'Subsystem sftp internal-sftp' >> /etc/ssh/sshd_config && sed -i 's/.*ExecStart=.*/ExecStart=\/usr\/sbin\/sshd -D `$OPTIONS -f \/etc\/ssh\/sshd_config/g' /usr/lib/systemd/system/sshd.service && systemctl daemon-reload && systemctl restart sshd.service" -runAsSudo
+			}
+		}
+	}
+
 	if ( $CustomKernel)
 	{
 		Write-LogInfo "Custom kernel: $CustomKernel will be installed on all machines..."
@@ -880,7 +940,7 @@ Function Set-CustomConfigInVMs($CustomKernel, $CustomLIS, $EnableSRIOV, $AllVMDa
 			$retValue = $false
 		}
 	}
-    return $retValue
+	return $retValue
 }
 
 Function Detect-LinuxDistro() {

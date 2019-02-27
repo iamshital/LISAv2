@@ -44,8 +44,11 @@ function InstallGPUDrivers() {
             yum -y install kernel-devel-$(uname -r) kernel-headers-$(uname -r)
         fi
 
+        # This is to avoid a conflict between libraries - bugzilla.redhat 1584740
+        yum -y install mesa-libEGL
+
         install_epel
-        yum --nogpgcheck -y install dkms hyperv-tools
+        yum --nogpgcheck -y install dkms
 
         wget http://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/"${CUDA_REPO_PKG}" -O /tmp/"${CUDA_REPO_PKG}"
         if [ $? -ne 0 ]; then

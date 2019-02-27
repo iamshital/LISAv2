@@ -1260,6 +1260,9 @@ CreateIfupConfigFile()
 
 				ip link set "$__interface_name" up
 				service networking restart || service network restart
+				if $(ifup --help > /dev/null 2>&1) ; then
+					ifup "$__interface_name"
+				fi
 				;;
 			*)
 				LogMsg "CreateIfupConfigFile: Platform not supported yet!"
@@ -1419,6 +1422,9 @@ CreateIfupConfigFile()
 
 				ip link set "$__interface_name" up
 				service networking restart || service network restart
+				if $(ifup --help > /dev/null 2>&1) ; then
+					ifup "$__interface_name"
+				fi
 				;;
 			*)
 				LogMsg "CreateIfupConfigFile: Platform not supported!"
@@ -1774,7 +1780,7 @@ function GetOSVersion {
         os_CODENAME=""
         for r in "Red Hat" CentOS Fedora XenServer; do
             os_VENDOR=$r
-            if [[ -n "$(grep \"$r\" /etc/redhat-release)" ]]; then
+            if [[ -n $(grep "${r}" "/etc/redhat-release") ]]; then
                 ver=$(sed -e 's/^.* \([0-9].*\) (\(.*\)).*$/\1\|\2/' /etc/redhat-release)
                 os_CODENAME=${ver#*|}
                 os_RELEASE=${ver%|*}
@@ -2356,7 +2362,7 @@ function install_fio () {
 	echo "Detected $DISTRO_NAME $DISTRO_VERSION; installing required packages of fio"
 	update_repos
 	case "$DISTRO_NAME" in
-		rhel|centos)
+		oracle|rhel|centos)
 			install_epel
 			yum -y --nogpgcheck install wget sysstat mdadm blktrace libaio fio
 			check_exit_status "install_fio"
@@ -2428,9 +2434,9 @@ function install_iperf3 () {
 	echo "Detected $DISTRO_NAME $DISTRO_VERSION; installing required packages of iperf3"
 	update_repos
 	case "$DISTRO_NAME" in
-		rhel|centos)
+		oracle|rhel|centos)
 			install_epel
-			yum -y --nogpgcheck install iperf3 sysstat bc psmisc
+			yum -y --nogpgcheck install iperf3 sysstat bc psmisc wget
 			iptables -F
 			;;
 
@@ -2519,9 +2525,9 @@ function install_lagscope () {
 	echo "Detected $DISTRO_NAME $DISTRO_VERSION; installing required packages of lagscope"
 	update_repos
 	case "$DISTRO_NAME" in
-		rhel|centos)
+		oracle|rhel|centos)
 			install_epel
-			yum -y --nogpgcheck install libaio sysstat git bc make gcc
+			yum -y --nogpgcheck install libaio sysstat git bc make gcc wget
 			build_lagscope
 			iptables -F
 			;;
@@ -2591,7 +2597,7 @@ function install_ntttcp () {
 	echo "Detected $DISTRO_NAME $DISTRO_VERSION; installing required packages of ntttcp"
 	update_repos
 	case "$DISTRO_NAME" in
-		rhel|centos)
+		oracle|rhel|centos)
 			install_epel
 			yum -y --nogpgcheck install wget libaio sysstat git bc make gcc dstat psmisc
 			build_ntttcp "${1}"
@@ -2659,9 +2665,9 @@ function install_netperf () {
 	echo "Detected $DISTRO_NAME $DISTRO_VERSION; installing required packages of netperf"
 	update_repos
 	case "$DISTRO_NAME" in
-		rhel|centos)
+		oracle|rhel|centos)
 			install_epel
-			yum -y --nogpgcheck install sysstat make gcc
+			yum -y --nogpgcheck install sysstat make gcc wget
 			build_netperf
 			iptables -F
 			;;

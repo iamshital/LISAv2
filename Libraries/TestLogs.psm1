@@ -182,7 +182,7 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 		#region Host Version checking and skip it for OL platform.
 		if (!$TestPlatform.StartsWith('OL')) {
 			$FoundLineNumber = (Select-String -Path "$LogDir\$($vmData.RoleName)-dmesg.txt" -Pattern "Hyper-V Host Build").LineNumber
-			$ActualLineNumber = $FoundLineNumber - 1
+			$ActualLineNumber = $FoundLineNumber[-1] - 1
 			$FinalLine = [string]((Get-Content -Path "$LogDir\$($vmData.RoleName)-dmesg.txt")[$ActualLineNumber])
 			$FinalLine = $FinalLine.Replace('; Vmbus version:4.0','')
 			$FinalLine = $FinalLine.Replace('; Vmbus version:3.0','')
@@ -307,8 +307,10 @@ Function GetAndCheck-KernelLogs($allDeployedVMs, $status, $vmUser, $vmPassword, 
 			}
 
 			if ($status -imatch "Initial") {
-				$detectedDistro = Detect-LinuxDistro -VIP $VM.PublicIP -SSHport $VM.SSHPort `
-					-testVMUser $vmUser -testVMPassword $vmPassword
+				if (!$global:detectedDistro) {
+					$detectedDistro = Detect-LinuxDistro -VIP $VM.PublicIP -SSHport $VM.SSHPort `
+						-testVMUser $vmUser -testVMPassword $vmPassword
+				}
 				Set-DistroSpecificVariables -detectedDistro $detectedDistro
 				$retValue = $true
 			}
