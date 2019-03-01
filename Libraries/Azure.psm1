@@ -527,7 +527,7 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
                 Write-LogErr "Failed to create Resource Group Deployment - $RGName."
                 if ($ResourceCleanup -imatch "Delete") {
                     Write-LogInfo "-ResourceCleanup = Delete is Set. Deleting $RGName."
-                    $isCleaned = Delete-ResourceGroup -RGName $RGName
+                    $isCleaned = Delete-ResourceGroup -RGName $RGName -UseExistingRG $UseExistingRG
                     if (!$isCleaned) {
                         Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
                     }
@@ -542,7 +542,7 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
                     }
                     else {
                         Write-LogInfo "Removing Failed resource group, as we found 0 VM(s) deployed."
-                        $isCleaned = Delete-ResourceGroup -RGName $RGName
+                        $isCleaned = Delete-ResourceGroup -RGName $RGName -UseExistingRG $UseExistingRG
                         if (!$isCleaned) {
                             Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
                         }
