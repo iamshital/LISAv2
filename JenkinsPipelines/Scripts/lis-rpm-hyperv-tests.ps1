@@ -61,6 +61,7 @@ function Main {
             $command += " -TestArea '$TestArea'"
             $command += " -VMGeneration '$VMgeneration'"
             $command += " -ResourceCleanup Delete"
+            $command += " -EnableTelemetry"
             $command += " -ExitWithZero"
             if ($IncludeTests) {
                 $command += " -TestNames '$IncludeTests'"
