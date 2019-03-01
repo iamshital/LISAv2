@@ -311,7 +311,7 @@
     <test>
         <testName>DYNAMIC-MEMORY-MAX-MEMORY-HONORED</testName>
         <testScript>DM-MAXMEMHONOR.ps1</testScript>
-        <files>.\Testscripts\Linux\check_traces.sh</files>
+        <files>.\Testscripts\Linux\check_traces.sh,.\Testscripts\Linux\utils.sh</files>
         <setupType>TwoVM</setupType>
         <TestParameters>
             <param>appGitURL=DYNAMIC_MEMORY_STRESSNG</param>
@@ -337,7 +337,7 @@
     <test>
         <testName>DYNAMIC-MEMORY-MIN-MEMORY-HONORED</testName>
         <testScript>DM-MINMEMHONOR.ps1</testScript>
-        <files>.\Testscripts\Linux\check_traces.sh</files>
+        <files>.\Testscripts\Linux\check_traces.sh,.\Testscripts\Linux\utils.sh</files>
         <setupType>TwoVM</setupType>
         <TestParameters>
             <param>minMem=40%</param>
