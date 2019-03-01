@@ -39,7 +39,8 @@ function Main {
             $newVHDName = "EOSG-AUTOBUILT-$($ARMImage[0])-$($ARMImage[1])-$($ARMImage[2])-$($ARMImage[3])-$Append"
         }
         if ($global:BaseOsVHD) {
-            $newVHDName = "EOSG-AUTOBUILT-$($global:BaseOsVHD).Replace('.vhd',''))-$Append"
+            $OSVhd = $global:BaseOsVHD.Split('/')[-1]
+            $newVHDName = "EOSG-AUTOBUILT-$($OSVhd.Replace('.vhd',''))-$Append"
         }
         $newVHDName = "$newVHDName.vhd"
         Write-LogInfo "Sleeping 30 seconds..."

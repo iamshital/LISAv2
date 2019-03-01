@@ -1679,6 +1679,7 @@ Function Generate-AzureDeployJSONFile ($RGName, $ImageName, $osVHD, $RGXMLData, 
         Add-Content -Value "$($indents[5])^osDisk^ : " -Path $jsonFile
         Add-Content -Value "$($indents[5]){" -Path $jsonFile
         if ($osVHD) {
+            $osVHD = $osVHD.Split('/')[-1]
             if ($UseManagedDisks) {
                 Write-LogInfo ">>> Using VHD : $osVHD (Converted to Managed Image)"
                 Add-Content -Value "$($indents[6])^osType^: ^Linux^," -Path $jsonFile
