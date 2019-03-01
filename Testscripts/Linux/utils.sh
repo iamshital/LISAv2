@@ -2370,6 +2370,7 @@ function install_fio () {
 			;;
 
 		ubuntu|debian)
+			export DEBIAN_FRONTEND=noninteractive
 			dpkg_configure
 			apt-get install -y pciutils gawk mdadm wget sysstat blktrace bc fio
 			check_exit_status "install_fio"
