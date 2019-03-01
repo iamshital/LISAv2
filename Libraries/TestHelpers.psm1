@@ -14,13 +14,11 @@
 
 .INPUTS
 
-
 .NOTES
 	Creation Date:
 	Purpose/Change:
 
 .EXAMPLE
-
 
 #>
 ###############################################################################################
@@ -234,16 +232,16 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 
 		if (($returnCode -ne 0) -and ($retry -ne $maxRetry))
 		{
-			Write-LogWarn "Error in download, Attempt $retry. Retrying for download"
+			Write-LogWarn "Download error, attempt $retry. Retrying for download"
 		}
 		elseif (($returnCode -ne 0) -and ($retry -eq $maxRetry))
 		{
-			Write-Output "Error in download after $retry attempt, hence giving up"
-			Throw "Calling function - $($MyInvocation.MyCommand). Error in download after $retry attempt, hence giving up."
+			Write-Output "Download error after $retry attempt, hence giving up"
+			Throw "Calling function - $($MyInvocation.MyCommand). Download error after $retry attempt, hence giving up."
 		}
 		elseif ($returnCode -eq 0)
 		{
-			Write-LogInfo "Download Success after $retry Attempt"
+			Write-LogInfo "Download successful after $retry attempt"
 			break
 		}
 		$retry += 1
@@ -254,7 +252,7 @@ function Download-RemoteFile($downloadFrom, $downloadTo, $port, $file, $username
 Function Copy-RemoteFiles($uploadTo, $downloadFrom, $downloadTo, $port, $files, $username, $password, [switch]$upload, [switch]$download, [switch]$usePrivateKey, [switch]$doNotCompress, $maxRetry)
 {
 	if (!$files) {
-		Write-LogInfo "Error: No file to copy."
+		Write-LogErr "No file(s) to copy."
 		return
 	}
 	$fileList = @()
@@ -306,7 +304,7 @@ Function Copy-RemoteFiles($uploadTo, $downloadFrom, $downloadTo, $port, $files, 
 	}
 	else
 	{
-		Write-LogInfo "Error: Upload/Download switch is not used!"
+		Write-LogErr "Upload/Download switch is not used!"
 	}
 }
 
@@ -508,14 +506,14 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 				}
 				if ($debugOutput -imatch "Unable to authenticate")
 				{
-					Write-LogInfo "Unable to authenticate. Not retrying!"
+					Write-LogErr "Unable to authenticate. Not retrying!"
 					Throw "Calling function - $($MyInvocation.MyCommand). Unable to authenticate"
 
 				}
 				if ($timeOut)
 				{
 					$retValue = ""
-					Throw "Calling function - $($MyInvocation.MyCommand). Tmeout while executing command : $MaskedCommand"
+					Throw "Calling function - $($MyInvocation.MyCommand). Timeout while executing command : $MaskedCommand"
 				}
 				Write-LogErr "Linux machine returned exit code : $($LinuxExitCode.Split("-")[4])"
 				if ($attempts -eq $maxRetryCount)
@@ -640,7 +638,7 @@ Function Run-LinuxCmd([string] $username,[string] $password,[string] $ip,[string
 					if ($timeOut)
 					{
 						$retValue = ""
-						Write-LogErr "Tmeout while executing command : $MaskedCommand"
+						Write-LogErr "Timeout while executing command : $MaskedCommand"
 					}
 					Write-LogErr "Linux machine returned exit code : $($LinuxExitCode.Split("-")[4])"
 					if ($attemptswt -eq $maxRetryCount -and $attemptswot -eq $maxRetryCount)
