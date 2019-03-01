@@ -77,90 +77,74 @@ Function Get-SQLQueryOfTelemetryData ($TestPlatform,$TestLocation,$TestCategory,
 	}
 }
 
-Function Upload-TestResultToDatabase ([String]$SQLQuery)
-{
-	if ($XmlSecrets) {
-		$dataSource = $XmlSecrets.secrets.DatabaseServer
-		$dbuser = $XmlSecrets.secrets.DatabaseUser
-		$dbpassword = $XmlSecrets.secrets.DatabasePassword
-		$database = $XmlSecrets.secrets.DatabaseName
-
-		if ($dataSource -and $dbuser -and $dbpassword -and $database) {
-			try
-			{
-				Write-LogInfo "SQLQuery:  $SQLQuery"
-				$connectionString = "Server=$dataSource;uid=$dbuser; pwd=$dbpassword;Database=$database;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
-				$connection = New-Object System.Data.SqlClient.SqlConnection
-				$connection.ConnectionString = $connectionString
-				$connection.Open()
-				$command = $connection.CreateCommand()
-				$command.CommandText = $SQLQuery
-				$null = $command.executenonquery()
-				$connection.Close()
-				Write-LogInfo "Uploading test results to database :  done!!"
-			}
-			catch
-			{
-				Write-LogErr "Uploading test results to database :  ERROR"
-				$line = $_.InvocationInfo.ScriptLineNumber
-				$script_name = ($_.InvocationInfo.ScriptName).Replace($PWD,".")
-				$ErrorMessage =  $_.Exception.Message
-				Write-LogInfo "EXCEPTION : $ErrorMessage"
-				Write-LogInfo "Source : Line $line in script $script_name."
-			}
-		} else {
-			Write-LogErr "Database details are not provided. Results will not be uploaded to database!!"
-		}
-	} else {
-		Write-LogErr "Unable to send telemetry data to Azure. XML Secrets file not provided."
-	}
-}
-
-Function Upload-TestResultToDatabase ([Array] $TestResultData, [Object] $DatabaseConfig) {
+Function Upload-TestResultToDatabase {
+	param (
+		[Parameter(ParameterSetName="TestResult")]
+		[Array] $TestResultData, [Object] $DatabaseConfig,
+		[Parameter(ParameterSetName="TelemetryData")]
+		[String]$SQLQuery
+	)
 	$server = $DatabaseConfig.server
 	$dbUser = $DatabaseConfig.user
 	$dbPassword = $DatabaseConfig.password
 	$dbName = $DatabaseConfig.dbname
 	$tableName = $DatabaseConfig.dbtable
-
-	if ($server -and $dbUser -and $dbPassword -and $dbName -and $tableName) {
-		try {
-			$connectionString = "Server=$server;uid=$dbuser; pwd=$dbpassword;Database=$dbName;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
-			$connection = New-Object System.Data.SqlClient.SqlConnection
-			$connection.ConnectionString = $connectionString
-			$connection.Open()
-			foreach ($map in $TestResultData) {
-				$queryKey = "INSERT INTO $tableName ("
-				$queryValue = "VALUES ("
-				foreach ($key in $map.Keys) {
-					$queryKey += "$key,"
-					if ($map[$key] -ne $null -and $map[$key].GetType().Name -eq "String") {
-						$queryValue += "'$($map[$key])',"
-					} else {
-						$queryValue += "$($map[$key]),"
-					}
+	$DBDetailsAvailable = $server -and $dbUser -and $dbPassword -and $dbName
+	$TestResultReadyToUpload = $DBDetailsAvailable -and $tableName
+	if (($PSCmdlet.ParameterSetName -eq "TelemetryData") -and $DBDetailsAvailable) {
+		Run-SQLQuery -DatabaseServer $server -DatabaseName $dbName -DatabaseUsername $dbUser `
+		-DatabasePassword $dbPassword -SQLQuery $SQLQuery`
+		Write-LogInfo "Uploading telemetry data to database :  Succeeded."
+	} elseif (($PSCmdlet.ParameterSetName -eq "TestResult") -and $TestResultReadyToUpload) {
+		foreach ($map in $TestResultData) {
+			$queryKey = "INSERT INTO $tableName ("
+			$queryValue = "VALUES ("
+			foreach ($key in $map.Keys) {
+				$queryKey += "$key,"
+				if ($map[$key] -ne $null -and $map[$key].GetType().Name -eq "String") {
+					$queryValue += "'$($map[$key])',"
+				} else {
+					$queryValue += "$($map[$key]),"
 				}
-				$query = $queryKey.TrimEnd(",") + ") " + $queryValue.TrimEnd(",") + ")"
-				Write-LogInfo "SQLQuery:  $query"
-				$command = $connection.CreateCommand()
-				$command.CommandText = $query
-				$null = $command.executenonquery()
 			}
-			$connection.Close()
-			Write-LogInfo "Succeed to upload test results to database"
-		} catch {
-			Write-LogErr "Fail to upload test results to database"
-			$line = $_.InvocationInfo.ScriptLineNumber
-			$script_name = ($_.InvocationInfo.ScriptName).Replace($PWD,".")
-			$ErrorMessage =  $_.Exception.Message
-			Write-LogInfo "EXCEPTION : $ErrorMessage"
-			Write-LogInfo "Source : Line $line in script $script_name."
+			$query = $queryKey.TrimEnd(",") + ") " + $queryValue.TrimEnd(",") + ")"
+			Run-SQLQuery -DatabaseServer $server -DatabaseName $dbName -DatabaseUsername $dbUser `
+				-DatabasePassword $dbPassword -SQLQuery $query`
 		}
+		Write-LogInfo "Uploading test result to database :  Succeeded."
 	} else {
 		Write-LogErr "Database details are not provided. Results will not be uploaded to database."
 	}
 }
 
+Function Run-SQLQuery {
+	param (
+		[string] $DatabaseServer,
+		[string] $DatabaseName,
+		[string] $DatabaseUsername,
+		[string] $DatabasePassword,
+		[string] $SQLQuery
+	)
+	try {
+		Write-LogInfo "SQL Query: $SQLQuery"
+		$connectionString = "Server=$DatabaseServer;uid=$DatabaseUsername; pwd=$DatabasePassword;Database=$DatabaseName;Encrypt=yes;TrustServerCertificate=no;Connection Timeout=30;"
+		$connection = New-Object System.Data.SqlClient.SqlConnection
+		$connection.ConnectionString = $connectionString
+		$connection.Open()
+		$command = $connection.CreateCommand()
+		$command.CommandText = $SQLQuery
+		$null = $command.executenonquery()
+		$connection.Close()
+		Write-LogInfo "SQL Query: Succeeded."
+	} catch {
+		Write-LogErr "SQL Query: Failed."
+		$line = $_.InvocationInfo.ScriptLineNumber
+		$script_name = ($_.InvocationInfo.ScriptName).Replace($PWD,".")
+		$ErrorMessage =  $_.Exception.Message
+		Write-LogInfo "EXCEPTION : $ErrorMessage"
+		Write-LogInfo "Source : Line $line in script $script_name."
+	}
+}
 Function Get-VMProperties ($PropertyFilePath) {
 	if (Test-Path $PropertyFilePath) {
 		$GuestDistro = Get-Content $PropertyFilePath | Select-String "OS type"| ForEach-Object {$_ -replace ",OS type,",""}

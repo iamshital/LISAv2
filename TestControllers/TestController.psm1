@@ -464,7 +464,8 @@ Class TestController
 		if (!$global:IsWindowsImage -and $testParameters["SkipVerifyKernelLogs"] -ne "True") {
 			GetAndCheck-KernelLogs -allDeployedVMs $VmData -status "Final" -EnableCodeCoverage $this.EnableCodeCoverage | Out-Null
 			Get-SystemBasicLogs -AllVMData $VmData -User $global:user -Password $global:password -CurrentTestData $CurrentTestData `
-				-CurrentTestResult $currentTestResult -enableTelemetry $this.EnableTelemetry
+				-CurrentTestResult $currentTestResult -enableTelemetry $this.EnableTelemetry `
+				-DatabaseConfig $this.GlobalConfig.Global.$($this.TestPlatform).ResultsDatabase
 		}
 
 		$collectDetailLogs = !$this.TestCasePassStatus.contains($currentTestResult.TestResult) -and !$global:IsWindowsImage -and $testParameters["SkipVerifyKernelLogs"] -ne "True"

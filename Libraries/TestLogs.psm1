@@ -139,7 +139,7 @@ function Collect-TestLogs {
 	return $currentTestResult
 }
 
-Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $CurrentTestResult, $enableTelemetry) {
+Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $CurrentTestResult, $enableTelemetry, $DatabaseConfig) {
 	try
 	{
 		if ($allVMData.Count -gt 1)
@@ -214,7 +214,7 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 			-LISVersion $LISVersion -HostVersion $HostVersion -VMSize $VMSize -Networking $Networking `
 			-ARMImageName $global:ARMImageName -OsVHD $global:BaseOsVHD -BuildURL $env:BUILD_URL
 
-			Upload-TestResultToDatabase -SQLQuery $SQLQuery
+			Upload-TestResultToDatabase -SQLQuery $SQLQuery -DatabaseConfig $DatabaseConfig
 		}
 	}
 	catch
