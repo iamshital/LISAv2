@@ -116,7 +116,7 @@ Function Upload-TestResultToDatabase ([String]$SQLQuery)
 	}
 }
 
-Function Upload-TestResultToDatabase ([Array] $TestResultData, [Object] $DatabaseConfig) {
+Function Upload-TestResultDataToDatabase ([Array] $TestResultData, [Object] $DatabaseConfig) {
 	$server = $DatabaseConfig.server
 	$dbUser = $DatabaseConfig.user
 	$dbPassword = $DatabaseConfig.password
