@@ -457,7 +457,7 @@ Class TestController
 
 		# Upload results to database
 		if ($currentTestResult.TestResultData) {
-			Upload-TestResultToDatabase -TestResultData $currentTestResult.TestResultData -DatabaseConfig $this.GlobalConfig.Global.$($this.TestPlatform).ResultsDatabase
+			Upload-TestResultDataToDatabase -TestResultData $currentTestResult.TestResultData -DatabaseConfig $this.GlobalConfig.Global.$($this.TestPlatform).ResultsDatabase
 		}
 
 		# Do log collecting and VM clean up
