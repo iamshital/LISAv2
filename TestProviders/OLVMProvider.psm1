@@ -33,19 +33,19 @@ Class OLVMProvider : AzureProvider
 	[string] $OLUserName
 	[string] $OLUserPassword
 
-	[object] DeployVMs([xml] $GlobalConfig, [object] $SetupTypeData, [object] $TestCaseData, [string] $TestLocation, [string] $RGIdentifier, [bool] $UseExistingRG) {
-		$allVMData = ([AzureProvider]$this).DeployVMs($GlobalConfig, $SetupTypeData, $TestCaseData, $TestLocation, $RGIdentifier, $UseExistingRG)
+	[object] DeployVMs([xml] $GlobalConfig, [object] $SetupTypeData, [object] $TestCaseData, [string] $TestLocation, [string] $RGIdentifier, [bool] $UseExistingRG,  [string] $ResourceCleanup) {
 
-	if ($($GlobalConfig.Global.OL.TestCredentials)) {
-		$this.OLUserName = $($GlobalConfig.Global.OL.TestCredentials.OLUserName)
-		$this.OLUserPassword = $($GlobalConfig.Global.OL.TestCredentials.OLUserPassword)
-	} else {
-		Write-LogErr "Cannnot find test credentials for OL platform"
-		throw "OL credentials missing"
-	}
+	        if ($($GlobalConfig.Global.OL.TestCredentials)) {
+        	        $this.OLUserName = $($GlobalConfig.Global.OL.TestCredentials.OLUserName)
+                	$this.OLUserPassword = $($GlobalConfig.Global.OL.TestCredentials.OLUserPassword)
+	        } else {
+        	        Write-LogErr "Cannnot find test credentials for OL platform"
+                	throw "OL credentials missing"
+	        }
+        	Set-Variable -Name user -Value $this.OLUserName -Scope Global -Force
+	        Set-Variable -Name password -Value $this.OLUserPassword -Scope Global -Force
+		$allVMData = ([AzureProvider]$this).DeployVMs($GlobalConfig, $SetupTypeData, $TestCaseData, $TestLocation, $RGIdentifier, $UseExistingRG, $ResourceCleanup)
 
-	Set-Variable -Name user -Value $this.OLUserName -Scope Global -Force
-	Set-Variable -Name password -Value $this.OLUserPassword -Scope Global -Force
 
 	return $allVMData
 	}
