@@ -1116,13 +1116,13 @@ function Check-FileInLinuxGuest{
 		Write-Output "yes" | .\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "stat ${fileName} >/dev/null"
 	}
 
-	if (-not $checkSize) {
+	if (-not $?) {
 		return $False
 	}
 	if ($checkContent) {
 
 		Write-Output "yes" | .\Tools\plink.exe -C -pw $vmPassword -P $vmPort $vmUserName@$ipv4 "cat ${fileName}"
-		if (-not $checkContent) {
+		if (-not $?) {
 			return $False
 		}
 	}
@@ -1984,6 +1984,8 @@ function IsGreaterKernelVersion() {
                 continue
             } elseif ([int]$actualKernelVersions[$i] -lt [int]$supportKernelVersions[$i]) {
                 return $false
+            } else {
+                return $true
             }
         }
         return $true
