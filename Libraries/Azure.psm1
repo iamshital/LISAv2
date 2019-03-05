@@ -233,7 +233,7 @@ Function Validate-SubscriptionUsage($RGXMLData, $Location, $OverrideVMSize, $Sto
     }
 }
 
-Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Distro, [string]$TestLocation, $GlobalConfig, $TiPSessionId, $TipCluster, $UseExistingRG) {
+Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Distro, [string]$TestLocation, $GlobalConfig, $TiPSessionId, $TipCluster, $UseExistingRG, $ResourceCleanup) {
     $resourceGroupCount = 0
 
     Write-LogInfo "Current test setup: $($SetupTypeData.Name)"
@@ -301,19 +301,14 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
                     }
                     Write-LogInfo "test platform is : $testPlatform"
                     if ($isServiceCreated -eq "True") {
-                        if ($testPlatform -eq 'OLVM') {
-                            $DeploymentStartTime = (Get-Date)
-                            $CreateRGDeployments =  Create-ResourceForOLVM -RGName $groupName -Location $location -RGXMLData $RG -OsVHD $osVHD -CurrentTestData $TestCaseData
-                        }
-                        else {
-                            $azureDeployJSONFilePath = Join-Path $env:TEMP "$groupName.json"
-                            $null = Generate-AzureDeployJSONFile -RGName $groupName -ImageName $osImage -osVHD $osVHD -RGXMLData $RG -Location $location `
+                        $azureDeployJSONFilePath = Join-Path $env:TEMP "$groupName.json"
+                        $null = Generate-AzureDeployJSONFile -RGName $groupName -ImageName $osImage -osVHD $osVHD -RGXMLData $RG -Location $location `
                                 -azuredeployJSONFilePath $azureDeployJSONFilePath -CurrentTestData $TestCaseData -TiPSessionId $TiPSessionId -TipCluster $TipCluster `
                                 -StorageAccountName $GlobalConfig.Global.Azure.Subscription.ARMStorageAccount
-                            $DeploymentStartTime = (Get-Date)
-                            $CreateRGDeployments = Create-ResourceGroupDeployment -RGName $groupName -location $location -TemplateFile $azureDeployJSONFilePath `
+
+                        $DeploymentStartTime = (Get-Date)
+                        $CreateRGDeployments = Create-ResourceGroupDeployment -RGName $groupName -location $location -TemplateFile $azureDeployJSONFilePath `
                                 -UseExistingRG $UseExistingRG
-                        }
 
                         $DeploymentEndTime = (Get-Date)
                         $DeploymentElapsedTime = $DeploymentEndTime - $DeploymentStartTime
@@ -356,62 +351,6 @@ Function Create-AllResourceGroupDeployments($SetupTypeData, $TestCaseData, $Dist
     }
     return $retValue, $deployedGroups, $resourceGroupCount, $DeploymentElapsedTime
 }
-
-Function Create-ResourceForOLVM([string]$RGName, [string]$Location, $RGXMLData, [string]$OsVHD, $CurrentTestData) {
-
-    $randomVal = Get-Random -Maximum 999999 -Minimum 111111
-    $networkName = "Network$randomVal"
-	$NICName = "NIC$randomVal"
-	$publicIPAddressName = "PublicIP$randomVal"
-	$SubnetName = "Subnet$randomVal"
-	$SubnetAddressPrefix = "10.0.0.0/24"
-	$VnetAddressPrefix = "10.0.0.0/16"
-    $DNSNameLabel = "dns$randomVal"
-    $retValue = $false
-    $VMSize = $null
-
-    foreach ( $newVM in $RGXMLData.VirtualMachine) {
-        if ( $CurrentTestData.OverrideVMSize) {
-            $VMSize = $CurrentTestData.OverrideVMSize
-        }
-        else {
-            $VMSize = $newVM.ARMInstanceSize
-        }
-    }
-
-    $StorageAccountName = $GlobalConfig.Global.Azure.Subscription.ARMStorageAccount
-    $vhduri = "https://$StorageAccountName.blob.core.windows.net/vhds/$OsVHD"
-    $vmName = Get-NewVMName -namePrefix $RGName -numberOfVMs 0
-    $sourceContainer = $vhduri.Split("/")[$vhduri.Split("/").Count - 2]
-    $destVHDName = "$randomVal-$OsVHD"
-
-    $copyStatus = Copy-VHDToAnotherStorageAccount -sourceStorageAccount $StorageAccountName -sourceStorageContainer $sourceContainer -destinationStorageAccount $StorageAccountName -destinationStorageContainer "vhds" -vhdName $OsVHD -destVHDName $destVHDName
-    if (!$copyStatus) {
-		Throw "Failed to copy the VHD to $ARMStorageAccount"
-		} else {
-		Write-LogInfo "New Base VHD name - $destVHDName"
-    }
-
-    $vhduri = "https://$StorageAccountName.blob.core.windows.net/vhds/$destVHDName"
-
-    try {
-        $vmSubnet = New-AzureRmVirtualNetworkSubnetConfig -Name $SubnetName -AddressPrefix $SubnetAddressPrefix
-        $Vnet = New-AzureRmVirtualNetwork -Name $networkName -ResourceGroupName $RGName -Location $Location -AddressPrefix $VnetAddressPrefix -Subnet $vmSubnet -force
-        $publicIPInstance = New-AzureRmPublicIpAddress -Name $publicIPAddressName -DomainNameLabel $DNSNameLabel -ResourceGroupName $RGName -Location $Location -AllocationMethod Dynamic -force
-        $NIC = New-AzureRmNetworkInterface -Name $NICName -ResourceGroupName $RGName -Location $Location -SubnetId $Vnet.Subnets[0].Id -PublicIpAddressId $publicIPInstance.Id -Force
-        $virtualMachine = New-AzureRmVMConfig -VMName $vmName -VMSize $VMSize -ErrorAction Stop
-        $virtualMachine = Add-AzureRmVMNetworkInterface -VM $virtualMachine -Id $NIC.Id -ErrorAction Stop
-        $virtualMachine = Set-AzureRmVMOSDisk -VM $virtualMachine -Name $destVHDName -VhdUri $vhduri -CreateOption Attach -Linux -ErrorAction Stop
-        Write-LogInfo "Creating a OLVM "
-        New-AzureRmVm -ResourceGroupName $RGName -Location $Location  -VM $virtualMachine -ErrorAction Stop
-        $retValue = $true
-    }
-    catch {
-        Write-LogErr "Create-ResourceForVM failed with an error : $_"
-    }
-    return $retValue
-}
-
 Function Delete-ResourceGroup([string]$RGName, [switch]$KeepDisks, [bool]$UseExistingRG) {
     Write-LogInfo "Try to delete resource group $RGName..."
     try {
@@ -505,7 +444,7 @@ Function Create-ResourceGroup([string]$RGName, $location, $CurrentTestData) {
     return $retValue
 }
 
-Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFile, $UseExistingRG) {
+Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFile, $UseExistingRG, $ResourceCleanup) {
     $FailCounter = 0
     $retValue = "False"
     $ResourceGroupDeploymentName = "eosg" + (Get-Date).Ticks
@@ -527,7 +466,7 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
                 Write-LogErr "Failed to create Resource Group Deployment - $RGName."
                 if ($ResourceCleanup -imatch "Delete") {
                     Write-LogInfo "-ResourceCleanup = Delete is Set. Deleting $RGName."
-                    $isCleaned = Delete-ResourceGroup -RGName $RGName
+                    $isCleaned = Delete-ResourceGroup -RGName $RGName -UseExistingRG $UseExistingRG
                     if (!$isCleaned) {
                         Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
                     }
@@ -542,7 +481,7 @@ Function Create-ResourceGroupDeployment([string]$RGName, $location, $TemplateFil
                     }
                     else {
                         Write-LogInfo "Removing Failed resource group, as we found 0 VM(s) deployed."
-                        $isCleaned = Delete-ResourceGroup -RGName $RGName -UseExistingRG
+                        $isCleaned = Delete-ResourceGroup -RGName $RGName -UseExistingRG $UseExistingRG
                         if (!$isCleaned) {
                             Write-LogInfo "Cleanup unsuccessful for $RGName.. Please delete the services manually."
                         }
@@ -602,9 +541,6 @@ Function Get-AllDeploymentData($ResourceGroups)
         foreach ($testVM in $RGVMs)
         {
             $QuickVMNode = Create-QuickVMNode
-            if ($testPlatform -eq 'OLVM') {
-                Add-Member -InputObject $QuickVMNode -MemberType NoteProperty -Name "SSHPort" -Value "22" -Force
-            }
             $InboundNatRules = $LBdata.Properties.InboundNatRules
             foreach ($endPoint in $InboundNatRules)
             {
@@ -1633,30 +1569,31 @@ Function Generate-AzureDeployJSONFile ($RGName, $ImageName, $osVHD, $RGXMLData, 
         Add-Content -Value "$($indents[4])}," -Path $jsonFile
         #endregion
 
-        #region OSProfile
-        Add-Content -Value "$($indents[4])^osProfile^: " -Path $jsonFile
-        Add-Content -Value "$($indents[4]){" -Path $jsonFile
-        Add-Content -Value "$($indents[5])^computername^: ^$vmName^," -Path $jsonFile
-        Add-Content -Value "$($indents[5])^adminUsername^: ^[variables('adminUserName')]^," -Path $jsonFile
-        Add-Content -Value "$($indents[5])^adminPassword^: ^[variables('adminPassword')]^" -Path $jsonFile
-        #Add-Content -Value "$($indents[5])^linuxConfiguration^:" -Path $jsonFile
-        #Add-Content -Value "$($indents[5]){" -Path $jsonFile
-        #    Add-Content -Value "$($indents[6])^ssh^:" -Path $jsonFile
-        #    Add-Content -Value "$($indents[6]){" -Path $jsonFile
-        #        Add-Content -Value "$($indents[7])^publicKeys^:" -Path $jsonFile
-        #        Add-Content -Value "$($indents[7])[" -Path $jsonFile
-        #            Add-Content -Value "$($indents[8])[" -Path $jsonFile
-        #                Add-Content -Value "$($indents[9]){" -Path $jsonFile
-        #                    Add-Content -Value "$($indents[10])^path^:^$sshPath^," -Path $jsonFile
-        #                    Add-Content -Value "$($indents[10])^keyData^:^$sshKeyData^" -Path $jsonFile
-        #                Add-Content -Value "$($indents[9])}" -Path $jsonFile
-        #            Add-Content -Value "$($indents[8])]" -Path $jsonFile
-        #        Add-Content -Value "$($indents[7])]" -Path $jsonFile
-        #    Add-Content -Value "$($indents[6])}" -Path $jsonFile
-        #Add-Content -Value "$($indents[5])}" -Path $jsonFile
-        Add-Content -Value "$($indents[4])}," -Path $jsonFile
-        #endregion
-
+        if ($testPlatform -ne 'OLVM') {
+            #region OSProfile
+            Add-Content -Value "$($indents[4])^osProfile^: " -Path $jsonFile
+            Add-Content -Value "$($indents[4]){" -Path $jsonFile
+            Add-Content -Value "$($indents[5])^computername^: ^$vmName^," -Path $jsonFile
+            Add-Content -Value "$($indents[5])^adminUsername^: ^[variables('adminUserName')]^," -Path $jsonFile
+            Add-Content -Value "$($indents[5])^adminPassword^: ^[variables('adminPassword')]^" -Path $jsonFile
+            #Add-Content -Value "$($indents[5])^linuxConfiguration^:" -Path $jsonFile
+            #Add-Content -Value "$($indents[5]){" -Path $jsonFile
+            #    Add-Content -Value "$($indents[6])^ssh^:" -Path $jsonFile
+            #    Add-Content -Value "$($indents[6]){" -Path $jsonFile
+            #        Add-Content -Value "$($indents[7])^publicKeys^:" -Path $jsonFile
+            #        Add-Content -Value "$($indents[7])[" -Path $jsonFile
+            #            Add-Content -Value "$($indents[8])[" -Path $jsonFile
+            #                Add-Content -Value "$($indents[9]){" -Path $jsonFile
+            #                    Add-Content -Value "$($indents[10])^path^:^$sshPath^," -Path $jsonFile
+            #                    Add-Content -Value "$($indents[10])^keyData^:^$sshKeyData^" -Path $jsonFile
+            #                Add-Content -Value "$($indents[9])}" -Path $jsonFile
+            #            Add-Content -Value "$($indents[8])]" -Path $jsonFile
+            #        Add-Content -Value "$($indents[7])]" -Path $jsonFile
+            #    Add-Content -Value "$($indents[6])}" -Path $jsonFile
+            #Add-Content -Value "$($indents[5])}" -Path $jsonFile
+            Add-Content -Value "$($indents[4])}," -Path $jsonFile
+            #endregion
+        }
         #region Storage Profile
         Add-Content -Value "$($indents[4])^storageProfile^: " -Path $jsonFile
         Add-Content -Value "$($indents[4]){" -Path $jsonFile
@@ -1679,6 +1616,7 @@ Function Generate-AzureDeployJSONFile ($RGName, $ImageName, $osVHD, $RGXMLData, 
         Add-Content -Value "$($indents[5])^osDisk^ : " -Path $jsonFile
         Add-Content -Value "$($indents[5]){" -Path $jsonFile
         if ($osVHD) {
+            $osVHD = $osVHD.Split('/')[-1]
             if ($UseManagedDisks) {
                 Write-LogInfo ">>> Using VHD : $osVHD (Converted to Managed Image)"
                 Add-Content -Value "$($indents[6])^osType^: ^Linux^," -Path $jsonFile
@@ -1702,19 +1640,42 @@ Function Generate-AzureDeployJSONFile ($RGName, $ImageName, $osVHD, $RGXMLData, 
             }
             else {
                 Write-LogInfo ">>> Using VHD : $osVHD"
-                Add-Content -Value "$($indents[6])^image^: " -Path $jsonFile
-                Add-Content -Value "$($indents[6]){" -Path $jsonFile
-                Add-Content -Value "$($indents[7])^uri^: ^[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/vhds/','$osVHD')]^" -Path $jsonFile
-                Add-Content -Value "$($indents[6])}," -Path $jsonFile
-                Add-Content -Value "$($indents[6])^osType^: ^Linux^," -Path $jsonFile
-                Add-Content -Value "$($indents[6])^name^: ^$vmName-OSDisk^," -Path $jsonFile
-                #Add-Content -Value "$($indents[6])^osType^: ^Linux^," -Path $jsonFile
-                Add-Content -Value "$($indents[6])^vhd^: " -Path $jsonFile
-                Add-Content -Value "$($indents[6]){" -Path $jsonFile
-                Add-Content -Value "$($indents[7])^uri^: ^[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/vhds/','$vmName-$RGrandomWord-osdisk.vhd')]^" -Path $jsonFile
-                Add-Content -Value "$($indents[6])}," -Path $jsonFile
-                Add-Content -Value "$($indents[6])^caching^: ^ReadWrite^," -Path $jsonFile
-                Add-Content -Value "$($indents[6])^createOption^: ^FromImage^" -Path $jsonFile
+                if ($testPlatform -eq 'OLVM') {
+                    $vhduri = "https://$StorageAccountName.blob.core.windows.net/vhds/$OsVHD"
+                    $sourceContainer = $vhduri.Split("/")[$vhduri.Split("/").Count - 2]
+                    $destVHDName = "$vmName-$RGrandomWord-osdisk.vhd"
+
+                    $copyStatus = Copy-VHDToAnotherStorageAccount -sourceStorageAccount $StorageAccountName -sourceStorageContainer $sourceContainer -destinationStorageAccount $StorageAccountName -destinationStorageContainer "vhds" -vhdName $OsVHD -destVHDName $destVHDName
+                    if (!$copyStatus) {
+                        Throw "Failed to copy the VHD to $ARMStorageAccount"
+                    } else {
+                        Write-LogInfo "New Base VHD name - $destVHDName"
+                    }
+                    Add-Content -Value "$($indents[6])^osType^: ^Linux^," -Path $jsonFile
+                    Add-Content -Value "$($indents[6])^name^: ^$vmName-OSDisk^," -Path $jsonFile
+                    #Add-Content -Value "$($indents[6])^osType^: ^Linux^," -Path $jsonFile
+                    Add-Content -Value "$($indents[6])^vhd^: " -Path $jsonFile
+                    Add-Content -Value "$($indents[6]){" -Path $jsonFile
+                    Add-Content -Value "$($indents[7])^uri^: ^[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/vhds/','$vmName-$RGrandomWord-osdisk.vhd')]^" -Path $jsonFile
+                    Add-Content -Value "$($indents[6])}," -Path $jsonFile
+                    Add-Content -Value "$($indents[6])^caching^: ^ReadWrite^," -Path $jsonFile
+                    Add-Content -Value "$($indents[6])^createOption^: ^Attach^" -Path $jsonFile
+                }
+                else {
+                    Add-Content -Value "$($indents[6])^image^: " -Path $jsonFile
+                    Add-Content -Value "$($indents[6]){" -Path $jsonFile
+                    Add-Content -Value "$($indents[7])^uri^: ^[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/vhds/','$osVHD')]^" -Path $jsonFile
+                    Add-Content -Value "$($indents[6])}," -Path $jsonFile
+                    Add-Content -Value "$($indents[6])^osType^: ^Linux^," -Path $jsonFile
+                    Add-Content -Value "$($indents[6])^name^: ^$vmName-OSDisk^," -Path $jsonFile
+                    #Add-Content -Value "$($indents[6])^osType^: ^Linux^," -Path $jsonFile
+                    Add-Content -Value "$($indents[6])^vhd^: " -Path $jsonFile
+                    Add-Content -Value "$($indents[6]){" -Path $jsonFile
+                    Add-Content -Value "$($indents[7])^uri^: ^[concat('http://',variables('StorageAccountName'),'.blob.core.windows.net/vhds/','$vmName-$RGrandomWord-osdisk.vhd')]^" -Path $jsonFile
+                    Add-Content -Value "$($indents[6])}," -Path $jsonFile
+                    Add-Content -Value "$($indents[6])^caching^: ^ReadWrite^," -Path $jsonFile
+                    Add-Content -Value "$($indents[6])^createOption^: ^FromImage^" -Path $jsonFile
+                }
             }
         }
         else {

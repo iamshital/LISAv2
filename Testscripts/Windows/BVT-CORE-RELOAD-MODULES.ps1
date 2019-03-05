@@ -105,7 +105,11 @@ function Main {
     Run-LinuxCmd -username $VMUserName -password $VMPassword -ip $Ipv4 -port $VMPort `
         -command "echo '${VMPassword}' | sudo -S -s eval `"export HOME=``pwd``;bash ${testScript} > BVT-CORE-RELOAD-MODULES_summary.log`"" -RunInBackGround | Out-Null
     Stop-Job $pingJob
-
+    $isVmAlive = Is-VmAlive -AllVMDataObject $AllVmData -MaxRetryCount 40
+    if ($isVmAlive -eq "False") {
+        Write-LogErr "Failed to connect to test VM."
+        return "FAIL"
+    }
     $sts = Check-Result -VmIp $Ipv4 -VmPort $VMPort -User $VMUserName -Password $VMPassword
     if (-not $($sts[-1])) {
         Write-LogErr "Something went wrong during execution of BVT-CORE-RELOAD-MODULES.sh script!"

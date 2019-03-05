@@ -457,7 +457,7 @@ Class TestController
 
 		# Upload results to database
 		if ($currentTestResult.TestResultData) {
-			Upload-TestResultToDatabase -TestResultData $currentTestResult.TestResultData -DatabaseConfig $this.GlobalConfig.Global.$($this.TestPlatform).ResultsDatabase
+			Upload-TestResultDataToDatabase -TestResultData $currentTestResult.TestResultData -DatabaseConfig $this.GlobalConfig.Global.$($this.TestPlatform).ResultsDatabase
 		}
 
 		# Do log collecting and VM clean up
@@ -503,10 +503,10 @@ Class TestController
 					}
 					Write-LogInfo "$($case.testName) started running."
 					$executionCount += 1
-					if (!$vmData -or $this.DeployVMPerEachTest -or ($this.ResourceCleanup -imatch "Delete")) {
+					if (!$vmData -or $this.DeployVMPerEachTest) {
 						# Deploy the VM for the setup
 						$vmData = $this.TestProvider.DeployVMs($this.GlobalConfig, $this.SetupTypeTable[$setupType], $this.SetupTypeToTestCases[$key][0], `
-							$this.TestLocation, $this.RGIdentifier, $this.UseExistingRG)
+							$this.TestLocation, $this.RGIdentifier, $this.UseExistingRG, $this.ResourceCleanup)
 						if (!$vmData) {
 							# Failed to deploy the VMs, Set the case to abort
 							$this.JunitReport.StartLogTestCase("LISAv2Test-$($this.TestPlatform)","$($case.testName)","$($case.Category)-$($case.Area)")
@@ -523,6 +523,7 @@ Class TestController
 					if (!$this.TestCasePassStatus.contains($lastResult.TestResult)) {
 						if ($this.ResourceCleanup -imatch "Delete") {
 							$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
+							$vmData = $null
 						} elseif (!$this.TestProvider.ReuseVmOnFailure) {
 							$vmData = $null
 						}
@@ -530,6 +531,7 @@ Class TestController
 						# Delete the VM if DeployVMPerEachTest is set
 						# Do not delete the VMs if testing against existing resource group, or -ResourceCleanup = Keep is set
 						$this.TestProvider.DeleteTestVMS($vmData, $this.SetupTypeTable[$setupType], $this.UseExistingRG)
+						$vmData = $null
 					}
 					Write-LogInfo "$($case.testName) ended running with status: $($lastResult.TestResult)."
 				}
