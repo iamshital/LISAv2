@@ -37,7 +37,7 @@ Class OLQProvider : AzureProvider
     [string] $OLImageName
 
     [object] DeployVMs([xml] $GlobalConfig, [object] $SetupTypeData, [object] $TestCaseData, [string] $TestLocation, [string] $RGIdentifier, [bool] $UseExistingRG, [string] $ResourceCleanup) {
-        $allVMData = ([AzureProvider]$this).DeployVMs($GlobalConfig, $SetupTypeData, $TestCaseData, $TestLocation, $RGIdentifier, $UseExistingRG)
+        $allVMData = ([AzureProvider]$this).DeployVMs($GlobalConfig, $SetupTypeData, $TestCaseData, $TestLocation, $RGIdentifier, $UseExistingRG, $ResourceCleanup)
 
         if ($($GlobalConfig.Global.OL.TestCredentials)) {
             $this.OLUserName = $($GlobalConfig.Global.OL.TestCredentials.OLUserName)
