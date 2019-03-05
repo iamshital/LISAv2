@@ -24,11 +24,11 @@ function setup_huge_pages () {
 	LogMsg "Huge page setup is running"
 	ssh "${1}" "mkdir -p /mnt/huge && mkdir -p /mnt/huge-1G"
 	ssh "${1}" "mount -t hugetlbfs nodev /mnt/huge && mount -t hugetlbfs nodev /mnt/huge-1G -o 'pagesize=1G'"
-	check_exit_status "Huge pages are mounted on ${1}"
+	check_exit_status "Huge pages are mounted on ${1}" "exit"
 	ssh "${1}" "echo 4096 > /sys/devices/system/node/node0/hugepages/hugepages-2048kB/nr_hugepages"
-	check_exit_status "4KB huge pages are configured on ${1}"
+	check_exit_status "4KB huge pages are configured on ${1}" "exit"
 	ssh "${1}" "echo 8 > /sys/devices/system/node/node0/hugepages/hugepages-1048576kB/nr_hugepages"
-	check_exit_status "1GB huge pages are configured on ${1}"
+	check_exit_status "1GB huge pages are configured on ${1}" "exit"
 }
 
 function install_dpdk () {
@@ -61,7 +61,7 @@ function install_dpdk () {
 		LogMsg "Installing DPDK from source file $dpdkSrcTar"
 		ssh "${1}" "wget $dpdkSrcLink -P /tmp"
 		ssh "${1}" "tar xf /tmp/$dpdkSrcTar"
-		check_exit_status "tar xf /tmp/$dpdkSrcTar on ${1}"
+		check_exit_status "tar xf /tmp/$dpdkSrcTar on ${1}" "exit"
 		dpdkSrcDir="${dpdkSrcTar%%".tar"*}"
 		LogMsg "dpdk source on ${1} $dpdkSrcDir"
 		ssh "${1}" "mv ${dpdkSrcDir} ${RTE_SDK}"
@@ -70,7 +70,7 @@ function install_dpdk () {
 		dpdkSrcDir="${dpdkSrcLink##*/}"
 		LogMsg "Installing DPDK from source file $dpdkSrcDir"
 		ssh "${1}" git clone "$dpdkSrcLink"
-		check_exit_status "git clone $dpdkSrcLink on ${1}"
+		check_exit_status "git clone $dpdkSrcLink on ${1}" "exit"
 		LogMsg "dpdk source on ${1} $dpdkSrcDir"
 	else
 		LogMsg "Provide proper link $dpdkSrcLink"
@@ -78,11 +78,11 @@ function install_dpdk () {
 
 	LogMsg "MLX_PMD flag enabling on ${1}"
 	ssh "${1}" "sed -ri 's,(MLX._PMD=)n,\1y,' ${RTE_SDK}/config/common_base"
-	check_exit_status "sed -ri 's,(MLX._PMD=)n,\1y,' ${RTE_SDK}/config/common_base"
+	check_exit_status "sed -ri 's,(MLX._PMD=)n,\1y,' ${RTE_SDK}/config/common_base" "exit"
 	ssh "${1}" "cd ${RTE_SDK} && make config O=${RTE_TARGET} T=${RTE_TARGET}"
 	LogMsg "Starting DPDK build make on ${1}"
 	ssh "${1}" "cd ${RTE_SDK}/${RTE_TARGET} && make -j16 && make install"
-	check_exit_status "dpdk build on ${1}"
+	check_exit_status "dpdk build on ${1}" "exit"
 	LogMsg "*********INFO: Installed DPDK version on ${1} is ${dpdkVersion} ********"
 }
 
