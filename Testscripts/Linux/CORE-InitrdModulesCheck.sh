@@ -122,7 +122,7 @@ case $DISTRO in
 esac
 
 if [ -f /boot/initramfs-0-rescue* ]; then
-    img=/boot/initramfs-0-rescue*
+    img=$(find /boot -name "initramfs-0-rescue*" | head -1)
 else
   if [ -f "/boot/initrd-$(uname -r)" ]; then
     img="/boot/initrd-$(uname -r)"
