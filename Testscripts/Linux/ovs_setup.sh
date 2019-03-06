@@ -28,12 +28,6 @@ function install_ovs () {
 	case "${DISTRO_NAME}" in
 		ubuntu|debian)
 			ssh "${1}" "until dpkg --force-all --configure -a; sleep 10; do echo 'Trying again...'; done"
-			if [[ "${DISTRO_VERSION}" != "18.04" ]];
-			then
-				echo "Distro unsupported ${DISTRO_VERSION}"
-				SetTestStateAborted
-				exit 1
-			fi
 			ssh "${1}" ". ${UTIL_FILE} && update_repos"
 			packages+=(autoconf libtool)
 			;;

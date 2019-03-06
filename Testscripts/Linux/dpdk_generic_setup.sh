@@ -38,11 +38,10 @@ function install_dpdk () {
 	case "${DISTRO_NAME}" in
 		ubuntu|debian)
 			ssh "${1}" "until dpkg --force-all --configure -a; sleep 10; do echo 'Trying again...'; done"
-			if [[ "${DISTRO_VERSION}" != "18.04" ]];
+			if [[ "${DISTRO_VERSION}" == "16.04" ]];
 			then
-				echo "Distro unsupported ${DISTRO_VERSION}"
-				SetTestStateAborted
-				exit 1
+				LogMsg "Adding dpdk repo to ${DISTRO_NAME} ${DISTRO_VERSION} for DPDK test..."
+				ssh "${1}" "add-apt-repository ppa:canonical-server/dpdk-azure -y"
 			fi
 			ssh "${1}" ". ${UTIL_FILE} && update_repos"
 			packages+=(build-essential libnuma-dev libmnl-dev libibverbs-dev autoconf libtool)
@@ -64,7 +63,6 @@ function install_dpdk () {
 		check_exit_status "tar xf /tmp/$dpdkSrcTar on ${1}" "exit"
 		dpdkSrcDir="${dpdkSrcTar%%".tar"*}"
 		LogMsg "dpdk source on ${1} $dpdkSrcDir"
-		ssh "${1}" "mv ${dpdkSrcDir} ${RTE_SDK}"
 	elif [[ $dpdkSrcLink =~ ".git" ]] || [[ $dpdkSrcLink =~ "git:" ]];
 	then
 		dpdkSrcDir="${dpdkSrcLink##*/}"
@@ -75,6 +73,8 @@ function install_dpdk () {
 	else
 		LogMsg "Provide proper link $dpdkSrcLink"
 	fi
+
+	ssh "${1}" "mv ${dpdkSrcDir} ${RTE_SDK}"
 
 	LogMsg "MLX_PMD flag enabling on ${1}"
 	ssh "${1}" "sed -ri 's,(MLX._PMD=)n,\1y,' ${RTE_SDK}/config/common_base"
