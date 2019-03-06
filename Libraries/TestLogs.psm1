@@ -150,27 +150,17 @@ Function Get-SystemBasicLogs($AllVMData, $User, $Password, $currentTestData, $Cu
 		{
 			$vmData = $allVMData
 		}
-		if ($TestPlatform.StartsWith('OL')) {
-			$FilesToDownload = "*.txt"
-		}
-		else{
-			$FilesToDownload = "$($vmData.RoleName)-*.txt"
-		}
+		$FilesToDownload = "$($vmData.RoleName)-*.txt"
 		Copy-RemoteFiles -upload -uploadTo $vmData.PublicIP -port $vmData.SSHPort `
 			-files .\Testscripts\Linux\CollectLogFile.sh `
 			-username $user -password $password -maxRetry 5 | Out-Null
-		$Null = Run-LinuxCmd -username $user -password $password -ip $vmData.PublicIP -port $vmData.SSHPort -command "bash CollectLogFile.sh" -ignoreLinuxExitCode -runAsSudo
-		$Null = Copy-RemoteFiles -downloadFrom $vmData.PublicIP -port $vmData.SSHPort -username $user -password $password -files "$FilesToDownload" -downloadTo "$LogDir" -download
+		$Null = Run-LinuxCmd -username $user -password $password -ip $vmData.PublicIP -port $vmData.SSHPort `
+			-command "bash CollectLogFile.sh -hostname $($vmData.RoleName)" -ignoreLinuxExitCode -runAsSudo
+		$Null = Copy-RemoteFiles -downloadFrom $vmData.PublicIP -port $vmData.SSHPort `
+			-username $user -password $password -files "$FilesToDownload" -downloadTo "$LogDir" -download
 		$KernelVersion = Get-Content "$LogDir\$($vmData.RoleName)-kernelVersion.txt"
 		$GuestDistro = Get-Content "$LogDir\$($vmData.RoleName)-distroVersion.txt"
-		if ($TestPlatform.StartsWith('OL')) {
-			$KernelVersion = Get-Content "$LogDir\over*-kernelVersion.txt"
-			$GuestDistro = Get-Content "$LogDir\over*-distroVersion.txt"
-			$LISMatch = (Select-String -Path "$LogDir\over*-lis.txt" -Pattern "^version:").Line
-		}
-		else{
-			$LISMatch = (Select-String -Path "$LogDir\$($vmData.RoleName)-lis.txt" -Pattern "^version:").Line
-		}
+		$LISMatch = (Select-String -Path "$LogDir\$($vmData.RoleName)-lis.txt" -Pattern "^version:").Line
 		if ($LISMatch)
 		{
 			$LISVersion = $LISMatch.Split(":").Trim()[1]
