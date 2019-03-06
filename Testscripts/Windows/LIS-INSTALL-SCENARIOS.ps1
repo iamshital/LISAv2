@@ -158,7 +158,7 @@ Function Uninstall-LIS ( $LISTarballUrlCurrent, $allVMData , $TestProvider) {
 Function Upgrade-Kernel ($allVMData, $TestProvider, [switch]$RestartAfterUpgrade){
     try {
         Write-LogInfo "Upgrading kernel"
-        Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username "root" -password $password -command "yum install -y kernel >> ~/kernel_install_scenario.log" -runMaxAllowedTime 20000
+        Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username "root" -password $password -command "yum install -y kernel >> ~/kernel_install_scenario.log" -runMaxAllowedTime 600 -maxRetryCount 3
         # Checking if latest kernel is already installed
         $sts = Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username "root" -password $password -command "cat kernel_install_scenario.log | grep 'already installed'" -ignoreLinuxExitCode:$true
         if ($sts) {
@@ -276,7 +276,7 @@ Function Install-LIS-Scenario-4 ($PreviousTestResult, $LISTarballUrlOld, $LISTar
     if ($PreviousTestResult -eq "PASS") {
         $UpgradekernelStatus=Upgrade-Kernel -allVMData $AllVMData -TestProvider $TestProvider
         if (-not $UpgradekernelStatus) {
-            return "FAIL"
+            return "SKIPPED"
         }
         $LISInstallStatus=Install-LIS -LISTarballUrl $LISTarballUrlCurrent -allVMData $AllVMData
         if ($LISInstallStatus -ne $false) {
@@ -306,7 +306,7 @@ Function Install-LIS-Scenario-5 ($PreviousTestResult, $LISTarballUrlOld, $LISTar
         Write-LogInfo "LIS version before upgrading kernel: $LIS_version_before_upgrade_kernel"
         $UpgradekernelStatus=Upgrade-Kernel -allVMData $AllVMData -TestProvider $TestProvider -RestartAfterUpgrade
         if (-not $UpgradekernelStatus) {
-            return "FAIL"
+            return "SKIPPED"
         }
         $LIS_version_after_upgrade_kernel = Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username "root" -password $password -command "modinfo hv_vmbus"
         Write-LogInfo "LIS version after upgrading kernel: $LIS_version_after_upgrade_kernel"
@@ -341,7 +341,7 @@ Function Install-LIS-Scenario-6 ($PreviousTestResult, $LISTarballUrlOld, $LISTar
         Write-LogInfo "LIS version before upgrading kernel: $LIS_version_before_upgrade_kernel"
         $UpgradekernelStatus=Upgrade-Kernel -allVMData $AllVMData -TestProvider $TestProvider -RestartAfterUpgrade
         if (-not $UpgradekernelStatus) {
-            return "FAIL"
+            return "SKIPPED"
         }
         $LIS_version_after_upgrade_kernel = Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username "root" -password $password -command "modinfo hv_vmbus"
         Write-LogInfo "LIS version after upgrading kernel: $LIS_version_after_upgrade_kernel"
@@ -368,7 +368,7 @@ Function Install-LIS-Scenario-7 ($PreviousTestResult, $LISTarballUrlOld, $LISTar
         $is_oracle = Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username "root" -password $password -command "cat /etc/os-release | grep -i oracle" -ignoreLinuxExitCode:$true
         if ($is_oracle) {
             Write-LogErr "Skipped: Oracle not suported on this TC"
-            return "ABORTED"
+            return "SKIPPED"
         }
         Write-LogInfo "Upgrading minor kernel"
         $kernel_version_before_upgrade = Run-LinuxCmd -ip $allVMData.PublicIP -port $allVMData.SSHPort -username "root" -password $password -command "uname -r"
@@ -381,7 +381,7 @@ Function Install-LIS-Scenario-7 ($PreviousTestResult, $LISTarballUrlOld, $LISTar
             Write-LogInfo "kernel version after upgrade: $kernel_version_after_upgrade"
             if ( $kernel_version_after_upgrade -eq $kernel_version_before_upgrade) {
                 Write-LogErr "Failed to Upgrade Minor kernel"
-                return "FAIL"
+                return "SKIPPED"
             }
             Write-LogInfo "Sucessfully Upgraded Minor Kernel"
             $UpgradeStatus=Upgrade-LIS -LISTarballUrlOld $LISTarballUrlOld -LISTarballUrlCurrent $LISTarballUrlCurrent -allVMData $AllVMData -TestProvider $TestProvider -RestartAfterUpgrade
