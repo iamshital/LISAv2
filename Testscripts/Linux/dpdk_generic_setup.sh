@@ -63,7 +63,6 @@ function install_dpdk () {
 		check_exit_status "tar xf /tmp/$dpdkSrcTar on ${1}" "exit"
 		dpdkSrcDir="${dpdkSrcTar%%".tar"*}"
 		LogMsg "dpdk source on ${1} $dpdkSrcDir"
-		ssh "${1}" "mv ${dpdkSrcDir} ${RTE_SDK}"
 	elif [[ $dpdkSrcLink =~ ".git" ]] || [[ $dpdkSrcLink =~ "git:" ]];
 	then
 		dpdkSrcDir="${dpdkSrcLink##*/}"
@@ -74,6 +73,8 @@ function install_dpdk () {
 	else
 		LogMsg "Provide proper link $dpdkSrcLink"
 	fi
+
+	ssh "${1}" "mv ${dpdkSrcDir} ${RTE_SDK}"
 
 	LogMsg "MLX_PMD flag enabling on ${1}"
 	ssh "${1}" "sed -ri 's,(MLX._PMD=)n,\1y,' ${RTE_SDK}/config/common_base"
