@@ -53,7 +53,7 @@ def nodesMap = ["sriov":"rhel_7.3,rhel_7.4,centos_7.4,centos_7.3,rhel_7.3_gen2vm
                 "ws2012r2":"rhel_6.4_32bit,rhel_6.4_x64,rhel_6.5,rhel_6.6_x64,rhel_6.6_32bit, \
                     centos_6.4_x64,centos_6.5_x64,rhel_6.9_x64,", \
                 "ws2016":"oracle_6.5_rhck,oracle_6.9_rhck,oracle_7.4_rhck,oracle_7.0_rhck,centos_7.0_x64, \
-                    centos_7.0_gen2vm,centos_7.2_x64,rhel_7.0,rhel_7.1,rhel_7.2,rhel_6.10_x64,"]
+                    centos_7.0_gen2vm,centos_7.2_x64,rhel_7.0,rhel_7.1,rhel_7.2,rhel_7.6,rhel_6.10_x64,"]
 //def nodesMap = ["ws2016":"centos_6.8_x64,centos_7.2_x64"]
 
 // defines host version mapping for functional test validation
@@ -62,7 +62,8 @@ def validationNodesMap = ["ws2016":"rhel_6.10_x64,rhel_7.4,centos_6.5_x64,centos
                           "ws2012_fvt":"centos_6.8_x64,", \
                           "ws2012_bvt":"rhel_7.1,"]
 
-def PassingDistros = ["centos_7.5","centos_7.4","centos_7.3","rhel_7.5","rhel_7.3_gen2vm","centos_6.8_x64","centos_6.8_32bit","centos_6.9_32bit","rhel_6.8_x64","centos_7.0_x64"," centos_7.2_x64","rhel_7.2","oracle_6.9_rhck","rhel_7.0","oracle_7.4_rhck","oracle_7.0_rhck","rhel_7.1"]
+def PassingDistros = "centos_6.4_x64,centos_6.5_x64,centos_6.8_32bit,centos_6.8_x64,centos_6.9_32bit,centos_7.0_gen2vm,centos_7.0_x64,centos_7.2_x64,centos_7.3,centos_7.4,centos_7.5,oracle_6.5_rhck,oracle_6.9_rhck,oracle_7.0_rhck,oracle_7.4_rhck,rhel_6.10_x64,rhel_6.4_32bit,rhel_6.4_x64,rhel_6.5,rhel_6.6_32bit,rhel_6.6_x64,rhel_6.7_gen2vm,rhel_6.8_x64,rhel_6.9_x64,rhel_7.0,rhel_7.1,rhel_7.2,rhel_7.3,rhel_7.3_gen2vm,rhel_7.4,rhel_7.5,rhel_7.6"
+PassingDistros = PassingDistros.split(",")
 
 def supportedDistros = nodesMap["ws2012"] + nodesMap["ws2012r2"] + nodesMap["ws2016"] + nodesMap["sriov"]
 //def supportedDistros = nodesMap["ws2016"]
