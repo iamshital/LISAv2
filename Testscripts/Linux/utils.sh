@@ -2197,7 +2197,8 @@ function install_deb () {
 function apt_get_install ()
 {
 	package_name=$1
-	sudo DEBIAN_FRONTEND=noninteractive apt-get install -y  --force-yes $package_name
+	dpkg_configure
+	sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --force-yes $package_name
 	check_exit_status "apt_get_install $package_name"
 }
 
@@ -3207,20 +3208,24 @@ function Update_Kernel() {
 
 Kill_Process()
 {
-    ip=$1
-    if [[ $(detect_linux_distribution) == coreos ]]; then
-        output="default"
-        while [[ ${#output} != 0 ]]; do
-            output=$(ssh $ip "docker ps -a | grep $2 ")
-            if [[ ${#output} == 0 ]]; then
-                break
-            fi
-            pid=$(echo $output | awk '{print $1}')
-            ssh $ip "docker stop $pid; docker rm $pid"
-        done
-    else
-        ssh $ip "killall $2"
-    fi
+    ips=$1
+    IFS=',' read -r -a array <<< "$ips"
+    for ip in "${array[@]}"
+    do
+        if [[ $(detect_linux_distribution) == coreos ]]; then
+            output="default"
+            while [[ ${#output} != 0 ]]; do
+                output=$(ssh $ip "docker ps -a | grep $2 ")
+                if [[ ${#output} == 0 ]]; then
+                    break
+                fi
+                pid=$(echo $output | awk '{print $1}')
+                ssh $ip "docker stop $pid; docker rm $pid"
+            done
+        else
+            ssh $ip "killall $2"
+        fi
+    done
 }
 
 Delete_Containers()

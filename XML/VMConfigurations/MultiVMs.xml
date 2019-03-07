@@ -87,6 +87,70 @@
             </VirtualMachine>
         </ResourceGroup>
     </ThreeVM2NIC>
+    <FiveVM>
+        <isDeployed>NO</isDeployed>
+        <ResourceGroup>
+            <VirtualMachine>
+                <ARMInstanceSize>Standard_D15_v2</ARMInstanceSize>
+                <RoleName>server</RoleName>
+                <EndPoints>
+                    <Name>SSH</Name>
+                    <Protocol>tcp</Protocol>
+                    <LocalPort>22</LocalPort>
+                    <PublicPort>1111</PublicPort>
+                </EndPoints>
+                <DataDisk></DataDisk>
+            </VirtualMachine>
+            <VirtualMachine>
+                <DeployOnDifferentHyperVHost>yes</DeployOnDifferentHyperVHost>
+                <ARMInstanceSize>Standard_D15_v2</ARMInstanceSize>
+                <RoleName>client-vm-1</RoleName>
+                <EndPoints>
+                    <Name>SSH</Name>
+                    <Protocol>tcp</Protocol>
+                    <LocalPort>22</LocalPort>
+                    <PublicPort>1112</PublicPort>
+                </EndPoints>
+                <DataDisk></DataDisk>
+            </VirtualMachine>
+            <VirtualMachine>
+                <DeployOnDifferentHyperVHost>yes</DeployOnDifferentHyperVHost>
+                <ARMInstanceSize>Standard_D15_v2</ARMInstanceSize>
+                <RoleName>client-vm-2</RoleName>
+                <EndPoints>
+                    <Name>SSH</Name>
+                    <Protocol>tcp</Protocol>
+                    <LocalPort>22</LocalPort>
+                    <PublicPort>1113</PublicPort>
+                </EndPoints>
+                <DataDisk></DataDisk>
+            </VirtualMachine>
+            <VirtualMachine>
+                <DeployOnDifferentHyperVHost>yes</DeployOnDifferentHyperVHost>
+                <ARMInstanceSize>Standard_D15_v2</ARMInstanceSize>
+                <RoleName>client-vm-3</RoleName>
+                <EndPoints>
+                    <Name>SSH</Name>
+                    <Protocol>tcp</Protocol>
+                    <LocalPort>22</LocalPort>
+                    <PublicPort>1114</PublicPort>
+                </EndPoints>
+                <DataDisk></DataDisk>
+            </VirtualMachine>
+            <VirtualMachine>
+                <DeployOnDifferentHyperVHost>yes</DeployOnDifferentHyperVHost>
+                <ARMInstanceSize>Standard_D15_v2</ARMInstanceSize>
+                <RoleName>client-vm-4</RoleName>
+                <EndPoints>
+                    <Name>SSH</Name>
+                    <Protocol>tcp</Protocol>
+                    <LocalPort>22</LocalPort>
+                    <PublicPort>1115</PublicPort>
+                </EndPoints>
+                <DataDisk></DataDisk>
+            </VirtualMachine>
+        </ResourceGroup>
+    </FiveVM>
     <RDMA32VMs>
         <isDeployed>NO</isDeployed>
         <ResourceGroup>
