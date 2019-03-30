@@ -262,6 +262,18 @@ Function ValidateSubscriptionUsage($subscriptionID, $RGXMLData)
                 $currentStatus = SetUsage -currentStatus $currentStatus -text $identifierText  -usage $testVMUsage -AllowedUsagePercentage $AllowedUsagePercentage 
                 $overFlowErrors += TestUsage -currentStatus $currentStatus -text $identifierText -AllowedUsagePercentage $AllowedUsagePercentage 
             }
+            elseif ( $testVMSize.StartsWith("HB"))
+            {
+                $identifierText = "standardHBSFamily"
+                $currentStatus = SetUsage -currentStatus $currentStatus -text $identifierText  -usage $testVMUsage -AllowedUsagePercentage $AllowedUsagePercentage 
+                $overFlowErrors += TestUsage -currentStatus $currentStatus -text $identifierText -AllowedUsagePercentage $AllowedUsagePercentage 
+            }
+            elseif ( $testVMSize.StartsWith("HC"))
+            {
+                $identifierText = "standardHCSFamily"
+                $currentStatus = SetUsage -currentStatus $currentStatus -text $identifierText  -usage $testVMUsage -AllowedUsagePercentage $AllowedUsagePercentage 
+                $overFlowErrors += TestUsage -currentStatus $currentStatus -text $identifierText -AllowedUsagePercentage $AllowedUsagePercentage 
+            }
             elseif ( $testVMSize.StartsWith("H"))
             {
                 $identifierText = "standardHFamily"
